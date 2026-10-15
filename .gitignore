@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Test / tooling caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Learner-generated build + run artefacts (created at runtime)
+workdir/
+*.o
+a.out
+
+# Local secrets and machine-specific config
+.env
+config.local.json
+
+# Stock design references, not part of the application source
+admin-dashboard-panel-with-gradient-style/
+dashboard-user-panel-template/
+*.zip

@@ -1,0 +1,8 @@
+# Runtime dependency: PyQt6 provides the desktop UI.
+# HTTP requests to the LLM provider use the Python standard library (urllib),
+# so no other third-party package is required at runtime.
+PyQt6>=6.6
+
+# Test-only dependency. Install with:
+#   python3 -m pip install pytest
+pytest>=8.0
