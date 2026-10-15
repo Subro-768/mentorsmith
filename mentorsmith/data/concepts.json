@@ -1,0 +1,371 @@
+{
+  "_comment": "Structured concept model for adaptive learning. Kept as data, not code, so it can be edited and reviewed without touching Python. 'lesson_id' links a concept to its Markdown lesson in mentorsmith/lessons/. Prerequisites must be listed before the concepts that depend on them; core/concepts.py validates this and detects cycles.",
+  "concepts": [
+    {
+      "id": "program-structure",
+      "title": "Program Structure",
+      "lesson_id": "01-program-structure",
+      "summary": "The entry point, includes, namespaces, statements and exit status.",
+      "prerequisites": [],
+      "error_categories": ["missing_semicolon", "missing_return", "wrong_include"]
+    },
+    {
+      "id": "variables",
+      "title": "Variables and Scope",
+      "lesson_id": "02-variables-and-types",
+      "summary": "Declaring, initialising and constraining variables, and where they live.",
+      "prerequisites": ["program-structure"],
+      "error_categories": ["uninitialised_variable", "type_mismatch"]
+    },
+    {
+      "id": "types",
+      "title": "Types and Integer Division",
+      "lesson_id": "02-variables-and-types",
+      "summary": "Choosing int versus double and recognising truncated division.",
+      "prerequisites": ["variables"],
+      "error_categories": ["integer_division", "type_mismatch"]
+    },
+    {
+      "id": "io",
+      "title": "Input and Output",
+      "lesson_id": "03-input-output",
+      "summary": "Reading with cin and getline, writing with cout, and checking input succeeded.",
+      "prerequisites": ["variables"],
+      "error_categories": ["input_not_checked", "getline_newline"]
+    },
+    {
+      "id": "operators",
+      "title": "Operators and Precedence",
+      "lesson_id": "04-operators",
+      "summary": "Arithmetic, comparison and short-circuit logic.",
+      "prerequisites": ["variables", "types"],
+      "error_categories": ["assignment_vs_comparison", "precedence", "logic_error"]
+    },
+    {
+      "id": "conditions",
+      "title": "Conditions",
+      "lesson_id": "05-conditions",
+      "summary": "Branching correctly, ordering specific tests first, switch and break.",
+      "prerequisites": ["operators"],
+      "error_categories": ["assignment_vs_comparison", "condition_order", "float_equality"]
+    },
+    {
+      "id": "loops",
+      "title": "Loops",
+      "lesson_id": "06-loops",
+      "summary": "while, do while and for, plus off-by-one reasoning and loop termination.",
+      "prerequisites": ["conditions"],
+      "error_categories": ["off_by_one", "infinite_loop", "loop_bound"]
+    },
+    {
+      "id": "functions",
+      "title": "Functions",
+      "lesson_id": "07-functions",
+      "summary": "Parameters, return values, pass by value versus reference.",
+      "prerequisites": ["variables", "conditions"],
+      "error_categories": ["missing_return", "signature_mismatch", "declaration_order"]
+    },
+    {
+      "id": "arrays",
+      "title": "Arrays and Vectors",
+      "lesson_id": "08-arrays-and-strings",
+      "summary": "Fixed-size storage, indexing from zero, and bounds safety.",
+      "prerequisites": ["variables", "loops"],
+      "error_categories": ["off_by_one", "out_of_bounds", "signed_unsigned"]
+    },
+    {
+      "id": "strings",
+      "title": "Strings",
+      "lesson_id": "08-arrays-and-strings",
+      "summary": "std::string operations and safe access.",
+      "prerequisites": ["arrays", "io"],
+      "error_categories": ["out_of_bounds", "input_not_checked"]
+    },
+    {
+      "id": "pointers",
+      "title": "Pointers",
+      "lesson_id": "09-pointers",
+      "summary": "Addresses, dereferencing, null checks and never dereferencing uninitialised memory.",
+      "prerequisites": ["variables", "arrays"],
+      "error_categories": ["null_dereference", "uninitialised_pointer", "pointer_type"]
+    },
+    {
+      "id": "references",
+      "title": "References",
+      "lesson_id": "10-references",
+      "summary": "Aliases, pass by reference, dangling references.",
+      "prerequisites": ["pointers", "variables"],
+      "error_categories": ["dangling_reference", "pointer_type"]
+    },
+    {
+      "id": "memory",
+      "title": "Memory Management",
+      "lesson_id": "11-memory-concepts",
+      "summary": "Stack versus heap, leaks, double free, RAII and smart pointers.",
+      "prerequisites": ["pointers", "references"],
+      "error_categories": ["memory_leak", "double_free", "use_after_free", "dangling_reference"]
+    },
+    {
+      "id": "structures",
+      "title": "Structures",
+      "lesson_id": "12-structures",
+      "summary": "Grouping data, member access, passing structs to functions.",
+      "prerequisites": ["variables", "arrays"],
+      "error_categories": ["member_access", "signature_mismatch"]
+    },
+    {
+      "id": "classes",
+      "title": "Classes and Objects",
+      "lesson_id": "13-classes-and-objects",
+      "summary": "Encapsulating state with member functions and const correctness.",
+      "prerequisites": ["structures", "functions"],
+      "error_categories": ["missing_const", "member_access", "signature_mismatch"]
+    },
+    {
+      "id": "constructors",
+      "title": "Constructors and RAII",
+      "lesson_id": "14-constructors-encapsulation",
+      "summary": "Initialising objects safely, rule of zero, validating invariants.",
+      "prerequisites": ["classes"],
+      "error_categories": ["invalid_state", "missing_initialisation", "memory_leak"]
+    },
+    {
+      "id": "files",
+      "title": "File Handling",
+      "lesson_id": "15-file-handling",
+      "summary": "Opening, checking, reading and writing files safely.",
+      "prerequisites": ["io", "strings"],
+      "error_categories": ["file_not_checked", "input_not_checked"]
+    },
+    {
+      "id": "exceptions",
+      "title": "Exceptions and Errors",
+      "lesson_id": "16-exceptions-and-error-handling",
+      "summary": "Throwing, catching in the right order, and letting RAII clean up.",
+      "prerequisites": ["classes", "conditions", "functions"],
+      "error_categories": ["catch_order", "swallowed_exception", "invalid_state"]
+    }
+  ],
+  "projects": [
+    {
+      "id": "number-guessing-game",
+      "title": "Number Guessing Game",
+      "purpose": "Practise loops, conditions and input validation by building a small interactive game.",
+      "concepts": ["conditions", "loops", "io"],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "Ask and validate",
+          "requirements": "Prompt for a guess, read it as an int, and reject non-numeric input with a clear message.",
+          "acceptance_criteria": [
+            "Program compiles with -Wall and no errors",
+            "Non-numeric input produces a helpful message and re-prompts",
+            "Exactly one value is read per iteration"
+          ],
+          "hint": "Test the stream: if (!(std::cin >> guess)) then handle it. Consider how you clear the bad state before re-reading."
+        },
+        {
+          "title": "Feedback loop",
+          "requirements": "Tell the user whether the guess is too high, too low, or correct, and keep going until correct.",
+          "acceptance_criteria": [
+            "Correct guess exits the loop",
+            "High and low guesses give distinct messages",
+            "Loop always terminates when the number is guessed"
+          ],
+          "hint": "A while loop with a bool 'solved' flag, or a do while, both work. Pick one and make the exit condition obvious."
+        },
+        {
+          "title": "Attempts and scoring",
+          "requirements": "Count guesses and report the final count.",
+          "acceptance_criteria": [
+            "Counter starts at 0 and increments once per guess",
+            "Final count is printed on exit",
+            "Count is correct for a scripted sequence"
+          ],
+          "hint": "Increment the counter immediately after a validated read, not inside the rejection path."
+        }
+      ],
+      "extensions": [
+        "Cap the number of attempts and report a loss.",
+        "Let the player choose difficulty by narrowing a range.",
+        "Track a best score across runs using a file."
+      ]
+    },
+    {
+      "id": "marks-analyser",
+      "title": "Marks Analyser",
+      "purpose": "Practise arrays, loops and functions by turning a list of marks into statistics.",
+      "concepts": ["arrays", "loops", "functions"],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "Read into a vector",
+          "requirements": "Read a count then that many marks into a std::vector<int>, rejecting non-numeric input.",
+          "acceptance_criteria": [
+            "Marks are stored in a vector, not a fixed array",
+            "Count and marks agree",
+            "Bad input is reported rather than silently accepted"
+          ],
+          "hint": "Read the count first, then loop with push_back. Use .at(i) rather than operator[] while you are learning."
+        },
+        {
+          "title": "Compute statistics",
+          "requirements": "Write separate functions returning the sum, mean, highest and lowest.",
+          "acceptance_criteria": [
+            "Each statistic is its own named function",
+            "Mean is computed as a double, not truncated",
+            "Functions take const std::vector<int>& parameters"
+          ],
+          "hint": "Watch out for integer division in the mean: cast the total before dividing."
+        },
+        {
+          "title": "Grade distribution",
+          "requirements": "Count how many marks fall into each grade band and print a summary.",
+          "acceptance_criteria": [
+            "Grades are ordered most specific first",
+            "Every mark is counted exactly once",
+            "Output labels each band"
+          ],
+          "hint": "One pass with if / else if chains ordered from the highest threshold down."
+        }
+      ],
+      "extensions": [
+        "Report the standard deviation.",
+        "Sort the marks and print the median.",
+        "Read marks from a CSV file instead of the keyboard."
+      ]
+    },
+    {
+      "id": "library-manager",
+      "title": "Library Manager",
+      "purpose": "Practise structs, classes and file handling by managing a catalogue on disk.",
+      "concepts": ["structures", "classes", "files", "strings"],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "The Book struct",
+          "requirements": "Define a struct or class holding id, title and author.",
+          "acceptance_criteria": [
+            "Fields are private with accessors, or a struct used consistently",
+            "Construction leaves a valid object",
+            "Compiles with -Wall cleanly"
+          ],
+          "hint": "Start with a plain struct, then decide what should be hidden."
+        },
+        {
+          "title": "Load and save",
+          "requirements": "Write the catalogue to a file and read it back, checking every stream operation.",
+          "acceptance_criteria": [
+            "File open is checked and reported",
+            "Round trip preserves every record",
+            "A missing file produces a clear message, not a crash"
+          ],
+          "hint": "Separate records with a delimiter that cannot appear in a title, and parse with istringstream."
+        },
+        {
+          "title": "Search and report",
+          "requirements": "Search by title and by author, reporting matches and misses.",
+          "acceptance_criteria": [
+            "Search is case-insensitive",
+            "No match reports clearly",
+            "Search does not modify the catalogue"
+          ],
+          "hint": "Lowercase both sides before comparing. std::find may save you a loop."
+        }
+      ],
+      "extensions": [
+        "Track loans and due dates.",
+        "Detect duplicate ids at load time.",
+        "Write results to a separate report file."
+      ]
+    },
+    {
+      "id": "log-analyser",
+      "title": "Log Analyser",
+      "purpose": "Practise strings, file handling and error handling by parsing a messy log file.",
+      "concepts": ["files", "strings", "exceptions"],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Parse a line",
+          "requirements": "Split one log line into level, timestamp and message.",
+          "acceptance_criteria": [
+            "Malformed lines are skipped, not fatal",
+            "The parse is a separate function you can test",
+            "No substring arithmetic assumptions"
+          ],
+          "hint": "istringstream plus a known delimiter is usually simpler than manual index searching."
+        },
+        {
+          "title": "Aggregate counts",
+          "requirements": "Count occurrences per level and find the most common error message.",
+          "acceptance_criteria": [
+            "Counts match a hand-checked example",
+            "A file with zero matching lines is handled",
+            "Performance is acceptable for a large file"
+          ],
+          "hint": "A std::map for counts. For most-common, track a running maximum as you go."
+        },
+        {
+          "title": "Report with honest failures",
+          "requirements": "Write a summary report, and throw a meaningful exception if the input file is unreadable.",
+          "acceptance_criteria": [
+            "Unreadable input raises a descriptive exception",
+            "The caller catches it and reports it to the user",
+            "A partial parse is never presented as a complete one"
+          ],
+          "hint": "Throw std::runtime_error with the path in the message; catch it at main."
+        }
+      ],
+      "extensions": [
+        "Filter by a time window.",
+        "Detect repeated identical errors across the log.",
+        "Compare two log files and report new error types."
+      ]
+    },
+    {
+      "id": "expense-tracker",
+      "title": "Expense Tracker",
+      "purpose": "Practise classes, constructors and file handling by recording and totalling spending.",
+      "concepts": ["classes", "constructors", "files"],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "The Expense class",
+          "requirements": "Create a class that validates its constructor arguments and rejects invalid state.",
+          "acceptance_criteria": [
+            "Negative amounts are rejected in the constructor",
+            "No invalid object can be constructed",
+            "Const accessors are used for read-only queries"
+          ],
+          "hint": "Validate in the constructor and throw std::invalid_argument. A constructor must never leave a half-valid object."
+        },
+        {
+          "title": "Store and total",
+          "requirements": "Hold a collection of expenses and total them, passing by const reference.",
+          "acceptance_criteria": [
+            "Totals are correct for a scripted sequence",
+            "Collection is not copied on every call",
+            "Empty collection returns 0.0 rather than crashing"
+          ],
+          "hint": "std::accumulate, or a range-based loop taking const Expense&."
+        },
+        {
+          "title": "Monthly grouping",
+          "requirements": "Group expenses by month and report totals per month.",
+          "acceptance_criteria": [
+            "Each expense lands in exactly one group",
+            "Months with no expenses are simply absent",
+            "Report is sorted predictably"
+          ],
+          "hint": "A map keyed by 'YYYY-MM' sorts for you."
+        }
+      ],
+      "extensions": [
+        "Add a category to each expense.",
+        "Report the largest single expense.",
+        "Persist to JSON-like text and reload."
+      ]
+    }
+  ]
+}

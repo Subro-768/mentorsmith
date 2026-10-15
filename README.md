@@ -5,30 +5,64 @@ PyQt6.
 
 MentorSmith compiles and runs **your own code** and shows you the real compiler
 and runtime output, then pairs each lesson with an AI tutor that supports three
-levels of help. The goal is understanding, not generated answers.
+levels of help. On top of that it tracks *evidence* of understanding rather than
+what you clicked, and adapts what it gives you next.
 
 ---
 
 ## What it does
 
+### Curriculum and lessons
+
 - **16 beginner C++ lessons**, from program structure to exceptions. Each has
   objectives, an explanation, a worked example, knowledge checks, an exercise
   with starter code, common mistakes, and a recap. The content lives in
   Markdown under `mentorsmith/lessons/`, not inside the UI code.
-- **Real compile and run** with `g++` or `clang++`, showing the exact command,
-  the compiler's own diagnostics, stdout and stderr separately, the exit code
-  and the wall-clock time. Failures are displayed honestly and are never
-  dressed up as success.
-- **A code editor** with C++ syntax highlighting and a line-number gutter.
-- **An AI tutor** with three assistance levels:
-  - *Hint* — one small clue, no answer.
-  - *Guided* — leading questions, one step at a time.
-  - *Full explanation* — the worked solution with reasoning.
-  Lower levels never volunteer the answer first, but you can ask for the full
-  explanation at any time.
-- **Progress that persists** in a local SQLite database: lesson completions,
-  every compile attempt and what actually happened, and a recent-activity feed.
-- **A dark theme** and a plain, readable layout.
+
+### Real compile and run
+
+- Compiles and runs with `g++` or `clang++`, showing the exact command, the
+  compiler's own diagnostics, stdout and stderr separately, the exit code and
+  the wall-clock time. Failures are displayed honestly and are never dressed up
+  as success.
+- A **code editor** with C++ syntax highlighting and a line-number gutter.
+
+### Adaptive practice
+
+- **18 concepts** with an explicit prerequisite graph, held as structured data
+  in `mentorsmith/data/concepts.json`.
+- **53 exercises across 8 types**: predict-output, find-a-bug, complete-code,
+  write-a-function, explain-code, modify-code, solve-without-AI, and
+  compare-implementations.
+- **Deterministic grading where possible.** Code exercises are compiled and run,
+  and the real output is compared against the expected output, with a diff when
+  they differ. Free-form explanations are graded by the tutor against a rubric
+  and are always labelled *interpretive* — an opinion, not a proof.
+- **A guided debugging coach**: capture the failure, categorise it where the
+  evidence allows, give one small hint, let you retry, escalate only after
+  repeated failure, and ask a related question after you fix it.
+- **The next activity is chosen from your history** and always comes with its
+  reason, quoting your own numbers.
+
+### Evidence, not vibes
+
+A concept gets a label — `not_started`, `needs_review`, `developing`, `strong` —
+but a label is a **summary, not a measurement**, and the app always shows the
+counts behind it. Two things are deliberately *not* counted as evidence of
+learning:
+
+- chat messages sent to the tutor
+- time spent in the app
+
+Only graded exercise attempts count, and **completing a lesson is not
+evidence** either.
+
+### Projects
+
+- Projects are proposed from concepts you have *demonstrated*, not merely
+  opened. A blocked project tells you which concepts to strengthen first.
+- Each project splits into small milestones, each with requirements and
+  acceptance criteria you can check yourself.
 
 ## Requirements
 
@@ -172,10 +206,20 @@ main.py                     Entry point (--check builds the UI headlessly)
 mentorsmith/
   app.py                    QApplication bootstrap
   config.py                 Paths and non-secret settings
+  data/
+    concepts.json           Concept graph + project catalogue
+    exercises.json          Adaptive exercise bank
   lessons/                  The 16 lessons, as Markdown
   core/
     db.py                   SQLite persistence, schema migrations
     curriculum.py           Lesson loading and the file format
+    concepts.py             Concept model + prerequisite graph
+    exercises.py            Exercise bank, grading, model-output prompts
+    mastery.py              Evidence -> label, always with reasons
+    adaptive.py             Which exercise next, and why
+    debugging.py            Diagnose, hint, retry, escalate
+    projects.py             Project proposals and milestones
+    revision.py             Review recommendations and regressions
   compiler/
     toolchain.py            Detect, compile, run, contain
   providers/
@@ -183,6 +227,8 @@ mentorsmith/
     openai_compat.py        /chat/completions client, stdlib only
   services/
     tutor.py                Assistance levels, prompts, response parsing
+    practice.py             One exercise, end to end (no Qt)
+    insights.py             Dashboard assembly and justifications
   ui/                       Qt widgets (theme, editor, panels, window)
 tests/                      pytest suite
 docs/                       Architecture notes
@@ -191,13 +237,35 @@ docs/                       Architecture notes
 Only PyQt6 is required at runtime; HTTP uses the Python standard library, so
 there is no third-party HTTP dependency.
 
+## How recommendations work
+
+Deterministic, and inspectable in the UI:
+
+1. **Repair** — a concept already attempted but weak, especially with a
+   recurring error category. New material waits.
+2. **Consolidate** — correct first time, but only once. One correct answer is
+   not evidence of understanding, so an unfamiliar variation comes next.
+3. **Extension** — prerequisites all strong, nothing attempted yet.
+4. **Delayed review** — a strong concept not practised recently, revisited with
+   a variation rather than the worked example.
+
+A recurring error category (three or more occurrences of the same one) forces a
+review flag even when the overall score is high, because one recurring
+misunderstanding is the thing worth fixing.
+
+No scheduling method guarantees mastery, and the app says so where it shows
+recommendations. Only a new, unfamiliar problem can show whether something
+transferred.
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |
 |---|---|
 | `Ctrl+R` | Dashboard |
+| `Ctrl+K` | Practice |
 | `Ctrl+L` | Lessons |
-| `Ctrl+P` | Progress |
+| `Ctrl+P` | Progress and insights |
+| `Ctrl+J` | Projects |
 | `Ctrl+Shift+P` | Compile and run the current lesson |
 | `Ctrl+,` | Settings |
 | `Ctrl+Enter` | Send a chat message |
@@ -207,9 +275,15 @@ there is no third-party HTTP dependency.
 - Linux desktop only. The Android companion is not built yet.
 - The in-app Markdown renderer covers the subset the lessons use, not the
   whole specification.
-- There is no built-in test suite for the learner's own C++ lessons; the
-  examples are verified by the compiler when you press **Compile & Run**.
-- The editor has no autocomplete or undo history beyond Qt's built-in support.
+- The exercise bank ships 53 exercises. Coverage is thin for `constructors`,
+  `files`, `strings` and `structures` (2 each).
+- Mastery labels are a summary of recorded counts. They are explainable but
+  they are not a psychometric measurement.
+- Review recommendations use a fixed staleness threshold, not a proven spaced
+  repetition schedule.
+- There is no built-in test suite for the learner's own C++; exercises are
+  graded by the compiler when you press **Run & check**.
+- The editor has no autocomplete.
 - Progress is per-machine and not synchronised anywhere.
 
 ## Licence

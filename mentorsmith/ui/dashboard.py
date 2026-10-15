@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QListWidget,
@@ -175,6 +176,238 @@ class DashboardView(QWidget):
 
     def _on_click(self, item: QListWidgetItem) -> None:
         self.open_button.setEnabled(True)
+
+
+class InsightsPanel(QWidget):
+    """Phase 2 panel: next activity with its reason, reviews, real statistics.
+
+    Every number here comes from graded attempts. Chat message counts and time
+    spent in the app are deliberately excluded, and the panel says so.
+    """
+
+    #: (exercise_id,) when the learner chooses the suggested activity.
+    activity_requested = pyqtSignal(str)
+    practice_requested = pyqtSignal()
+    projects_requested = pyqtSignal()
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._build_ui()
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
+
+        self.summary = QLabel()
+        self.summary.setObjectName("subtitle")
+        self.summary.setWordWrap(True)
+        layout.addWidget(self.summary)
+
+        # --- suggested next activity, with its reason ---
+        next_box = QGroupBox("Suggested next activity")
+        next_layout = QVBoxLayout(next_box)
+
+        self.next_label = QLabel("Nothing to suggest yet.")
+        self.next_label.setWordWrap(True)
+        next_layout.addWidget(self.next_label)
+
+        self.next_reason = QLabel()
+        self.next_reason.setWordWrap(True)
+        self.next_reason.setObjectName("muted")
+        next_layout.addWidget(self.next_reason)
+
+        buttons = QHBoxLayout()
+        self.start_button = QPushButton("Start this exercise")
+        self.start_button.setObjectName("primary")
+        self.practice_button = QPushButton("Open practice")
+        self.projects_button = QPushButton("Open projects")
+        buttons.addWidget(self.start_button)
+        buttons.addWidget(self.practice_button)
+        buttons.addWidget(self.projects_button)
+        buttons.addStretch(1)
+        next_layout.addLayout(buttons)
+        layout.addWidget(next_box)
+
+        # --- concepts to review ---
+        review_box = QGroupBox("Concepts to review")
+        review_layout = QVBoxLayout(review_box)
+        self.review_view = QTextBrowser()
+        self.review_view.setMaximumHeight(170)
+        review_layout.addWidget(self.review_view)
+        layout.addWidget(review_box)
+
+        # --- independent work, hints, projects, recurring errors ---
+        stats_row = QHBoxLayout()
+
+        work_box = QGroupBox("Independent work")
+        work_layout = QVBoxLayout(work_box)
+        self.independent_label = QLabel("0")
+        self.independent_label.setObjectName("title")
+        work_layout.addWidget(self.independent_label)
+        note = QLabel("graded attempts solved with no hints")
+        note.setObjectName("muted")
+        note.setWordWrap(True)
+        work_layout.addWidget(note)
+        self.hints_label = QLabel("0 hints used")
+        self.hints_label.setObjectName("muted")
+        work_layout.addWidget(self.hints_label)
+        stats_row.addWidget(work_box)
+
+        project_box = QGroupBox("Projects and milestones")
+        project_layout = QVBoxLayout(project_box)
+        self.project_label = QLabel("No projects started")
+        self.project_label.setWordWrap(True)
+        project_layout.addWidget(self.project_label)
+        self.milestone_label = QLabel()
+        self.milestone_label.setObjectName("muted")
+        project_layout.addWidget(self.milestone_label)
+        stats_row.addWidget(project_box)
+
+        error_box = QGroupBox("Recurring error categories")
+        error_layout = QVBoxLayout(error_box)
+        self.error_view = QTextBrowser()
+        self.error_view.setMaximumHeight(110)
+        error_layout.addWidget(self.error_view)
+        stats_row.addWidget(error_box)
+
+        layout.addLayout(stats_row)
+
+        # --- concept mastery table ---
+        mastery_box = QGroupBox("Concepts and the evidence behind each label")
+        mastery_layout = QVBoxLayout(mastery_box)
+        self.mastery_view = QTextBrowser()
+        self.mastery_view.setMaximumHeight(260)
+        mastery_layout.addWidget(self.mastery_view)
+        layout.addWidget(mastery_box)
+
+        self.disclaimer = QLabel()
+        self.disclaimer.setWordWrap(True)
+        self.disclaimer.setObjectName("muted")
+        layout.addWidget(self.disclaimer)
+
+        self._next_exercise_id: str | None = None
+        self.start_button.clicked.connect(
+            lambda: self._next_exercise_id and self.activity_requested.emit(self._next_exercise_id)
+        )
+        self.practice_button.clicked.connect(self.practice_requested)
+        self.projects_button.clicked.connect(self.projects_requested)
+
+    def set_report(self, report) -> None:
+        """Render a :class:`~mentorsmith.services.insights.DashboardReport`."""
+        self.summary.setText(report.summary_line())
+        self.disclaimer.setText(f"{report.disclaimer}  {report.not_evidence_note}")
+
+        if report.next_activity is not None:
+            self.next_label.setText(
+                f"<b>{_escape(report.next_activity.title)}</b> — "
+                f"{_escape(report.next_activity.concept_id)} "
+                f"({_escape(report.next_activity.exercise_type)})"
+            )
+            self.next_reason.setText(
+                f"<b>Why:</b> {_escape(report.next_activity_reason)}"
+            )
+            self._next_exercise_id = report.next_activity.exercise_id
+            self.start_button.setEnabled(True)
+        else:
+            self.next_label.setText(report.next_activity_reason)
+            self.next_reason.setText("")
+            self._next_exercise_id = None
+            self.start_button.setEnabled(False)
+
+        if report.reviews:
+            rows = []
+            for item in report.reviews:
+                rows.append(
+                    f"<p><b>{_escape(item.title)}</b><br>"
+                    f"<span style='color:{theme.MUTED}'>{_escape(item.reason)}</span></p>"
+                )
+            self.review_view.setHtml("".join(rows))
+        else:
+            self.review_view.setHtml(
+                f"<p style='color:{theme.MUTED}'>Nothing flagged for review. "
+                "That is not the same as knowing everything — it means no "
+                "recorded attempt looks weak or stale yet.</p>"
+            )
+
+        self.independent_label.setText(str(report.independent_results))
+        self.hints_label.setText(
+            f"{report.hints_used} hint(s) used across {report.total_attempts} attempts"
+        )
+
+        if report.projects:
+            in_progress = [
+                p for p in report.projects if p.get("status") in ("in_progress", "not_started")
+            ]
+            self.project_label.setText(
+                f"{len(report.projects)} started · {len(in_progress)} in progress"
+            )
+        else:
+            self.project_label.setText("No projects started")
+        done = report.milestone_totals.get("done", 0)
+        total = report.milestone_totals.get("total", 0)
+        self.milestone_label.setText(f"{done} of {total} milestones complete")
+
+        if report.error_categories:
+            rows = "".join(
+                f"<li><b>{_escape(name)}</b> — {count} time(s)</li>"
+                for name, count in report.error_categories
+            )
+            self.error_view.setHtml(f"<ul>{rows}</ul>")
+        else:
+            self.error_view.setHtml(
+                f"<p style='color:{theme.MUTED}'>No error categories recorded yet.</p>"
+            )
+
+        rows = []
+        for row in report.concepts:
+            colour = {
+                "strong": theme.SUCCESS,
+                "developing": theme.INFO,
+                "needs_review": theme.WARNING,
+                "not_started": theme.MUTED,
+            }.get(row.label, theme.MUTED)
+            evidence = (
+                "<br><span style='color:"
+                + theme.MUTED
+                + "'>"
+                + " ".join(_escape(item) for item in row.evidence[:2])
+                + "</span>"
+                if row.evidence
+                else ""
+            )
+            missing = (
+                "<br><span style='color:"
+                + theme.ERROR
+                + "'>blocked by: "
+                + _escape(", ".join(row.missing_prerequisites))
+                + "</span>"
+                if row.missing_prerequisites
+                else ""
+            )
+            rows.append(
+                f"<tr>"
+                f"<td style='padding:3px 8px'>{_escape(row.title)}</td>"
+                f"<td style='color:{colour};padding:3px 8px'>{row.label}</td>"
+                f"<td style='padding:3px 8px'>{row.attempts}</td>"
+                f"<td style='padding:3px 8px'>{row.correct}</td>"
+                f"<td style='padding:3px 8px'>{row.independent}</td>"
+                f"<td style='padding:3px 8px'>{row.hints_used}</td>"
+                f"<td style='padding:3px 8px'>{row.score:.2f}"
+                f"{evidence}{missing}</td>"
+                f"</tr>"
+            )
+        self.mastery_view.setHtml(
+            "<table width='100%' cellspacing='0' cellpadding='0'>"
+            "<tr style='color:"
+            + theme.MUTED
+            + "'><th align='left'>Concept</th><th align='left'>Label</th>"
+            "<th align='left'>Attempts</th><th align='left'>Correct</th>"
+            "<th align='left'>Alone</th><th align='left'>Hints</th>"
+            "<th align='left'>Score &amp; evidence</th></tr>"
+            + "".join(rows)
+            + "</table>"
+        )
 
 
 class ProgressView(QWidget):

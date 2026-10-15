@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from mentorsmith.compiler.toolchain import Toolchain  # noqa: E402
 from mentorsmith.core.curriculum import load_lessons  # noqa: E402
 from mentorsmith.core.db import Database  # noqa: E402
+from mentorsmith.services.insights import build_report  # noqa: E402
 
 pytest.importorskip("PyQt6", reason="PyQt6 is not installed")
 
@@ -28,7 +29,10 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from mentorsmith.ui.dashboard import DashboardView, ProgressView  # noqa: E402
 from mentorsmith.ui.lesson_view import LessonView  # noqa: E402
-from mentorsmith.ui.main_window import MainWindow  # noqa: E402
+from mentorsmith.ui.main_window import (  # noqa: E402
+    PAGE_LESSON,
+    MainWindow,
+)
 
 
 @pytest.fixture(scope="session")
@@ -65,7 +69,9 @@ def _ensure(path: Path) -> Path:
 # Construction
 # ----------------------------------------------------------------------
 def test_main_window_constructs(window) -> None:
-    assert window.stack.count() == 3
+    # Page count is asserted loosely: Phase 2 added practice, insights and
+    # project pages, and the count should not be a brittle equality test.
+    assert window.stack.count() >= 6
     assert window.windowTitle().startswith("MentorSmith")
 
 
@@ -92,7 +98,7 @@ def test_opening_a_lesson_loads_content(window) -> None:
 
     assert window.lesson_view.lesson is not None
     assert window.lesson_view.lesson.id == lesson.id
-    assert window.stack.currentIndex() == 1
+    assert window.stack.currentIndex() == PAGE_LESSON
     assert lesson.title in window.lesson_view.title_label.text()
     assert window.lesson_view.editor.code().strip()
 
@@ -135,7 +141,10 @@ def test_marking_complete_persists(window) -> None:
 
     assert window.database.is_lesson_complete(lesson.id)
     assert lesson.id in window.database.completed_lessons()
-    assert window.dashboard.progress_bar.value() > 0
+    # Phase 1 lesson completion does not make a concept "strong": lesson
+    # progress is deliberately not counted as evidence of understanding.
+    progress = window.database.get_concept_progress("program-structure")
+    assert progress is None or progress["label"] != "strong"
 
 
 def test_completion_survives_a_window_restart(qt_app, tmp_path: Path) -> None:
@@ -254,6 +263,94 @@ def test_progress_view_renders(qt_app) -> None:
     view.set_lessons(load_lessons())
     view.refresh(Database(":memory:"), [])
     assert "0 of 16" in view.summary.text()
+
+
+# ----------------------------------------------------------------------
+# Phase 2: practice, insights and projects
+# ----------------------------------------------------------------------
+def test_phase2_pages_exist(window) -> None:
+    from mentorsmith.ui.main_window import (
+        PAGE_INSIGHTS,
+        PAGE_PRACTICE,
+        PAGE_PROJECTS,
+    )
+
+    assert window.stack.count() == 6
+    assert window.stack.widget(PAGE_PRACTICE) is not None
+    assert window.stack.widget(PAGE_INSIGHTS) is not None
+    assert window.stack.widget(PAGE_PROJECTS) is not None
+
+
+def test_practice_view_auto_selects_the_top_recommendation(window) -> None:
+    """The screen opens ready to work on the best suggestion."""
+    assert window.practice_view.recommendation_list.count() > 0
+    assert window.practice_view.session is not None
+    assert window.practice_view.session.exercise is not None
+
+
+def test_recommendations_are_listed_with_reasons(window) -> None:
+    """Phase 2 requires a suggested activity *with its reason*."""
+    assert window.practice_view.recommendation_list.count() > 0
+    first = window.practice_view.recommendation_list.item(0)
+    assert first.toolTip(), "a recommendation arrived without a reason"
+
+
+def test_insights_explains_its_next_activity(window) -> None:
+    window.refresh_insights()
+    assert window.insights.next_reason.text()
+    assert "graded attempts" in window.insights.next_reason.text().lower() or \
+           "prerequisites" in window.insights.next_reason.text().lower()
+
+
+def test_insights_states_what_is_not_evidence(window) -> None:
+    window.refresh_insights()
+    assert "not counted" in window.insights.disclaimer.text().lower()
+
+
+def test_loading_a_practice_exercise_configures_the_editor(window) -> None:
+    exercise = window.bank.get("types-fix-division")
+    window.practice_view.load_exercise(exercise)
+    assert window.practice_view.session is not None
+    assert window.practice_view.editor.code().strip()
+    assert "compiling and running" in window.practice_view.grade_label.text()
+
+
+def test_interpretive_exercise_uses_the_answer_box(window) -> None:
+    exercise = window.bank.get("types-explain-division")
+    window.practice_view.load_exercise(exercise)
+    assert window.practice_view.tabs.currentWidget() is window.practice_view.answer_edit
+    assert "opinion" in window.practice_view.grade_label.text().lower()
+
+
+def test_solve_without_ai_disables_hints_in_the_ui(window) -> None:
+    exercise = window.bank.get("io-solve-no-ai")
+    window.practice_view.load_exercise(exercise)
+    assert not window.practice_view.hint_button.isEnabled()
+    assert "disabled" in window.practice_view.hint_button.text().lower()
+
+
+def test_projects_are_proposed_with_rationale(window) -> None:
+    window.refresh_insights()
+    assert window.projects_view.project_list.count() > 0
+    first = window.projects_view.project_list.item(0)
+    assert first.toolTip()
+
+
+def test_graded_attempt_updates_the_report(window) -> None:
+    """History must actually change what the dashboard recommends."""
+    from mentorsmith.services.practice import PracticeSession
+
+    exercise = window.bank.get("types-fix-division")
+    before = window.database.total_attempts() if hasattr(
+        window.database, "total_attempts"
+    ) else 0
+    session = PracticeSession(
+        database=window.database, toolchain=window.toolchain, exercise=exercise
+    )
+    session.submit("#include <iostream>\nint main(){ return 0; }\n")
+    after = build_report(window.database, window.model, window.bank)
+    assert after.total_attempts > before
+    assert after.recommendations
 
 
 # ----------------------------------------------------------------------

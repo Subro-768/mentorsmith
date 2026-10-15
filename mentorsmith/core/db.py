@@ -65,6 +65,110 @@ MIGRATIONS: dict[int, list[str]] = {
         )
         """,
     ],
+    2: [
+        # --- Phase 2: adaptive learning ---------------------------------
+        # Additive only. Every column has a default so existing Phase 1 rows
+        # keep their data and the table can be migrated in place.
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN exercise_type TEXT NOT NULL DEFAULT 'freeform'
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN concept_id TEXT NOT NULL DEFAULT ''
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN correct INTEGER NOT NULL DEFAULT 0
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN hints_used INTEGER NOT NULL DEFAULT 0
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN independent INTEGER NOT NULL DEFAULT 1
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN error_category TEXT NOT NULL DEFAULT ''
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN grade TEXT NOT NULL DEFAULT ''
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN novelty INTEGER NOT NULL DEFAULT 0
+        """,
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN graded_by TEXT NOT NULL DEFAULT 'deterministic'
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_attempts_concept
+            ON exercise_attempts (concept_id, exercise_type)
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_attempts_error_category
+            ON exercise_attempts (error_category)
+        """,
+        # Cached mastery label per concept, so the dashboard does not have to
+        # recompute for every row. Always recomputable from exercise_attempts.
+        """
+        CREATE TABLE IF NOT EXISTS concept_progress (
+            concept_id   TEXT PRIMARY KEY,
+            label        TEXT NOT NULL,
+            score        REAL NOT NULL DEFAULT 0.0,
+            evidence     TEXT NOT NULL DEFAULT '',
+            updated_at   TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS projects (
+            id           TEXT PRIMARY KEY,
+            title        TEXT NOT NULL,
+            purpose      TEXT NOT NULL DEFAULT '',
+            concepts     TEXT NOT NULL DEFAULT '',
+            difficulty   TEXT NOT NULL DEFAULT 'unknown',
+            status       TEXT NOT NULL DEFAULT 'not_started',
+            created_at   TEXT NOT NULL,
+            updated_at   TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS project_milestones (
+            id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id           TEXT NOT NULL,
+            ordinal              INTEGER NOT NULL,
+            title                TEXT NOT NULL,
+            requirements         TEXT NOT NULL DEFAULT '',
+            acceptance_criteria  TEXT NOT NULL DEFAULT '',
+            hint                 TEXT NOT NULL DEFAULT '',
+            status               TEXT NOT NULL DEFAULT 'pending',
+            completed_at         TEXT
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_milestones_project
+            ON project_milestones (project_id, ordinal)
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS project_activity (
+            id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id                TEXT NOT NULL,
+            milestone_id              INTEGER,
+            notes                     TEXT NOT NULL DEFAULT '',
+            needed_substantial_help   INTEGER NOT NULL DEFAULT 0,
+            created_at                TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS reviews (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            concept_id  TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            evidence    TEXT NOT NULL DEFAULT '',
+            status      TEXT NOT NULL DEFAULT 'open',
+            created_at  TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_reviews_status
+            ON reviews (status, concept_id)
+        """,
+    ],
 }
 
 LATEST_SCHEMA_VERSION = max(MIGRATIONS)
@@ -209,18 +313,43 @@ class Database:
         compiled_ok: bool = False,
         ran_ok: bool = False,
         result: str = "",
+        exercise_type: str = "freeform",
+        concept_id: str = "",
+        correct: bool = False,
+        hints_used: int = 0,
+        independent: bool | None = None,
+        error_category: str = "",
+        grade: str = "",
+        novelty: bool = False,
+        graded_by: str = "deterministic",
     ) -> int:
         """Store one attempt at an exercise and return its row id.
 
         ``compiled_ok`` / ``ran_ok`` record what actually happened when the
         learner pressed Run, rather than what the tutor asserted.
+
+        Phase 2 additions are keyword-only with defaults, so existing Phase 1
+        callers are unaffected. ``graded_by`` distinguishes a deterministic
+        check from an interpretive AI judgement, which the UI labels.
+
+        ``independent`` defaults to ``None``, meaning "derive it": an attempt
+        counts as independent only when it was correct and used no hints. Pass
+        it explicitly to override, which :mod:`mentorsmith.services.practice`
+        does so it can also account for escalation.
         """
+        independent_flag = (
+            bool(correct and hints_used == 0)
+            if independent is None
+            else bool(independent)
+        )
         conn = self.connect()
         cur = conn.execute(
             """
             INSERT INTO exercise_attempts
-                (lesson_id, exercise_id, source, compiled_ok, ran_ok, result, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (lesson_id, exercise_id, source, compiled_ok, ran_ok, result,
+                 exercise_type, concept_id, correct, hints_used, independent,
+                 error_category, grade, novelty, graded_by, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 lesson_id,
@@ -229,6 +358,15 @@ class Database:
                 int(bool(compiled_ok)),
                 int(bool(ran_ok)),
                 result,
+                exercise_type,
+                concept_id,
+                int(bool(correct)),
+                int(hints_used),
+                int(independent_flag),
+                error_category,
+                grade,
+                int(bool(novelty)),
+                graded_by,
                 _utcnow(),
             ),
         )
@@ -315,6 +453,298 @@ class Database:
         conn = self.connect()
         rows = conn.execute("SELECT key, value FROM app_settings").fetchall()
         return {str(r["key"]): str(r["value"]) for r in rows}
+
+    # ------------------------------------------------------------------
+    # Phase 2: adaptive learning evidence
+    # ------------------------------------------------------------------
+    def attempts_for_concept(self, concept_id: str) -> list[dict]:
+        """Every graded attempt for a concept, newest first."""
+        conn = self.connect()
+        rows = conn.execute(
+            "SELECT * FROM exercise_attempts WHERE concept_id = ? ORDER BY id DESC",
+            (concept_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def concept_evidence(self, concept_ids: Sequence[str]) -> dict[str, dict]:
+        """Aggregate raw evidence per concept in a single pass.
+
+        Returns counts only. Interpretation lives in
+        :mod:`mentorsmith.core.mastery` so the numbers here stay objective and
+        the labels stay explainable.
+        """
+        ids = list(concept_ids)
+        summary: dict[str, dict] = {
+            concept_id: {
+                "attempts": 0,
+                "correct": 0,
+                "incorrect": 0,
+                "hints_used": 0,
+                "independent": 0,
+                "first_try_correct": 0,
+                "freeform_attempts": 0,
+                "freeform_correct": 0,
+                "novel_attempts": 0,
+                "error_categories": {},
+                "exercise_types": {},
+            }
+            for concept_id in ids
+        }
+        if not ids:
+            return summary
+
+        placeholders = ",".join("?" for _ in ids)
+        rows = self.connect().execute(
+            f"SELECT * FROM exercise_attempts WHERE concept_id IN ({placeholders}) "
+            "ORDER BY id ASC",
+            tuple(ids),
+        ).fetchall()
+
+        # Track the earliest attempt per concept to spot first-try success.
+        seen_first: set[str] = set()
+        for row in rows:
+            record = dict(row)
+            concept_id = str(record["concept_id"])
+            entry = summary.get(concept_id)
+            if entry is None:
+                continue
+            entry["attempts"] += 1
+            if record["correct"]:
+                entry["correct"] += 1
+            else:
+                entry["incorrect"] += 1
+            entry["hints_used"] += int(record.get("hints_used") or 0)
+            if record.get("independent"):
+                entry["independent"] += 1
+            if record.get("exercise_type") == "explain-code":
+                entry["freeform_attempts"] += 1
+                if record["correct"]:
+                    entry["freeform_correct"] += 1
+            if record.get("novelty"):
+                entry["novel_attempts"] += 1
+            category = record.get("error_category") or ""
+            if category:
+                entry["error_categories"][category] = (
+                    entry["error_categories"].get(category, 0) + 1
+                )
+            exercise_type = record.get("exercise_type") or ""
+            if exercise_type:
+                entry["exercise_types"][exercise_type] = (
+                    entry["exercise_types"].get(exercise_type, 0) + 1
+                )
+            if concept_id not in seen_first:
+                seen_first.add(concept_id)
+                if record["correct"]:
+                    entry["first_try_correct"] += 1
+        return summary
+
+    def error_category_counts(self, limit: int = 10) -> list[tuple[str, int]]:
+        """Most frequent error categories across all attempts."""
+        rows = self.connect().execute(
+            "SELECT error_category, COUNT(*) AS n FROM exercise_attempts "
+            "WHERE error_category != '' GROUP BY error_category "
+            "ORDER BY n DESC, error_category LIMIT ?",
+            (int(limit),),
+        ).fetchall()
+        return [(str(r["error_category"]), int(r["n"])) for r in rows]
+
+    def total_hints_used(self) -> int:
+        row = self.connect().execute(
+            "SELECT COALESCE(SUM(hints_used), 0) AS n FROM exercise_attempts"
+        ).fetchone()
+        return int(row["n"]) if row else 0
+
+    def independent_attempt_count(self) -> int:
+        """Attempts the learner solved without substantial help."""
+        row = self.connect().execute(
+            "SELECT COUNT(*) AS n FROM exercise_attempts "
+            "WHERE correct = 1 AND independent = 1"
+        ).fetchone()
+        return int(row["n"]) if row else 0
+
+    # ------------------------------------------------------------------
+    # Concept progress cache
+    # ------------------------------------------------------------------
+    def set_concept_progress(
+        self, concept_id: str, label: str, score: float, evidence: str = ""
+    ) -> None:
+        """Cache a computed mastery label.
+
+        Purely a cache: it can always be rebuilt from ``concept_evidence``.
+        """
+        conn = self.connect()
+        conn.execute(
+            "INSERT INTO concept_progress (concept_id, label, score, evidence, updated_at) "
+            "VALUES (?, ?, ?, ?, ?) ON CONFLICT(concept_id) DO UPDATE SET "
+            "label = excluded.label, score = excluded.score, "
+            "evidence = excluded.evidence, updated_at = excluded.updated_at",
+            (concept_id, label, float(score), evidence, _utcnow()),
+        )
+        conn.commit()
+
+    def get_concept_progress(self, concept_id: str) -> dict | None:
+        row = self.connect().execute(
+            "SELECT * FROM concept_progress WHERE concept_id = ?", (concept_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def all_concept_progress(self) -> dict[str, dict]:
+        rows = self.connect().execute(
+            "SELECT * FROM concept_progress"
+        ).fetchall()
+        return {str(r["concept_id"]): dict(r) for r in rows}
+
+    # ------------------------------------------------------------------
+    # Projects and milestones
+    # ------------------------------------------------------------------
+    def create_project(
+        self,
+        project_id: str,
+        title: str,
+        *,
+        purpose: str = "",
+        concepts: Sequence[str] = (),
+        difficulty: str = "unknown",
+        milestones: Sequence[dict] = (),
+    ) -> str:
+        """Insert a project and its milestones. Returns the project id.
+
+        Re-adding an existing project updates it rather than duplicating, so
+        regenerating recommendations is safe.
+        """
+        conn = self.connect()
+        stamp = _utcnow()
+        conn.execute(
+            "INSERT INTO projects "
+            "(id, title, purpose, concepts, difficulty, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, 'not_started', ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET title = excluded.title, "
+            "purpose = excluded.purpose, concepts = excluded.concepts, "
+            "difficulty = excluded.difficulty, updated_at = excluded.updated_at",
+            (project_id, title, purpose, ",".join(concepts), difficulty, stamp, stamp),
+        )
+        if milestones:
+            conn.execute("DELETE FROM project_milestones WHERE project_id = ?", (project_id,))
+            for ordinal, milestone in enumerate(milestones, start=1):
+                conn.execute(
+                    "INSERT INTO project_milestones "
+                    "(project_id, ordinal, title, requirements, acceptance_criteria, "
+                    " hint, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')",
+                    (
+                        project_id,
+                        ordinal,
+                        str(milestone.get("title", f"Milestone {ordinal}")),
+                        str(milestone.get("requirements", "")),
+                        ",".join(str(c) for c in milestone.get("acceptance_criteria", [])),
+                        str(milestone.get("hint", "")),
+                    ),
+                )
+        conn.commit()
+        return project_id
+
+    def get_project(self, project_id: str) -> dict | None:
+        row = self.connect().execute(
+            "SELECT * FROM projects WHERE id = ?", (project_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def list_projects(self) -> list[dict]:
+        rows = self.connect().execute(
+            "SELECT * FROM projects ORDER BY created_at, id"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def set_project_status(self, project_id: str, status: str) -> None:
+        conn = self.connect()
+        conn.execute(
+            "UPDATE projects SET status = ?, updated_at = ? WHERE id = ?",
+            (status, _utcnow(), project_id),
+        )
+        conn.commit()
+
+    def milestones_for(self, project_id: str) -> list[dict]:
+        rows = self.connect().execute(
+            "SELECT * FROM project_milestones WHERE project_id = ? ORDER BY ordinal",
+            (project_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def set_milestone_status(self, milestone_id: int, status: str) -> None:
+        conn = self.connect()
+        completed = _utcnow() if status == "done" else None
+        conn.execute(
+            "UPDATE project_milestones SET status = ?, completed_at = ? WHERE id = ?",
+            (status, completed, milestone_id),
+        )
+        conn.commit()
+
+    def record_project_activity(
+        self,
+        project_id: str,
+        notes: str,
+        *,
+        milestone_id: int | None = None,
+        needed_substantial_help: bool = False,
+    ) -> int:
+        conn = self.connect()
+        cur = conn.execute(
+            "INSERT INTO project_activity "
+            "(project_id, milestone_id, notes, needed_substantial_help, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (
+                project_id,
+                milestone_id,
+                notes,
+                int(bool(needed_substantial_help)),
+                _utcnow(),
+            ),
+        )
+        conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def project_activity_for(self, project_id: str) -> list[dict]:
+        rows = self.connect().execute(
+            "SELECT * FROM project_activity WHERE project_id = ? ORDER BY id DESC",
+            (project_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # ------------------------------------------------------------------
+    # Reviews
+    # ------------------------------------------------------------------
+    def add_review(self, concept_id: str, reason: str, evidence: str = "") -> int:
+        """Flag a concept for review. Deduplicates on (concept, open)."""
+        conn = self.connect()
+        existing = conn.execute(
+            "SELECT id FROM reviews WHERE concept_id = ? AND status = 'open'",
+            (concept_id,),
+        ).fetchone()
+        if existing is not None:
+            return int(existing["id"])
+        cur = conn.execute(
+            "INSERT INTO reviews (concept_id, reason, evidence, status, created_at) "
+            "VALUES (?, ?, ?, 'open', ?)",
+            (concept_id, reason, evidence, _utcnow()),
+        )
+        conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def open_reviews(self) -> list[dict]:
+        rows = self.connect().execute(
+            "SELECT * FROM reviews WHERE status = 'open' ORDER BY id"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def close_review(self, review_id: int) -> None:
+        conn = self.connect()
+        conn.execute("UPDATE reviews SET status = 'done' WHERE id = ?", (review_id,))
+        conn.commit()
+
+    def reviews_for(self, concept_id: str) -> list[dict]:
+        rows = self.connect().execute(
+            "SELECT * FROM reviews WHERE concept_id = ? ORDER BY id DESC", (concept_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
 
     # ------------------------------------------------------------------
     # Aggregates used by the progress view

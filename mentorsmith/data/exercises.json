@@ -1,0 +1,671 @@
+{
+  "_comment": "Adaptive exercise bank. Deterministic exercises (predict-output, find-a-bug, complete-code, write-a-function, modify-code, solve-without-AI, compare-implementations) carry 'expected_stdout' and are graded by compiling and running the learner's code. Free-form exercises (explain-code) carry a 'rubric' and are graded interpretively by AI, which the UI labels as such. 'novel': true marks an unfamiliar variation as opposed to the worked example. core/exercises.py validates this file on load.",
+  "exercises": [
+    {
+      "id": "str-split-main",
+      "concept_id": "program-structure",
+      "lesson_id": "01-program-structure",
+      "type": "predict-output",
+      "title": "Where does execution begin?",
+      "prompt": "This program is missing a line. Predict what it prints as written, then fix it so it prints the message.",
+      "code": "#include <iostream>\nint main() {\n    return 0;\n}\n",
+      "expected_stdout": "Hello\n",
+      "needs_fix": true,
+      "starter_code": "#include <iostream>\nint main() {\n    // Add the statement that prints Hello, followed by a newline.\n    return 0;\n}\n",
+      "tags": ["basics"]
+    },
+    {
+      "id": "str-semicolon",
+      "concept_id": "program-structure",
+      "lesson_id": "01-program-structure",
+      "type": "find-a-bug",
+      "title": "The missing semicolon",
+      "prompt": "This should print two numbers but does not compile. Find the bug.",
+      "code": "#include <iostream>\nint main() {\n    std::cout << \"a\\n\"\n    std::cout << \"b\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "a\nb\n",
+      "starter_code": "#include <iostream>\nint main() {\n    std::cout << \"a\\n\"\n    std::cout << \"b\\n\";\n    return 0;\n}\n",
+      "tags": ["basics", "compile-error"]
+    },
+    {
+      "id": "str-explain-entry",
+      "concept_id": "program-structure",
+      "lesson_id": "01-program-structure",
+      "type": "explain-code",
+      "title": "Explain the entry point",
+      "prompt": "In your own words, explain what int main() does and what its return value means to the operating system. Do not repeat this page back to me; say what you think it is for.",
+      "code": "int main() {\n    return 0;\n}\n",
+      "rubric": [
+        "mentions it is the entry point the OS calls",
+        "mentions the return value is an exit status",
+        "mentions 0 conventionally means success"
+      ]
+    },
+
+    {
+      "id": "var-scope-shadow",
+      "concept_id": "variables",
+      "lesson_id": "02-variables-and-types",
+      "type": "predict-output",
+      "title": "Shadowing in a nested block",
+      "prompt": "Two variables share a name. Predict the output.",
+      "code": "#include <iostream>\nint main() {\n    int value = 1;\n    {\n        int value = 2;\n        std::cout << value << \" \";\n    }\n    std::cout << value << \"\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "2 1\n",
+      "tags": ["scope"]
+    },
+    {
+      "id": "var-const-reassign",
+      "concept_id": "variables",
+      "lesson_id": "02-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Assigning to a const",
+      "prompt": "This does not compile. Make it compile and still print 3.14159.",
+      "code": "int main() {\n    const double pi = 3.14159;\n    pi = 3.14;\n    return 0;\n}\n",
+      "expected_stdout": "3.14159\n",
+      "starter_code": "#include <iostream>\nint main() {\n    const double pi = 3.14159;\n    std::cout << pi << \"\\n\";\n    return 0;\n}\n",
+      "tags": ["const"]
+    },
+    {
+      "id": "var-write-swap",
+      "concept_id": "variables",
+      "lesson_id": "02-variables-and-types",
+      "type": "write-a-function",
+      "title": "Swap two variables",
+      "prompt": "Write a function void swap_values(int& a, int& b) that swaps the two variables the caller owns. main must end up printing '1 2' starting from a=2, b=1.",
+      "code": "#include <iostream>\nvoid swap_values(int& a, int& b) {\n    // swap through the two references\n}\nint main() {\n    int x = 2, y = 1;\n    swap_values(x, y);\n    std::cout << x << ' ' << y << \"\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "1 2\n",
+      "tags": ["references"]
+    },
+
+    {
+      "id": "types-int-division",
+      "concept_id": "types",
+      "lesson_id": "02-variables-and-types",
+      "type": "predict-output",
+      "title": "The integer division trap",
+      "prompt": "Both expressions divide. Predict both lines exactly.",
+      "code": "#include <iostream>\nint main() {\n    int a = 7, b = 2;\n    std::cout << a / b << '\\n';\n    std::cout << 7.0 / 2 << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "3\n3.5\n",
+      "novel": true,
+      "tags": ["integer-division"]
+    },
+    {
+      "id": "types-fix-division",
+      "concept_id": "types",
+      "lesson_id": "02-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Wrong average",
+      "prompt": "The average is printed as 0 but should be 2.5. Find and fix the cause.",
+      "code": "#include <iostream>\nint main() {\n    int total = 5;\n    int count = 2;\n    std::cout << total / count << \"\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "2.5\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int total = 5;\n    int count = 2;\n    double average = 0.0;\n    // Compute the average so it prints 2.5\n    std::cout << average << \"\\n\";\n    return 0;\n}\n",
+      "novel": true,
+      "tags": ["integer-division"]
+    },
+    {
+      "id": "types-explain-division",
+      "concept_id": "types",
+      "lesson_id": "02-variables-and-types",
+      "type": "explain-code",
+      "prompt": "Explain, in your own words, why total / count gives 2 instead of 2.5 here. Explain the underlying representation rather than just stating the result.",
+      "code": "int total = 5;\nint count = 2;\nint average = total / count;\n",
+      "rubric": [
+        "mentions integer division or truncation",
+        "mentions the fractional part is discarded",
+        "mentions that a double operand would be needed"
+      ]
+    },
+
+    {
+      "id": "io-getline-newline",
+      "concept_id": "io",
+      "lesson_id": "03-input-output",
+      "type": "predict-output",
+      "title": "The leftover newline",
+      "prompt": "Read carefully: name is read with >> and the rest with getline. Predict the output for input 'Ada' then a blank line.",
+      "code": "#include <iostream>\n#include <string>\nint main() {\n    std::string name;\n    std::cin >> name;\n    std::string rest;\n    std::getline(std::cin, rest);\n    std::cout << \"[\" << rest << \"]\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "[]\n",
+      "novel": true,
+      "tags": ["getline"]
+    },
+    {
+      "id": "io-fix-getline",
+      "concept_id": "io",
+      "lesson_id": "03-input-output",
+      "type": "find-a-bug",
+      "title": "Empty full name",
+      "prompt": "For input 'Ada Lovelace' this prints an empty surname. Fix it so it prints 'Lovelace'.",
+      "code": "#include <iostream>\n#include <string>\nint main() {\n    std::string first, surname;\n    std::cin >> first;\n    std::getline(std::cin, surname);\n    std::cout << surname << \"\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "Lovelace\n",
+      "starter_code": "#include <iostream>\n#include <string>\nint main() {\n    std::string first, surname;\n    std::cin >> first;\n    std::cin.ignore();\n    std::getline(std::cin, surname);\n    std::cout << surname << \"\\n\";\n    return 0;\n}\n",
+      "tags": ["getline"]
+    },
+    {
+      "id": "io-solve-no-ai",
+      "concept_id": "io",
+      "lesson_id": "03-input-output",
+      "type": "solve-without-AI",
+      "title": "Validated integer reader",
+      "prompt": "Without asking the tutor, write the loop that reads ints until the user enters 0, then prints how many were read. Run it with input '3 7 0' and it must print '2'.",
+      "code": "#include <iostream>\nint main() {\n    int value = 0;\n    int count = 0;\n    // read until 0, then print count\n    return 0;\n}\n",
+      "expected_stdout": "2\n",
+      "stdin": "3 7 0\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int value = 0;\n    int count = 0;\n    std::cout << \"Values: \";\n    // Your loop here\n    std::cout << \"\\n\" << count << \"\\n\";\n    return 0;\n}\n",
+      "tags": ["loops", "validation"]
+    },
+
+    {
+      "id": "op-precedence",
+      "concept_id": "operators",
+      "lesson_id": "04-operators",
+      "type": "predict-output",
+      "title": "Precedence and parentheses",
+      "prompt": "Predict both lines.",
+      "code": "#include <iostream>\nint main() {\n    int a = 2, b = 3, c = 4;\n    std::cout << a + b * c << '\\n';\n    std::cout << (a + b) * c << '\\n';\n    std::cout << (a < b) == (b < c) << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "14\n20\n1\n",
+      "tags": ["precedence"]
+    },
+    {
+      "id": "op-assign-compare",
+      "concept_id": "operators",
+      "lesson_id": "04-operators",
+      "type": "find-a-bug",
+      "title": "Assignment used as a condition",
+      "prompt": "This always runs and never prints 'nope'. Make it behave correctly so it prints 'nope'.",
+      "code": "#include <iostream>\nint main() {\n    int x = 5;\n    if (x = 5) {\n        std::cout << \"nope\\n\";\n    }\n    return 0;\n}\n",
+      "expected_stdout": "nope\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int x = 5;\n    if (x == 5) {\n        std::cout << \"nope\\n\";\n    }\n    return 0;\n}\n",
+      "tags": ["assignment-vs-comparison"]
+    },
+    {
+      "id": "op-modulo",
+      "concept_id": "operators",
+      "lesson_id": "04-operators",
+      "type": "predict-output",
+      "title": "Modulo with negatives",
+      "prompt": "Predict the output of both lines exactly, including signs.",
+      "code": "#include <iostream>\nint main() {\n    std::cout << (7 % 3) << '\\n';\n    std::cout << (-7 % 3) << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "1\n-1\n",
+      "novel": true,
+      "tags": ["modulo"]
+    },
+
+    {
+      "id": "cond-order",
+      "concept_id": "conditions",
+      "lesson_id": "05-conditions",
+      "type": "find-a-bug",
+      "title": "The chain that matches everything",
+      "prompt": "Every score becomes an A. Reorder the chain so 85 gives B and 92 gives A.",
+      "code": "#include <iostream>\nint main() {\n    int score = 85;\n    char grade;\n    if (score >= 70)      { grade = 'A'; }\n    else if (score >= 90) { grade = 'B'; }\n    else                  { grade = 'C'; }\n    std::cout << grade << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "B\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int score = 85;\n    char grade;\n    if (score >= 90)      { grade = 'A'; }\n    else if (score >= 80) { grade = 'B'; }\n    else                  { grade = 'C'; }\n    std::cout << grade << '\\n';\n    return 0;\n}\n",
+      "novel": true,
+      "tags": ["condition-order"]
+    },
+    {
+      "id": "cond-float-equality",
+      "concept_id": "conditions",
+      "lesson_id": "05-conditions",
+      "type": "find-a-bug",
+      "title": "Exact float comparison",
+      "prompt": "This never prints 'equal'. Make it print 'equal' using a sensible tolerance.",
+      "code": "#include <iostream>\nint main() {\n    double a = 0.1 + 0.2;\n    double b = 0.3;\n    if (a == b) std::cout << \"equal\\n\";\n    else std::cout << \"not equal\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "equal\n",
+      "starter_code": "#include <cmath>\n#include <iostream>\nint main() {\n    double a = 0.1 + 0.2;\n    double b = 0.3;\n    if (std::abs(a - b) < 1e-9) std::cout << \"equal\\n\";\n    else std::cout << \"not equal\\n\";\n    return 0;\n}\n",
+      "tags": ["float-equality"]
+    },
+    {
+      "id": "cond-explain-elseif",
+      "concept_id": "conditions",
+      "lesson_id": "05-conditions",
+      "type": "explain-code",
+      "prompt": "Explain why score 95 does not produce grade B here, and state the general rule you would follow when ordering such a chain.",
+      "code": "if (score >= 70)      grade = 'A';\nelse if (score >= 90) grade = 'B';\nelse                  grade = 'C';\n",
+      "rubric": [
+        "mentions only the first true branch runs",
+        "mentions ordering from most specific to least",
+        "mentions the tests should be ordered highest threshold first"
+      ]
+    },
+
+    {
+      "id": "loop-off-by-one",
+      "concept_id": "loops",
+      "lesson_id": "06-loops",
+      "type": "find-a-bug",
+      "title": "One number too many",
+      "prompt": "It prints 6 instead of 5. Fix it.",
+      "code": "#include <iostream>\nint main() {\n    for (int i = 1; i <= 5; ++i) std::cout << i << ' ';\n    std::cout << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "1 2 3 4 5 \n",
+      "starter_code": "#include <iostream>\nint main() {\n    for (int i = 1; i < 5; ++i) std::cout << i << ' ';\n    std::cout << '\\n';\n    return 0;\n}\n",
+      "tags": ["off-by-one"]
+    },
+    {
+      "id": "loop-infinite",
+      "concept_id": "loops",
+      "lesson_id": "06-loops",
+      "type": "find-a-bug",
+      "title": "The loop that never ends",
+      "prompt": "This hangs. Make it count down and stop at zero.",
+      "code": "#include <iostream>\nint main() {\n    int n = 3;\n    while (n > 0) {\n        std::cout << n << ' ';\n    }\n    std::cout << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "3 2 1 \n",
+      "starter_code": "#include <iostream>\nint main() {\n    int n = 3;\n    while (n > 0) {\n        std::cout << n << ' ';\n        --n;\n    }\n    std::cout << '\\n';\n    return 0;\n}\n",
+      "tags": ["infinite-loop"]
+    },
+    {
+      "id": "loop-write-countdown",
+      "concept_id": "loops",
+      "lesson_id": "06-loops",
+      "type": "write-a-function",
+      "title": "Countdown from n",
+      "prompt": "Write void countdown(int n) that prints n down to 1 separated by spaces, then a newline, and prints nothing when n <= 1.",
+      "code": "#include <iostream>\nvoid countdown(int n) {\n    // your implementation\n}\nint main() {\n    countdown(3);\n    countdown(1);\n    return 0;\n}\n",
+      "expected_stdout": "3 2 1 \n",
+      "tags": ["loops", "functions"]
+    },
+
+    {
+      "id": "fn-missing-return",
+      "concept_id": "functions",
+      "lesson_id": "07-functions",
+      "type": "find-a-bug",
+      "title": "Missing return",
+      "prompt": "The program prints nothing useful. Make it print '7'.",
+      "code": "#include <iostream>\nint triple(int x) {\n    int y = x * 3;\n}\nint main() {\n    std::cout << triple(7) << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "7\n",
+      "starter_code": "#include <iostream>\nint triple(int x) {\n    int y = x * 3;\n    return y;\n}\nint main() {\n    std::cout << triple(7) << '\\n';\n    return 0;\n}\n",
+      "tags": ["missing-return"]
+    },
+    {
+      "id": "fn-byvalue-bug",
+      "concept_id": "functions",
+      "lesson_id": "07-functions",
+      "type": "find-a-bug",
+      "title": "The change that vanishes",
+      "prompt": "The function is called but nothing changes. Fix it so it prints '11'.",
+      "code": "#include <iostream>\nvoid increment(int x) {\n    x = x + 1;\n}\nint main() {\n    int n = 10;\n    increment(n);\n    std::cout << n << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "11\n",
+      "starter_code": "#include <iostream>\nvoid increment(int& x) {\n    x = x + 1;\n}\nint main() {\n    int n = 10;\n    increment(n);\n    std::cout << n << '\\n';\n    return 0;\n}\n",
+      "tags": ["pass-by-value"]
+    },
+    {
+      "id": "fn-explain-passing",
+      "concept_id": "functions",
+      "lesson_id": "07-functions",
+      "type": "explain-code",
+      "prompt": "Explain why n is unchanged after this call, and say what you would change about the parameter and why you would prefer that.",
+      "code": "void increment(int x) { x = x + 1; }\nint main() { int n = 10; increment(n); /* n is still 10 */ }\n",
+      "rubric": [
+        "mentions the parameter is a copy",
+        "mentions changing a copy cannot affect the caller",
+        "mentions passing by reference as the fix"
+      ]
+    },
+
+    {
+      "id": "arr-off-by-one",
+      "concept_id": "arrays",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "find-a-bug",
+      "title": "Indexing past the end",
+      "prompt": "This reads out of bounds. Fix it so it prints the sum of all four numbers, 10.",
+      "code": "#include <iostream>\nint main() {\n    int nums[4] = {1, 2, 3, 4};\n    int sum = 0;\n    for (int i = 0; i <= 4; ++i) sum += nums[i];\n    std::cout << sum << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "10\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int nums[4] = {1, 2, 3, 4};\n    int sum = 0;\n    for (int i = 0; i < 4; ++i) sum += nums[i];\n    std::cout << sum << '\\n';\n    return 0;\n}\n",
+      "tags": ["off-by-one", "out-of-bounds"]
+    },
+    {
+      "id": "arr-write-max",
+      "concept_id": "arrays",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "write-a-function",
+      "title": "Find the largest",
+      "prompt": "Write int find_max(const std::vector<int>& values) returning the largest element, and 0 for an empty vector. It must print 92 for the given input.",
+      "code": "#include <iostream>\n#include <vector>\nint find_max(const std::vector<int>& values) {\n    // your implementation\n}\nint main() {\n    std::vector<int> scores{70, 85, 92, 60};\n    std::cout << find_max(scores) << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "92\n",
+      "novel": true,
+      "tags": ["vectors"]
+    },
+    {
+      "id": "arr-explain-index",
+      "concept_id": "arrays",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "explain-code",
+      "prompt": "Explain what this loop prints, and why. Then say what would happen if the condition were changed to i <= 3 and why C++ would not stop you.",
+      "code": "int nums[4] = {10, 20, 30, 40};\nfor (int i = 0; i < 4; ++i) std::cout << nums[i];\n",
+      "rubric": [
+        "mentions it prints all four values in order",
+        "mentions indexing starts at zero so the last index is 3",
+        "mentions C++ does not bounds-check arrays at runtime"
+      ]
+    },
+
+    {
+      "id": "str-explain-length",
+      "concept_id": "strings",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "explain-code",
+      "prompt": "Explain what this prints and why, then say what would go wrong if the string were empty.",
+      "code": "#include <iostream>\n#include <string>\nint main() {\n    std::string s = \"hello\";\n    std::cout << s.size() << '\\n';\n    std::cout << s[s.size() - 1] << '\\n';\n}\n",
+      "rubric": [
+        "mentions size is 5",
+        "mentions s[size()-1] is the last character",
+        "mentions an empty string would underflow or read out of range"
+      ]
+    },
+    {
+      "id": "str-find-length",
+      "concept_id": "strings",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "write-a-function",
+      "title": "Count the vowels",
+      "prompt": "Write int count_vowels(const std::string& text) that counts a, e, i, o, u case-insensitively. For 'Hello World' it must print 3.",
+      "code": "#include <iostream>\n#include <string>\nint count_vowels(const std::string& text) {\n    // your implementation\n}\nint main() {\n    std::cout << count_vowels(\"Hello World\") << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "3\n",
+      "novel": true,
+      "tags": ["strings"]
+    },
+
+    {
+      "id": "ptr-null-deref",
+      "concept_id": "pointers",
+      "lesson_id": "09-pointers",
+      "type": "find-a-bug",
+      "title": "Dereferencing nothing",
+      "prompt": "This crashes. Make it print 'safe' when the pointer is null.",
+      "code": "#include <iostream>\nint main() {\n    int value = 5;\n    int* p = nullptr;\n    std::cout << *p << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "safe\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int value = 5;\n    int* p = nullptr;\n    if (p != nullptr) std::cout << *p << '\\n';\n    else std::cout << \"safe\\n\";\n    return 0;\n}\n",
+      "tags": ["null-dereference"]
+    },
+    {
+      "id": "ptr-addr-null-check",
+      "concept_id": "pointers",
+      "lesson_id": "09-pointers",
+      "type": "predict-output",
+      "title": "Testing an address against null",
+      "prompt": "Predict both lines exactly. One of them is a surprise.",
+      "code": "#include <iostream>\nint main() {\n    int x = 1;\n    std::cout << std::boolalpha << (&x == nullptr) << '\\n';\n    int* p = nullptr;\n    std::cout << (p == nullptr) << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "false\ntrue\n",
+      "novel": true,
+      "tags": ["pointers"]
+    },
+    {
+      "id": "ptr-explain-star",
+      "concept_id": "pointers",
+      "lesson_id": "09-pointers",
+      "type": "explain-code",
+      "prompt": "Explain what &value and *address each produce, and explain what happens to the original variable when it is written through the pointer.",
+      "code": "int value = 42;\nint* address = &value;\n*address = 99;\n",
+      "rubric": [
+        "mentions &value gives the address",
+        "mentions *address dereferences to the value",
+        "mentions writing through it changes the original variable"
+      ]
+    },
+
+    {
+      "id": "ref-uninitialised",
+      "concept_id": "references",
+      "lesson_id": "10-references",
+      "type": "find-a-bug",
+      "title": "The reference that is not one",
+      "prompt": "This does not compile, and should not. Replace the bad line so the program prints 5.",
+      "code": "#include <iostream>\nint main() {\n    int& ref;\n    std::cout << 5 << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "5\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int value = 5;\n    int& ref = value;\n    std::cout << ref << '\\n';\n    return 0;\n}\n",
+      "tags": ["references"]
+    },
+    {
+      "id": "ref-explain-alias",
+      "concept_id": "references",
+      "lesson_id": "10-references",
+      "type": "explain-code",
+      "prompt": "Explain what happens to the original variable when alias is assigned to, and explain why that is different from what would happen with a pointer.",
+      "code": "int first = 1;\nint second = 2;\nint& alias = first;\nalias = second;\n",
+      "rubric": [
+        "mentions alias is an alias for first",
+        "mentions first now holds 2",
+        "mentions the reference is not reseated, unlike a pointer"
+      ]
+    },
+
+    {
+      "id": "mem-leak",
+      "concept_id": "memory",
+      "lesson_id": "11-memory-concepts",
+      "type": "find-a-bug",
+      "title": "The forgotten delete",
+      "prompt": "This leaks. Fix it so the value is printed and no allocation is left dangling.",
+      "code": "#include <iostream>\nint* make() {\n    int* p = new int(42);\n    return p;\n}\nint main() {\n    int* v = make();\n    std::cout << *v << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "42\n",
+      "starter_code": "#include <iostream>\n#include <memory>\nstd::unique_ptr<int> make() {\n    return std::make_unique<int>(42);\n}\nint main() {\n    auto v = make();\n    std::cout << *v << '\\n';\n    return 0;\n}\n",
+      "tags": ["memory-leak"]
+    },
+    {
+      "id": "mem-double-free",
+      "concept_id": "memory",
+      "lesson_id": "11-memory-concepts",
+      "type": "find-a-bug",
+      "title": "Freeing twice",
+      "prompt": "This crashes because of a double free. Make it print 7 and free the memory exactly once.",
+      "code": "#include <iostream>\nint main() {\n    int* p = new int(7);\n    delete p;\n    delete p;\n    return 0;\n}\n",
+      "expected_stdout": "7\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int* p = new int(7);\n    std::cout << *p << '\\n';\n    delete p;\n    p = nullptr;\n    return 0;\n}\n",
+      "tags": ["double-free"]
+    },
+    {
+      "id": "mem-explain-raii",
+      "concept_id": "memory",
+      "lesson_id": "11-memory-concepts",
+      "type": "explain-code",
+      "prompt": "Explain why risky_operation() throwing does not leak the file handle here, and say what the general rule is.",
+      "code": "void process() {\n    std::ofstream file(\"data.txt\");\n    if (!file) throw std::runtime_error(\"cannot open\");\n    risky_operation();\n}\n",
+      "rubric": [
+        "mentions the destructor runs during stack unwinding",
+        "mentions RAII",
+        "mentions the file is closed even on the exception path"
+      ]
+    },
+
+    {
+      "id": "st-dot-arrow",
+      "concept_id": "structures",
+      "lesson_id": "12-structures",
+      "type": "find-a-bug",
+      "title": "Dot where you need an arrow",
+      "prompt": "This does not compile because of the member access. Fix it so it prints 10.",
+      "code": "#include <iostream>\nstruct Point { int x; int y; };\nint main() {\n    Point p{3, 4};\n    Point* pointer = &p;\n    std::cout << pointer.x * pointer.y << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "12\n",
+      "starter_code": "#include <iostream>\nstruct Point { int x; int y; };\nint main() {\n    Point p{3, 4};\n    Point* pointer = &p;\n    std::cout << pointer->x * pointer->y << '\\n';\n    return 0;\n}\n",
+      "tags": ["member-access"]
+    },
+    {
+      "id": "st-write-distance",
+      "concept_id": "structures",
+      "lesson_id": "12-structures",
+      "type": "write-a-function",
+      "prompt": "Using the provided struct Point, write double distance_squared(const Point& a, const Point& b). For (0,0) and (3,4) it must print 25.",
+      "code": "#include <iostream>\nstruct Point { int x; int y; };\ndouble distance_squared(const Point& a, const Point& b) {\n    // your implementation\n}\nint main() {\n    Point a{0, 0}, b{3, 4};\n    std::cout << (int)distance_squared(a, b) << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "25\n",
+      "tags": ["structs"]
+    },
+
+    {
+      "id": "cls-const-method",
+      "concept_id": "classes",
+      "lesson_id": "13-classes-and-objects",
+      "type": "find-a-bug",
+      "title": "The read-only method that is not",
+      "prompt": "This does not compile on a const object. Fix it so it prints 12.",
+      "code": "#include <iostream>\nclass Rect {\npublic:\n    int area() { return w * h; }\nprivate:\n    int w = 3, h = 4;\n};\nint main() {\n    const Rect r;\n    std::cout << r.area() << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "12\n",
+      "starter_code": "#include <iostream>\nclass Rect {\npublic:\n    int area() const { return w * h; }\nprivate:\n    int w = 3, h = 4;\n};\nint main() {\n    const Rect r;\n    std::cout << r.area() << '\\n';\n    return 0;\n}\n",
+      "tags": ["missing-const"]
+    },
+    {
+      "id": "cls-write-class",
+      "concept_id": "classes",
+      "lesson_id": "13-classes-and-objects",
+      "type": "write-a-function",
+      "prompt": "Write a class Counter with a private int value_ initialised to 0, an increment() method, and int value() const. main must print 2.",
+      "code": "#include <iostream>\nclass Counter {\npublic:\n    // your declaration and definitions\n};\nint main() {\n    Counter c;\n    c.increment();\n    c.increment();\n    std::cout << c.value() << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "2\n",
+      "tags": ["classes"]
+    },
+
+    {
+      "id": "ctor-invalid-state",
+      "concept_id": "constructors",
+      "lesson_id": "14-constructors-encapsulation",
+      "type": "find-a-bug",
+      "title": "Constructing an invalid object",
+      "prompt": "The constructor accepts a negative balance. Make it reject it and print 'rejected'.",
+      "code": "#include <iostream>\nclass Account {\npublic:\n    explicit Account(double opening) : balance_(opening) {}\n    double balance() const { return balance_; }\nprivate:\n    double balance_ = 0.0;\n};\nint main() {\n    Account a(-5.0);\n    if (a.balance() < 0) std::cout << \"rejected\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "rejected\n",
+      "starter_code": "#include <iostream>\n#include <stdexcept>\nclass Account {\npublic:\n    explicit Account(double opening) : balance_(opening) {\n        if (opening < 0.0) throw std::invalid_argument(\"negative opening balance\");\n    }\n    double balance() const { return balance_; }\nprivate:\n    double balance_ = 0.0;\n};\nint main() {\n    try {\n        Account a(-5.0);\n        std::cout << \"rejected\\n\";\n    } catch (const std::invalid_argument&) {\n        std::cout << \"rejected\\n\";\n    }\n    return 0;\n}\n",
+      "novel": true,
+      "tags": ["invalid-state"]
+    },
+    {
+      "id": "ctor-explain-list",
+      "concept_id": "constructors",
+      "lesson_id": "14-constructors-encapsulation",
+      "type": "explain-code",
+      "prompt": "Explain the difference between initialising in the initialisation list versus assigning in the constructor body, and give one situation where only the list works.",
+      "code": "Rectangle(double w, double h) : width_(w), height_(h) {}\n// versus\nRectangle(double w, double h) { width_ = w; height_ = h; }\n",
+      "rubric": [
+        "mentions the list initialises directly",
+        "mentions the body default-constructs then overwrites",
+        "mentions const or reference members that cannot be assigned"
+      ]
+    },
+
+    {
+      "id": "file-not-checked",
+      "concept_id": "files",
+      "lesson_id": "15-file-handling",
+      "type": "find-a-bug",
+      "title": "The unchecked open",
+      "prompt": "For a missing file this silently does nothing. Make it print 'missing'.",
+      "code": "#include <fstream>\n#include <iostream>\nint main() {\n    std::ifstream input(\"no_such_file.txt\");\n    std::string line;\n    std::getline(input, line);\n    std::cout << \"missing\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "missing\n",
+      "starter_code": "#include <fstream>\n#include <iostream>\nint main() {\n    std::ifstream input(\"no_such_file.txt\");\n    if (!input) {\n        std::cout << \"missing\\n\";\n        return 1;\n    }\n    std::string line;\n    std::getline(input, line);\n    return 0;\n}\n",
+      "tags": ["file-not-checked"]
+    },
+    {
+      "id": "file-truncate",
+      "concept_id": "files",
+      "lesson_id": "15-file-handling",
+      "type": "predict-output",
+      "title": "Truncate versus append",
+      "prompt": "Before running, the file contains 'old\\n'. Predict the file contents after this program runs.",
+      "code": "#include <fstream>\nint main() {\n    std::ofstream out(\"data.txt\");            // no mode given\n    out << \"new\\n\";\n    return 0;\n}\n",
+      "expected_stdout": "new\n",
+      "tags": ["file-modes"]
+    },
+
+    {
+      "id": "exc-catch-order",
+      "concept_id": "exceptions",
+      "lesson_id": "16-exceptions-and-error-handling",
+      "type": "find-a-bug",
+      "title": "The unreachable handler",
+      "prompt": "The specific handler never runs because the broad one is first. Fix the order so it prints 'specific'.",
+      "code": "#include <iostream>\n#include <stdexcept>\nint main() {\n    try {\n        throw std::invalid_argument(\"boom\");\n    } catch (const std::exception& e) {\n        std::cout << \"general\\n\";\n    } catch (const std::invalid_argument& e) {\n        std::cout << \"specific\\n\";\n    }\n    return 0;\n}\n",
+      "expected_stdout": "specific\n",
+      "starter_code": "#include <iostream>\n#include <stdexcept>\nint main() {\n    try {\n        throw std::invalid_argument(\"boom\");\n    } catch (const std::invalid_argument& e) {\n        std::cout << \"specific\\n\";\n    } catch (const std::exception& e) {\n        std::cout << \"general\\n\";\n    }\n    return 0;\n}\n",
+      "tags": ["catch-order"]
+    },
+    {
+      "id": "exc-explain-raii",
+      "concept_id": "exceptions",
+      "lesson_id": "16-exceptions-and-error-handling",
+      "type": "explain-code",
+      "prompt": "Explain why the file still gets closed when risky_operation() throws, and say why you would not normally use catch(...) to close it manually.",
+      "code": "void process() {\n    std::ofstream file(\"data.txt\");\n    risky_operation();   // may throw\n    // ...\n}\n",
+      "rubric": [
+        "mentions the destructor runs during unwinding",
+        "mentions RAII",
+        "mentions catch(...) would hide real errors"
+      ]
+    },
+
+    {
+      "id": "cmp-two-implementations",
+      "concept_id": "loops",
+      "lesson_id": "06-loops",
+      "type": "compare-implementations",
+      "prompt": "Two versions sum 1..n. Run both, then explain in your own words which one you would keep and why.",
+      "code": "// Version A\nint sum_a(int n) { int s = 0; for (int i = 1; i <= n; ++i) s += i; return s; }\n// Version B\nint sum_b(int n) { int s = 0; int i = 1; while (i <= n) { s += i; ++i; } return s; }\nint main() { std::cout << sum_a(10) << ' ' << sum_b(10) << '\\n'; return 0; }\n",
+      "expected_stdout": "55 55\n",
+      "rubric": [
+        "states both produce the same result",
+        "gives a reason grounded in readability or intent",
+        "mentions off-by-one risk in whichever is riskier"
+      ]
+    },
+    {
+      "id": "modify-loop-to-while",
+      "concept_id": "loops",
+      "lesson_id": "06-loops",
+      "type": "modify-code",
+      "title": "Rewrite a for loop as a while",
+      "prompt": "Rewrite this for loop as a while loop that produces identical output, then run it to prove it.",
+      "code": "#include <iostream>\nint main() {\n    for (int i = 0; i < 3; ++i) std::cout << i << ' ';\n    std::cout << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "0 1 2 \n",
+      "starter_code": "#include <iostream>\nint main() {\n    int i = 0;\n    // rewrite the loop as a while loop\n    std::cout << '\\n';\n    return 0;\n}\n",
+      "tags": ["loops"]
+    },
+    {
+      "id": "modify-to-const-ref",
+      "concept_id": "functions",
+      "lesson_id": "07-functions",
+      "type": "modify-code",
+      "title": "Avoid the copy",
+      "prompt": "Change the signature so the string is not copied on every call, without changing the output.",
+      "code": "#include <iostream>\n#include <string>\nint length_of(std::string text) { return static_cast<int>(text.size()); }\nint main() { std::cout << length_of(\"tutor\") << '\\n'; return 0; }\n",
+      "expected_stdout": "5\n",
+      "starter_code": "#include <iostream>\n#include <string>\nint length_of(const std::string& text) { return static_cast<int>(text.size()); }\nint main() { std::cout << length_of(\"tutor\") << '\\n'; return 0; }\n",
+      "tags": ["const-ref"]
+    },
+    {
+      "id": "complete-even-check",
+      "concept_id": "conditions",
+      "lesson_id": "05-conditions",
+      "type": "complete-code",
+      "title": "Complete the even test",
+      "prompt": "Finish the function so it returns true for even numbers. The body is missing.",
+      "code": "#include <iostream>\nbool is_even(int n) {\n    /* write the body here */\n}\nint main() {\n    std::cout << std::boolalpha << is_even(4) << ' ' << is_even(7) << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "true false\n",
+      "starter_code": "#include <iostream>\nbool is_even(int n) {\n    // Return true when n is divisible by 2.\n    return false;\n}\nint main() {\n    std::cout << std::boolalpha << is_even(4) << ' ' << is_even(7) << '\\n';\n    return 0;\n}\n",
+      "tags": ["modulo"]
+    },
+    {
+      "id": "complete-array-sum",
+      "concept_id": "arrays",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "complete-code",
+      "title": "Complete the array sum",
+      "prompt": "Fill in the loop so the total of the array is computed and printed as 55.",
+      "code": "#include <iostream>\nint main() {\n    int values[5] = {1, 2, 3, 4, 5};\n    int total = 0;\n    /* write the loop here */\n    std::cout << total << '\\n';\n    return 0;\n}\n",
+      "expected_stdout": "55\n",
+      "starter_code": "#include <iostream>\nint main() {\n    int values[5] = {1, 2, 3, 4, 5};\n    int total = 0;\n    for (int i = 0; i < 5; ++i) {\n        // add values[i] to total\n    }\n    std::cout << total << '\\n';\n    return 0;\n}\n",
+      "tags": ["loops"]
+    },
+    {
+      "id": "cmp-index-vs-pointer",
+      "concept_id": "pointers",
+      "lesson_id": "09-pointers",
+      "type": "compare-implementations",
+      "prompt": "Run both versions, confirm they agree, then explain in your own words when you would prefer each and what safety difference you noticed.",
+      "code": "#include <iostream>\n#include <vector>\n// Version A: range-based for\nint total_a(const std::vector<int>& v) { int s = 0; for (int x : v) s += x; return s; }\n// Version B: index with at()\nint total_b(const std::vector<int>& v) { int s = 0; for (std::size_t i = 0; i < v.size(); ++i) s += v.at(i); return s; }\nint main() { std::vector<int> v{1,2,3}; std::cout << total_a(v) << ' ' << total_b(v) << '\\n'; return 0; }\n",
+      "expected_stdout": "6 6\n",
+      "rubric": [
+        "states both produce the same result",
+        "gives a reason grounded in readability or intent",
+        "mentions that at() is bounds-checked while [] is not"
+      ]
+    }
+  ]
+}

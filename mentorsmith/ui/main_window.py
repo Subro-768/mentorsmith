@@ -1,4 +1,4 @@
-"""Main window: navigation, persistence wiring and the tutor thread."""
+"""Main window: navigation, persistence wiring and the tutor threads."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
-    QMessageBox,
     QPushButton,
     QStackedWidget,
     QStatusBar,
@@ -16,24 +15,37 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ..compiler.toolchain import Toolchain
 from ..config import load_settings
+from ..core.concepts import load_model
 from ..core.curriculum import Lesson, adjacent_lesson, lesson_index, load_lessons
 from ..core.db import Database
-from ..providers.base import ProviderError
+from ..core.exercises import load_bank
+from ..providers.base import CompletionRequest, ProviderError
 from ..providers.openai_compat import build_provider, network_allowed
+from ..services.insights import build_report
 from ..services.tutor import TutorContext, TutorReply, TutorService
 from . import theme
-from .dashboard import DashboardView, ProgressView
+from .dashboard import DashboardView, InsightsPanel, ProgressView
 from .lesson_view import LessonView
+from .practice_view import PracticeView
+from .projects_view import ProjectsView
 from .settings_dialog import SettingsDialog
+
+#: Page indices, named so navigation code is readable.
+PAGE_DASHBOARD = 0
+PAGE_PRACTICE = 1
+PAGE_LESSON = 2
+PAGE_INSIGHTS = 3
+PAGE_PROJECTS = 4
+PAGE_PROGRESS = 5
 
 
 class TutorWorker(QThread):
     """Calls the provider off the GUI thread so the window never freezes."""
 
     replied = pyqtSignal(object)      # TutorReply
-    failed = pyqtSignal(str)          # human-readable error
-    unavailable = pyqtSignal(str)     # offline / not configured
+    failed = pyqtSignal(str)
 
     def __init__(self, service: TutorService, context: TutorContext) -> None:
         super().__init__()
@@ -55,28 +67,37 @@ class MainWindow(QMainWindow):
     def __init__(self, database: Database | None = None) -> None:
         super().__init__()
         self.setWindowTitle("MentorSmith — C++ tutor")
-        self.resize(1360, 880)
+        self.resize(1420, 900)
 
         self.settings = load_settings()
-        self.database = database or Database(_default_db_path())
+        self.database = database or Database(_db_path())
         self.database.connect()
 
         self.lessons: list[Lesson] = load_lessons()
+        self.lesson_ids = {lesson.id for lesson in self.lessons}
+        self.model = load_model(valid_lesson_ids=self.lesson_ids)
+        self.bank = load_bank(
+            known_concepts=set(self.model.concepts), valid_lesson_ids=self.lesson_ids
+        )
+
         self.current_lesson_id: str | None = None
         self._tutor_worker: TutorWorker | None = None
+        self._pending_rubric_exercise: str | None = None
 
-        # The toolchain must exist before the UI is built, because the lesson
-        # view reports the compiler and sandbox status while constructing.
         self._build_toolchain()
-
         self._build_ui()
         self._wire()
         self.refresh_all()
-        self.show_page(0)
+        self.show_page(PAGE_DASHBOARD)
 
     # ------------------------------------------------------------------
     # Construction
     # ------------------------------------------------------------------
+    def _build_toolchain(self) -> None:
+        self.toolchain = Toolchain(
+            sandbox=bool(self.settings.get("sandbox_enabled", False))
+        )
+
     def _build_ui(self) -> None:
         self.setStyleSheet(theme.STYLESHEET)
 
@@ -85,7 +106,6 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 6, 0, 0)
         layout.setSpacing(0)
 
-        # Navigation bar
         nav = QWidget()
         nav.setStyleSheet(f"background-color: {theme.SURFACE_ALT};")
         nav_layout = QHBoxLayout(nav)
@@ -98,12 +118,19 @@ class MainWindow(QMainWindow):
         )
         nav_layout.addWidget(brand)
 
-        self.dashboard_button = QPushButton("Dashboard")
-        self.lesson_button = QPushButton("Lessons")
-        self.progress_button = QPushButton("Progress")
-        nav_layout.addWidget(self.dashboard_button)
-        nav_layout.addWidget(self.lesson_button)
-        nav_layout.addWidget(self.progress_button)
+        self.nav_buttons: dict[int, QPushButton] = {}
+        for index, label in (
+            (PAGE_DASHBOARD, "Dashboard"),
+            (PAGE_PRACTICE, "Practice"),
+            (PAGE_LESSON, "Lessons"),
+            (PAGE_INSIGHTS, "Progress"),
+            (PAGE_PROJECTS, "Projects"),
+            (PAGE_PROGRESS, "History"),
+        ):
+            button = QPushButton(label)
+            button.clicked.connect(lambda _=False, i=index: self.show_page(i))
+            nav_layout.addWidget(button)
+            self.nav_buttons[index] = button
         nav_layout.addStretch(1)
 
         self.provider_label = QLabel()
@@ -112,27 +139,34 @@ class MainWindow(QMainWindow):
 
         self.settings_button = QPushButton("Settings")
         nav_layout.addWidget(self.settings_button)
-
         layout.addWidget(nav)
 
         self.stack = QStackedWidget()
         self.dashboard = DashboardView()
+        self.practice_view = PracticeView(self.database, self.bank, self.toolchain)
         self.lesson_view = LessonView(toolchain=self.toolchain)
+        self.insights = InsightsPanel()
+        self.projects_view = ProjectsView(self.database, self.model)
         self.progress_view = ProgressView()
-        self.stack.addWidget(self.dashboard)
-        self.stack.addWidget(self.lesson_view)
-        self.stack.addWidget(self.progress_view)
+
+        self.stack.addWidget(self.dashboard)              # 0
+        self.stack.addWidget(self.practice_view)          # 1
+        self.stack.addWidget(self.lesson_view)            # 2
+        self.stack.addWidget(self.insights)               # 3
+        self.stack.addWidget(self.projects_view)          # 4
+        self.stack.addWidget(self.progress_view)          # 5
         layout.addWidget(self.stack, 1)
 
         self.setCentralWidget(central)
         self.setStatusBar(QStatusBar())
         self.statusBar().showMessage("Ready")
 
-        # Keyboard shortcuts
         for key, slot in (
-            ("Ctrl+R", self.dashboard_button.click),
-            ("Ctrl+L", self.lesson_button.click),
-            ("Ctrl+P", self.progress_button.click),
+            ("Ctrl+R", lambda: self.show_page(PAGE_DASHBOARD)),
+            ("Ctrl+K", lambda: self.show_page(PAGE_PRACTICE)),
+            ("Ctrl+L", lambda: self.show_page(PAGE_LESSON)),
+            ("Ctrl+P", lambda: self.show_page(PAGE_INSIGHTS)),
+            ("Ctrl+J", lambda: self.show_page(PAGE_PROJECTS)),
             ("Ctrl+Shift+P", self.run_current_lesson),
             ("Ctrl+,", self.open_settings),
         ):
@@ -141,44 +175,38 @@ class MainWindow(QMainWindow):
             action.triggered.connect(slot)
             self.addAction(action)
 
-    def _build_toolchain(self) -> None:
-        """Create the toolchain, honouring the saved sandbox preference."""
-        from ..compiler.toolchain import Toolchain
-
-        self.toolchain = Toolchain(sandbox=bool(self.settings.get("sandbox_enabled", False)))
-
     def _wire(self) -> None:
-        self.dashboard_button.clicked.connect(lambda: self.show_page(0))
-        self.lesson_button.clicked.connect(lambda: self.show_page(1))
-        self.progress_button.clicked.connect(lambda: self.show_page(2))
         self.settings_button.clicked.connect(self.open_settings)
-
         self.dashboard.lesson_selected.connect(self.open_lesson)
         self.lesson_view.navigate_requested.connect(self._navigate)
         self.lesson_view.attempt_recorded.connect(self._record_attempt)
         self.lesson_view.lesson_completed.connect(self._mark_complete)
-        self.lesson_view.tutor_requested.connect(self._ask_tutor)
+        self.lesson_view.tutor_requested.connect(self._on_lesson_tutor)
         self.progress_view.refresh_button.clicked.connect(self.refresh_all)
         self.progress_view.reset_button.clicked.connect(self._reset_progress)
+
+        self.practice_view.attempt_recorded.connect(self._on_practice_attempt)
+        self.practice_view.tutor_requested.connect(self._on_practice_tutor)
+        self.practice_view.data_changed.connect(self.refresh_insights)
+
+        self.insights.activity_requested.connect(self._open_practice_exercise)
+        self.insights.practice_requested.connect(lambda: self.show_page(PAGE_PRACTICE))
+        self.insights.projects_requested.connect(lambda: self.show_page(PAGE_PROJECTS))
+        self.projects_view.data_changed.connect(self.refresh_insights)
 
     # ------------------------------------------------------------------
     # Navigation
     # ------------------------------------------------------------------
     def show_page(self, index: int) -> None:
         self.stack.setCurrentIndex(index)
-        active = self.stack.widget(index)
-        for button, page in (
-            (self.dashboard_button, 0),
-            (self.lesson_button, 1),
-            (self.progress_button, 2),
-        ):
+        for page, button in self.nav_buttons.items():
             button.setObjectName("primary" if page == index else "")
             button.style().unpolish(button)
             button.style().polish(button)
-
-        if index == 1 and self.current_lesson_id is None:
-            first = self.lessons[0]
-            self.open_lesson(first.id)
+        if index == PAGE_LESSON and self.current_lesson_id is None:
+            self.open_lesson(self.lessons[0].id)
+        if index == PAGE_INSIGHTS:
+            self.refresh_insights()
 
     def open_lesson(self, lesson_id: str) -> None:
         lesson = next((l for l in self.lessons if l.id == lesson_id), None)
@@ -192,7 +220,7 @@ class MainWindow(QMainWindow):
             has_next=index.get(lesson_id, -1) < len(self.lessons) - 1,
         )
         self.complete_button_state()
-        self.show_page(1)
+        self.show_page(PAGE_LESSON)
         self.statusBar().showMessage(f"Opened {lesson.display_title}")
 
     def complete_button_state(self) -> None:
@@ -211,8 +239,15 @@ class MainWindow(QMainWindow):
             self.open_lesson(neighbour.id)
 
     def run_current_lesson(self) -> None:
-        self.show_page(1)
+        self.show_page(PAGE_LESSON)
         self.lesson_view.on_run_clicked()
+
+    def _open_practice_exercise(self, exercise_id: str) -> None:
+        exercise = self.bank.get(exercise_id)
+        if exercise is None:
+            return
+        self.practice_view.load_exercise(exercise)
+        self.show_page(PAGE_PRACTICE)
 
     # ------------------------------------------------------------------
     # Persistence
@@ -227,12 +262,20 @@ class MainWindow(QMainWindow):
             result=summary,
         )
         self.database.record_activity("exercise_attempt", lesson_id, summary)
-        self.refresh_progress_views()
+        self.refresh_insights()
+
+    def _on_practice_attempt(self, exercise_id: str, concept_id: str, correct: bool) -> None:
+        self.database.record_activity(
+            "exercise_passed" if correct else "exercise_failed",
+            concept_id,
+            f"{exercise_id}: {'correct' if correct else 'not correct yet'}",
+        )
+        self.refresh_insights()
 
     def _mark_complete(self, lesson_id: str) -> None:
         self.database.mark_lesson_complete(lesson_id)
         self.database.record_activity("lesson_complete", lesson_id, "marked complete")
-        self.refresh_progress_views()
+        self.refresh_insights()
         self.complete_button_state()
         self.statusBar().showMessage(f"{lesson_id} marked complete")
 
@@ -243,19 +286,30 @@ class MainWindow(QMainWindow):
             self.database.unmark_lesson_complete(lesson.id)
         self.database.clear_activity()
         self.refresh_all()
-        self.statusBar().showMessage("All progress cleared")
+        self.statusBar().showMessage("All lesson progress cleared")
 
+    # ------------------------------------------------------------------
+    # Refresh
+    # ------------------------------------------------------------------
     def refresh_progress_views(self) -> None:
         completed = set(self.database.completed_lessons())
         stats = self.database.lesson_stats([l.id for l in self.lessons])
+        self.dashboard.set_lessons(self.lessons)
         self.dashboard.refresh(completed, stats)
         self.dashboard.set_activity(self.database.recent_activity(12))
         self.progress_view.set_lessons(self.lessons)
         self.progress_view.refresh(self.database, self.database.completed_lessons())
 
+    def refresh_insights(self) -> None:
+        """Rebuild the Phase 2 dashboard from stored evidence."""
+        report = build_report(self.database, self.model, self.bank)
+        self.insights.set_report(report)
+        self.practice_view.set_recommendations(report.recommendations)
+        self.projects_view.refresh(report.assessments)
+
     def refresh_all(self) -> None:
-        self.dashboard.set_lessons(self.lessons)
         self.refresh_progress_views()
+        self.refresh_insights()
         self._refresh_provider_status()
 
     # ------------------------------------------------------------------
@@ -264,29 +318,35 @@ class MainWindow(QMainWindow):
     def _refresh_provider_status(self) -> None:
         self.settings = load_settings()
         self.provider = build_provider(self.settings)
-        offline = not network_allowed()
 
-        chat = self.lesson_view.chat()
-        if offline:
-            chat.set_provider_ready(False)
-            chat.add_system_note(
-                "AI calls are blocked: MENTORSMITH_OFFLINE is set for this run."
-            )
+        if not network_allowed():
+            for chat in self._all_chat_panels():
+                chat.set_provider_ready(False)
             self.provider_label.setText("AI: offline (blocked)")
             return
 
         if self.provider.configured:
-            chat.set_provider_ready(True)
-            chat.set_provider_note(self.provider.describe())
+            for chat in self._all_chat_panels():
+                chat.set_provider_ready(True)
+                chat.set_provider_note(self.provider.describe())
             self.provider_label.setText("AI: configured")
         else:
-            chat.set_provider_ready(False)
+            for chat in self._all_chat_panels():
+                chat.set_provider_ready(False)
             self.provider_label.setText("AI: not configured")
 
-    def _ask_tutor(self, message: str, level: str, context: TutorContext) -> None:
-        """Dispatch one tutor turn on a worker thread."""
-        chat = self.lesson_view.chat()
+    def _all_chat_panels(self):
+        return (self.lesson_view.chat(), self.practice_view.chat())
 
+    def _send_to_tutor(
+        self,
+        chat,
+        context: TutorContext,
+        level: str,
+        *,
+        rubric_exercise: str | None = None,
+    ) -> None:
+        """Dispatch one tutor turn, or explain why it cannot be sent."""
         if not network_allowed():
             chat.add_tutor_error(
                 "AI calls are blocked because MENTORSMITH_OFFLINE is set."
@@ -294,64 +354,147 @@ class MainWindow(QMainWindow):
             return
 
         if not self.provider.configured:
-            # EchoProvider, and a partially configured real provider, both
-            # raise a detailed message naming exactly what is missing.
-            from ..providers.base import CompletionRequest
-
             try:
                 self.provider.complete(CompletionRequest(system="", user=""))
             except ProviderError as exc:
                 chat.add_tutor_error(str(exc))
             else:
                 chat.add_tutor_error(
-                    "The provider is not fully configured. Open Settings to check "
-                    "the base URL, model and API key."
+                    "The provider is not fully configured. Open Settings."
                 )
             return
 
-        service = TutorService(provider=self.provider, level=level)
         if self._tutor_worker is not None and self._tutor_worker.isRunning():
             chat.add_system_note("Still waiting on the previous reply…")
             return
 
         chat.set_sending(True)
-        context.user_message = message
+        self._pending_rubric_exercise = rubric_exercise
+        service = TutorService(provider=self.provider, level=level)
         self._tutor_worker = TutorWorker(service, context)
-        self._tutor_worker.replied.connect(lambda reply: self._on_tutor_reply(reply))
+        self._tutor_worker.replied.connect(
+            lambda reply: self._on_tutor_reply(reply, chat, rubric_exercise)
+        )
         self._tutor_worker.failed.connect(chat.add_tutor_error)
-        self._tutor_worker.unavailable.connect(chat.add_tutor_error)
         self._tutor_worker.finished.connect(lambda: chat.set_sending(False))
         self._tutor_worker.start()
 
-    def _on_tutor_reply(self, reply: TutorReply) -> None:
-        chat = self.lesson_view.chat()
+    # ------------------------------------------------------------------
+    # Tutor entry points
+    # ------------------------------------------------------------------
+    def _on_lesson_tutor(self, message: str, level: str, context: TutorContext) -> None:
+        self._send_to_tutor(self.lesson_view.chat(), context, level)
+
+    def _on_practice_tutor(self, message: str, level: str, marker: str) -> None:
+        """Handle the three kinds of tutor request the practice screen makes."""
+        if marker == "__back_to_lesson__":
+            self.show_page(PAGE_LESSON)
+            return
+
+        chat = self.practice_view.chat()
+        session = self.practice_view.session
+        if session is None:
+            return
+
+        if marker.startswith("__rubric__"):
+            exercise_id = marker.split("__rubric__", 1)[1]
+            context = TutorContext(
+                lesson_title=session.exercise.concept_id,
+                section=f"exercise type {session.exercise.type}",
+                user_message=message,
+            )
+            self._send_to_tutor(
+                chat, context, "guided", rubric_exercise=exercise_id
+            )
+            return
+
+        # __practice__ - ordinary help with the learner's code and real output.
+        context = TutorContext(
+            lesson_title=session.exercise.concept_id,
+            section=f"exercise: {session.exercise.title} ({session.exercise.type})",
+            code=session.editor_code() if hasattr(session, "editor_code") else "",
+            user_message=message,
+        )
+        view = self.practice_view
+        context.code = view.editor.code()
+        context.compile_output = view.result_view.toPlainText()[:4000]
+        context.attempt_count = session.session.attempts
+        context.misconception_shown = session.session.hints_used > 0
+        self._send_to_tutor(chat, context, level)
+
+    def _on_tutor_reply(
+        self, reply: TutorReply, chat, rubric_exercise: str | None
+    ) -> None:
         chat.add_tutor_message(reply.as_chat_text())
+
+        if rubric_exercise:
+            self._record_rubric_grade(reply, chat, rubric_exercise)
+            return
+
         if reply.action and reply.action != "none":
-            chat.add_system_note(f"Suggested next step: {reply.action.replace('_', ' ')}.")
+            chat.add_system_note(
+                f"Suggested next step: {reply.action.replace('_', ' ')}."
+            )
         if reply.reveals_solution:
             chat.add_system_note(
                 "The tutor gave a solution. Read it, then close the editor and "
                 "rebuild it yourself before moving on."
             )
 
+    def _record_rubric_grade(self, reply: TutorReply, chat, exercise_id: str) -> None:
+        """Parse a verdict from the tutor and record it as an interpretive grade.
+
+        The reply is untrusted text: :func:`parse_verdict` is the only thing
+        that reads it, and it can do nothing except pick a verdict.
+        """
+        from ..services.practice import parse_verdict
+
+        verdict, reason = parse_verdict(reply.raw)
+
+        session = self.practice_view.session
+        exercise = self.bank.get(exercise_id)
+        if session is None or exercise is None:
+            return
+        # Rebuild a session bound to this exercise so the grade lands on it.
+        from ..services.practice import PracticeSession
+
+        grading = PracticeSession(
+            database=self.database, toolchain=self.toolchain, exercise=exercise
+        )
+        grading.session.hints_used = session.session.hints_used
+        outcome = grading.record_interpretive(
+            self.practice_view.answer_edit.toPlainText(),
+            verdict=verdict,
+            feedback=reason,
+            hints_used=session.session.hints_used,
+        )
+        colour = theme.SUCCESS if outcome.correct else theme.WARNING
+        chat.add_system_note(
+            f"Recorded as an <b>interpretive</b> grade: {verdict}. "
+            "This is the tutor's reading of your explanation, not a proof."
+        )
+        chat.add_system_note(
+            f'<span style="color:{colour}">'
+            + ("Correct." if outcome.correct else "Not yet — try explaining again.")
+            + "</span>"
+        )
+        self._on_practice_attempt(exercise_id, exercise.concept_id, outcome.correct)
+
     # ------------------------------------------------------------------
-    # Settings
+    # Settings and lifecycle
     # ------------------------------------------------------------------
     def open_settings(self) -> None:
         dialog = SettingsDialog(self)
         if dialog.exec():
             self.settings = load_settings()
-            # Rebuild the toolchain so the sandbox preference takes effect.
             self._build_toolchain()
+            self.practice_view.toolchain = self.toolchain
+            self.lesson_view.toolchain = self.toolchain
             self.lesson_view.refresh_sandbox_status()
             self._refresh_provider_status()
             self.statusBar().showMessage("Settings saved")
 
-    # ------------------------------------------------------------------
-    # Lifecycle
-    # ------------------------------------------------------------------
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt API
-        """Stop any running learner program before the window closes."""
         try:
             self.toolchain.stop()
         except Exception:  # pragma: no cover - defensive
@@ -363,7 +506,7 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
 
 
-def _default_db_path() -> str:
+def _db_path() -> str:
     from ..config import db_path
 
     return str(db_path())
