@@ -1,9 +1,8 @@
 # PROJECT_STATE.md
 
 ## Current state
-- Current phase: **Phases 1, 2 and 4 complete. Phase 3 complete** (order was
-  1 → 2 → **4** → 3; see "Why Phase 4 came before Phase 3" below).
-- Phase 5: **not started**.
+- Current phase: **All five phases complete.** Order was 1 → 2 → **4** → 3 → 5
+  (see "Why Phase 4 came before Phase 3" below).
 - Last updated: 2026-10-16
 - Branch / repository status: `master`, four commits, clean tree. No remote.
 - App launch status: **Launches on Fedora 44**, six pages, verified by
@@ -27,7 +26,9 @@ de-risked it: if the Android toolchain had failed on JDK 25 / AGP, Phases 2 and
 | Start of Phase 2 | 140 | 1 |
 | Start of Phase 4 | 299 | 2 |
 | Start of Phase 3 | 362 | 3 |
-| After Phase 3 | **385** | 3 |
+| After Phase 3 | 385 | 3 |
+| Start of Phase 5 | 385 | 3 |
+| After Phase 5 | **576** | 3 |
 
 All earlier tests still pass unchanged. Android adds **41** JVM unit tests.
 
@@ -215,6 +216,31 @@ but not auto-graded.
   consequence — anyone who can reach the port can read and write progress — is
   stated in the contract document rather than buried.
 - No offline model for tutor chat (there is no model on the device at all).
+
+### Phase 5 (aihandoff_5.md) — developer tools, reliability, portfolio
+
+- [x] **Git integration** with a two-step approval gate on commits
+- [x] **No push, checkout, reset, clean or stash** in the module at all
+- [x] **Project workspaces** with path validation after resolution
+- [x] **Code review** with `confirmed` / `heuristic` / `speculative` origins,
+      where only a confirmed finding counts as a defect
+- [x] **Compiler diagnostics merged** into the same finding list, origin intact
+- [x] **Test generation** that proposes, never auto-runs, and always reports
+      proposed versus executed
+- [x] **Security audit** that runs real code and states what it does *not* prove
+- [x] **Delayed-review analytics** distinguishing recall from transfer
+- [x] **Bounded output reading** (see below — this was a real bug)
+- [x] Developer page wired into the desktop UI, 31 smoke tests
+- [x] README and this document updated to match the code
+
+**Not implemented, deliberately:**
+- **No authentication on the sync backend.** Phase 3 required asking first.
+- **No AI review or test generation without a provider.** The deterministic
+  checks still run and are reported as the confirmed findings.
+- **No offline model.** Offline means everything except the tutor's AI
+  features, and the docs say exactly that.
+- **No release build, no packaging, no store listing.** `assembleRelease` is
+  untested and signing is not configured.
 
 ## Commands
 ### Run Linux app
@@ -408,6 +434,11 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
   the sandbox is **not** active rather than implying otherwise.
 - Bubblewrap isolation is defence in depth, not a true sandbox. It gives less
   protection than a VM or a configured container.
+- **Output capture is capped at 200,000 characters while reading, not after.**
+  This was a genuine bug. The original code buffered a child's entire output
+  before truncating it; a program printing in a tight loop reached 13 GB on a
+  16 GB machine and the kernel OOM-killed the process. Now 17 MB on the same
+  input. `tests/test_retention.py` carries the regression.
 - The learner's own exercises are not automatically unit-tested; examples are
   verified when the learner compiles them.
 - There is no lesson-content editor in the UI; lessons are edited as Markdown.

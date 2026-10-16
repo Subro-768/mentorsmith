@@ -52,6 +52,28 @@ def _self_check() -> int:
     print()
     sandbox_note = window.lesson_view.status_label.text()
     print(f"  C++ containment: {sandbox_note}")
+    print()
+    print("  developer tools:")
+    tab_labels = [
+        window.developer_view.tabs.tabText(i)
+        for i in range(window.developer_view.tabs.count())
+    ]
+    print(f"    tabs         : {len(tab_labels)} ({', '.join(tab_labels)})")
+
+    from pathlib import Path as _Path
+
+    from mentorsmith.core.workspaces import WorkspaceManager
+    from mentorsmith.services.git_tools import GitRepository
+
+    found = GitRepository(_Path.cwd()).discover()
+    print(
+        "    git here     : "
+        + (str(found.path) if found else "not a repository (tools still work)")
+    )
+    workspaces = WorkspaceManager(
+        _Path.home() / ".local/share/mentorsmith/workspaces"
+    )
+    print(f"    workspaces   : {len(workspaces.list_ids())}")
 
     window.close()
     del window

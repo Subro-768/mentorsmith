@@ -9,7 +9,102 @@ levels of help. On top of that it tracks *evidence* of understanding rather than
 what you clicked, and adapts what it gives you next.
 
 **Four tracks: C++, Python, C and JavaScript.** 42 lessons, 44 concepts,
-87 exercises.
+87 exercises. Plus an Android companion and developer tooling.
+
+---
+
+## Status
+
+This is a working application, not a product. It launches, runs real compilers,
+and its behaviour is covered by 576 automated tests. It has **not** been
+through a security review, run at scale, or tested on anything but one Fedora
+workstation and one 16 GB laptop. There is no release build, no packaging and
+no store listing.
+
+The largest untested surface is the **live AI provider path**: everything up to
+the HTTP boundary is mocked, and no request has ever been sent to a real vendor.
+The Android app has **never been run on a device or emulator** — it builds and
+its logic is unit-tested, but nobody has watched it start.
+
+---
+
+## Try it in five minutes
+
+```bash
+git clone <your-fork-url> mentorsmith && cd mentorsmith
+python3 -m pip install --user PyQt6
+
+python3 main.py --check      # builds the UI offscreen, reports your toolchains
+python3 main.py              # launch
+```
+
+Then, to see the parts that are hard to describe:
+
+```bash
+python3 -m pytest tests/ -q                       # 576 tests
+python3 tools/security_audit.py                   # real containment evidence
+python3 tools/export_curriculum.py --check        # Android assets current?
+```
+
+A good first tour:
+
+1. **Lessons → Variables and Types.** Mark it complete. Note that the dashboard
+   still says *not started* — on purpose. Reading is not evidence.
+2. **Practice**, pick a `find-a-bug` exercise, get it wrong on purpose. The
+   debugging coach gives one small hint, not the answer.
+3. **Progress** after a few attempts. Every label quotes the numbers behind it.
+4. **Developer → Security audit.** Press the button. Read what each check says
+   it *does not* prove.
+5. Switch to **Python** in the toolbar and complete a C++ lesson's progress. It
+   does not carry over — mastery never transfers between languages.
+
+---
+
+## Architecture and data flow
+
+```
+lesson (Markdown) ──┐
+concept graph (JSON)┼─> curriculum_registry ──> per-language Track
+exercise bank (JSON)┘                              (lessons, model, bank)
+                                                        │
+  learner edits code ──> execution adapter ──> compiler/interpreter
+        │                   (limits, timeout,          │
+        │                    bounded output)           ▼
+        └──────────────> stdout / stderr / exit code  real output
+                                                        │
+  graded attempt ──> db.record_exercise_attempt(language, ...)
+                                                        │
+                          concept_evidence(language) ──┤
+                                   │                    │
+                          core/mastery ──> core/adaptive ──> services/insights
+                                   │           core/revision            │
+                                   v                                 v
+                            label + evidence                 dashboard explains
+                                                                     │
+                                                                     v
+                                                                 Qt UI / Compose
+```
+
+The rule that shapes the layering: **evidence flows one way.**
+`exercise_attempts` → `concept_evidence` → `mastery` → `adaptive`/`revision` →
+`insights` → UI. All interpretation lives in `mastery` and `adaptive`; no widget
+computes a label. That is why the desktop app and the Android app can agree on
+the same answer without sharing a line of code.
+
+## Stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Desktop UI | PyQt6 | Native Linux widgets, no web runtime |
+| Language | Python 3.11+ | The tutor's own code is short enough to read |
+| HTTP | Python standard library | No third-party HTTP client to audit |
+| Persistence | SQLite | One file, no server, trivially backed up |
+| Android | Kotlin + Compose + Room | One data model, two very different UIs |
+| Sync | FastAPI + SQLite | Optional, local, no cloud service |
+| Dependencies at runtime | **PyQt6 only** | |
+
+The test-only dependencies are pytest and, for the sync server, FastAPI. The
+Android build needs the Android SDK and a JDK 17–21.
 
 ---
 
@@ -191,6 +286,12 @@ runtime needs it: Node's V8 reserves a large *virtual* address space before
 running any user code, so its limit is raised and the real heap is bounded with
 `--max-old-space-size` instead.
 
+**Always on — bounded output.** Captured output is capped at 200,000 characters
+**while it is being read**, not afterwards. A program printing in a tight loop can
+emit gigabytes within the time it is allowed to run, and reading all of it into
+memory first is how the app would exhaust the machine. Discarded output is
+counted and the learner is told, rather than being silently dropped.
+
 **Optional — bubblewrap sandbox.** Compiled languages only. Enable it in
 Settings and the binary runs in a private mount namespace with no network and a
 read-only view of the system, so your program cannot read or write your home
@@ -304,6 +405,79 @@ transferred.
 | `Ctrl+,` | Settings |
 | `Ctrl+Enter` | Send a chat message |
 
+### Developer tools
+
+A **Developer** page in the desktop app, and a CLI equivalent for the audit.
+
+**Security audit — `python3 tools/security_audit.py`**
+
+Runs real code and reports what it observed on this machine, right now. Every
+check states both what it *proves* and what it *does not*. A check that cannot
+run here is reported as `SKIPPED` with the reason, never as passed.
+
+```
+Verdict: 9 check(s) verified on this machine, 0 skipped.
+Limits are real but this is NOT a security boundary.
+
+[PASS] runtime timeout
+  Proves: That a program which never finishes is killed and reported as a timeout.
+  Does not prove: That a runaway program is stopped. It says nothing about a
+  program that exits cleanly after doing damage.
+
+[PASS] filesystem sandbox
+  Proves: That with the sandbox enabled, a compiled program cannot list the
+  user's home directory.
+  Does not prove: Isolation of *any* kind. The sandbox is off by default,
+  depends on unprivileged user namespaces being permitted, and is far weaker
+  than a VM or a configured container.
+```
+
+**Git integration**
+
+Read-only inspection (status, diff, log, branches) is free to do. Committing is
+**approval-gated**: the first press produces a preview of exactly what would be
+recorded, and only then does the write button become live. It then asks again
+before writing.
+
+There is deliberately **no** push, checkout, reset, clean or stash in that
+module. Phase 5 requires those to be approval-gated and to show consequences
+first; the most reliable way to guarantee that is for the capability not to
+exist. Uncommitted work can be hours of effort.
+
+Note that an untracked file is *not* in the index, so it is never reported as
+about to be committed until you stage it.
+
+**Code review**
+
+Findings are labelled by how they were established, and the label is not
+decorative:
+
+| Label | Meaning | Counted as a defect? |
+|---|---|---|
+| `CONFIRMED` | A compiler or a test produced the diagnostic | yes |
+| `HEURISTIC` | A static pattern matched; needs a human to read it | no |
+| `SUGGESTION` | The model *believes* there may be a problem | no |
+
+Compiler diagnostics are merged into the same list as the model's output while
+keeping their origin visible. Only `CONFIRMED` findings count as bugs, and a
+model cannot promote itself by writing `origin: confirmed` — a test asserts
+that.
+
+**Test generation**
+
+Tests are proposed, never run automatically. `ProposedTest.execute()` requires
+an explicit confirmation, and the report always states how many were proposed
+versus executed, and which kinds of case were never covered. A passing generated
+suite is not evidence of correctness, and the output says so.
+
+**Project workspaces**
+
+Each learning project gets its own directory under
+`~/.local/share/mentorsmith/workspaces/<id>/`. Project files are never written
+into the tutor's source tree. Paths are validated *after resolution*, so
+`../../` and absolute paths are both refused rather than sanitised and hoped
+about.
+
 ## Android companion
 
 A read-and-revise companion app lives in `android/`. It does **not** run code —
@@ -327,23 +501,49 @@ the optional backend instead, which holds the key server-side. See
 
 ## Known limitations
 
-- Tutor chat on Android is not implemented; it needs the backend to exist first.
-- The in-app Markdown renderer covers the subset the lessons use, not the
-  whole specification.
-- Exercise coverage is uneven. C++ has 53 exercises; the other tracks have
-  11–12 each, which is enough to be useful but not to be a full course.
-- There is no project generator for Python, C or JavaScript. Projects are
-  generated for C++ only; the other tracks get exercises and lessons.
-- Mastery labels are a summary of recorded counts. They are explainable but
-  they are not a psychometric measurement.
+**Untested surfaces**
+
+- **No request has ever been sent to a real AI provider.** The provider tests
+  mock `urlopen`. The live path, including how a real model responds to the
+  interpretive-grading prompts, is unverified.
+- **The Android app has never been run.** It builds and its logic is unit
+  tested, but no device or emulator test exists — this machine had no system
+  images or `cmdline-tools`.
+- **No release build, packaging or signing** has been attempted.
+- **No security review.** The audit in `tools/security_audit.py` verifies
+  containment, not the absence of vulnerabilities.
+
+**Deliberate gaps**
+
+- Tutor chat on Android is disabled: an APK is not a secret store, so the key
+  must live on a backend. See [docs/sync-contract.md](docs/sync-contract.md).
+- The sync backend has **no authentication**. Anyone who can reach the port can
+  read and write stored progress. Bind it to localhost.
+- There is no offline model. Everything except the tutor's AI features works
+  with no network; the tutor itself does not.
+- No project generator for Python, C or JavaScript — projects are generated for
+  C++ only.
+
+**Quality and scope**
+
+- The in-app Markdown renderer covers the subset the lessons use, not the whole
+  specification.
+- Exercise coverage is uneven: C++ has 53, the other tracks 11–12 each.
+- Mastery labels are a summary of recorded counts. Explainable, but not a
+  psychometric measurement.
 - Review recommendations use a fixed staleness threshold, not a proven spaced
-  repetition schedule.
-- There is no built-in test suite for the learner's own code; exercises are
-  graded by actually compiling and running it.
+  repetition schedule. Delayed-review results are reported, but scheduling is
+  not adaptive.
 - The editor has no autocomplete and highlights C++ only.
-- Progress is per-machine and not synchronised anywhere.
+- Progress is per-machine on the desktop.
 - The bubblewrap sandbox covers compiled languages only, and unprivileged user
   namespaces give far less protection than a real isolation boundary.
+
+**Known bugs**
+
+None are known at the time of writing, beyond the limits above. The one real
+defect found during development was in output capture — see
+[PROJECT_STATE.md](PROJECT_STATE.md) — and it is fixed with a regression test.
 
 ## Licence
 

@@ -293,15 +293,18 @@ def test_progress_view_renders(qt_app) -> None:
 # ----------------------------------------------------------------------
 def test_phase2_pages_exist(window) -> None:
     from mentorsmith.ui.main_window import (
+        PAGE_DEVELOPER,
         PAGE_INSIGHTS,
         PAGE_PRACTICE,
         PAGE_PROJECTS,
     )
 
-    assert window.stack.count() == 6
+    # Seven pages since Phase 5 added the Developer tools.
+    assert window.stack.count() == 7
     assert window.stack.widget(PAGE_PRACTICE) is not None
     assert window.stack.widget(PAGE_INSIGHTS) is not None
     assert window.stack.widget(PAGE_PROJECTS) is not None
+    assert window.stack.widget(PAGE_DEVELOPER) is not None
 
 
 def test_practice_view_auto_selects_the_top_recommendation(window) -> None:

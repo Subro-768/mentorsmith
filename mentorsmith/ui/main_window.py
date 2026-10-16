@@ -28,6 +28,7 @@ from ..services.insights import build_report
 from ..services.tutor import TutorContext, TutorReply, TutorService
 from . import theme
 from .dashboard import DashboardView, InsightsPanel, ProgressView
+from .developer_view import DeveloperView
 from .lesson_view import LessonView
 from .practice_view import PracticeView
 from .projects_view import ProjectsView
@@ -40,6 +41,7 @@ PAGE_LESSON = 2
 PAGE_INSIGHTS = 3
 PAGE_PROJECTS = 4
 PAGE_PROGRESS = 5
+PAGE_DEVELOPER = 6
 
 
 class TutorWorker(QThread):
@@ -188,6 +190,7 @@ class MainWindow(QMainWindow):
             (PAGE_INSIGHTS, "Progress"),
             (PAGE_PROJECTS, "Projects"),
             (PAGE_PROGRESS, "History"),
+            (PAGE_DEVELOPER, "Developer"),
         ):
             button = QPushButton(label)
             button.clicked.connect(lambda _=False, i=index: self.show_page(i))
@@ -235,6 +238,8 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.insights)               # 3
         self.stack.addWidget(self.projects_view)          # 4
         self.stack.addWidget(self.progress_view)          # 5
+        self.developer_view = DeveloperView(self.database)  # 6
+        self.stack.addWidget(self.developer_view)         # 6
         layout.addWidget(self.stack, 1)
 
         self.setCentralWidget(central)
@@ -259,6 +264,9 @@ class MainWindow(QMainWindow):
         self.settings_button.clicked.connect(self.open_settings)
         self.language_combo.currentIndexChanged.connect(self._on_language_changed)
         self.dashboard.lesson_selected.connect(self.open_lesson)
+        self.developer_view.status_message.connect(
+            lambda text: self.statusBar().showMessage(text, 8000)
+        )
         self.lesson_view.navigate_requested.connect(self._navigate)
         self.lesson_view.attempt_recorded.connect(self._record_attempt)
         self.lesson_view.lesson_completed.connect(self._mark_complete)
