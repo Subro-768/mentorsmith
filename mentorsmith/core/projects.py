@@ -242,10 +242,13 @@ def milestone_progress(milestones: list[dict]) -> dict:
     }
 
 
-def save_project(database, proposal: ProjectProposal) -> str:
+def save_project(
+    database, proposal: ProjectProposal, language: str = "cpp"
+) -> str:
     """Persist a project and its milestones.
 
     Additive and idempotent, so re-proposing the same project is harmless.
+    Scoped by language: the same project id may exist in more than one track.
     """
     project = proposal.project
     return database.create_project(
@@ -255,4 +258,5 @@ def save_project(database, proposal: ProjectProposal) -> str:
         concepts=project.concepts,
         difficulty=proposal.estimated_difficulty,
         milestones=[m.to_dict() for m in project.milestones],
+        language=language,
     )

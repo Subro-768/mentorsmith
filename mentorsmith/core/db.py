@@ -210,6 +210,71 @@ MIGRATIONS: dict[int, list[str]] = {
             ON exercise_attempts (language, lesson_id)
         """,
     ],
+    4: [
+        # --- Phase 5 audit: finish the language dimension ----------------
+        # Phase 4 added `language` to lesson_progress and exercise_attempts but
+        # missed four other tables. That was a real bug: a review flagged for
+        # C++ pointers, project progress and the activity feed all looked
+        # identical in Python, because there was nowhere to record the track.
+        "ALTER TABLE reviews ADD COLUMN language TEXT NOT NULL DEFAULT 'cpp'",
+        "ALTER TABLE project_milestones ADD COLUMN language TEXT NOT NULL DEFAULT 'cpp'",
+        "ALTER TABLE activity ADD COLUMN language TEXT NOT NULL DEFAULT 'cpp'",
+        "ALTER TABLE project_activity ADD COLUMN language TEXT NOT NULL DEFAULT 'cpp'",
+
+        # concept_progress caches a mastery label, and mastery is computed per
+        # language. Keyed by concept_id alone it would show one track's label
+        # for another. Rebuilt with a composite key.
+        """
+        CREATE TABLE concept_progress_v4 (
+            concept_id  TEXT NOT NULL,
+            language    TEXT NOT NULL DEFAULT 'cpp',
+            label       TEXT NOT NULL,
+            score       REAL NOT NULL DEFAULT 0.0,
+            evidence    TEXT NOT NULL DEFAULT '',
+            updated_at  TEXT NOT NULL,
+            PRIMARY KEY (concept_id, language)
+        )
+        """,
+        """
+        INSERT INTO concept_progress_v4
+            (concept_id, language, label, score, evidence, updated_at)
+            SELECT concept_id, 'cpp', label, score, evidence, updated_at
+            FROM concept_progress
+        """,
+        "DROP TABLE concept_progress",
+        "ALTER TABLE concept_progress_v4 RENAME TO concept_progress",
+
+        # projects is keyed by id alone for the same reason. Only C++ ships
+        # projects today, so existing rows are all C++.
+        """
+        CREATE TABLE projects_v4 (
+            id          TEXT NOT NULL,
+            language    TEXT NOT NULL DEFAULT 'cpp',
+            title       TEXT NOT NULL,
+            purpose     TEXT NOT NULL DEFAULT '',
+            concepts    TEXT NOT NULL DEFAULT '',
+            difficulty  TEXT NOT NULL DEFAULT 'unknown',
+            status      TEXT NOT NULL DEFAULT 'not_started',
+            created_at  TEXT NOT NULL,
+            updated_at  TEXT NOT NULL,
+            PRIMARY KEY (id, language)
+        )
+        """,
+        """
+        INSERT INTO projects_v4
+            (id, language, title, purpose, concepts, difficulty, status,
+             created_at, updated_at)
+            SELECT id, 'cpp', title, purpose, concepts, difficulty, status,
+                   created_at, updated_at
+            FROM projects
+        """,
+        "DROP TABLE projects",
+        "ALTER TABLE projects_v4 RENAME TO projects",
+
+        "CREATE INDEX IF NOT EXISTS idx_reviews_language ON reviews (language, status)",
+        "CREATE INDEX IF NOT EXISTS idx_milestones_language ON project_milestones (language, project_id)",
+        "CREATE INDEX IF NOT EXISTS idx_activity_language ON activity (language, id)",
+    ],
 }
 
 LATEST_SCHEMA_VERSION = max(MIGRATIONS)
@@ -459,25 +524,37 @@ class Database:
     # ------------------------------------------------------------------
     # Recent activity
     # ------------------------------------------------------------------
-    def record_activity(self, kind: str, lesson_id: str | None = None, detail: str = "") -> None:
-        """Append an entry to the activity feed shown on the dashboard."""
+    def record_activity(
+        self,
+        kind: str,
+        lesson_id: str | None = None,
+        detail: str = "",
+        language: str = "cpp",
+    ) -> None:
+        """Append an entry to the activity feed shown on the dashboard.
+
+        Scoped by language: a C++ lesson event must not appear in the Python
+        activity list just because the lesson id happens to match.
+        """
         conn = self.connect()
         conn.execute(
-            "INSERT INTO activity (kind, lesson_id, detail, created_at) VALUES (?, ?, ?, ?)",
-            (kind, lesson_id, detail, _utcnow()),
+            "INSERT INTO activity (kind, lesson_id, detail, language, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (kind, lesson_id, detail, language, _utcnow()),
         )
         conn.commit()
 
-    def recent_activity(self, limit: int = 10) -> list[dict]:
+    def recent_activity(self, limit: int = 10, language: str = "cpp") -> list[dict]:
         conn = self.connect()
         rows = conn.execute(
-            "SELECT * FROM activity ORDER BY id DESC LIMIT ?", (int(limit),)
+            "SELECT * FROM activity WHERE language = ? ORDER BY id DESC LIMIT ?",
+            (language, int(limit)),
         ).fetchall()
         return [dict(r) for r in rows]
 
-    def clear_activity(self) -> None:
+    def clear_activity(self, language: str = "cpp") -> None:
         conn = self.connect()
-        conn.execute("DELETE FROM activity")
+        conn.execute("DELETE FROM activity WHERE language = ?", (language,))
         conn.commit()
 
     # ------------------------------------------------------------------
@@ -621,31 +698,42 @@ class Database:
     # Concept progress cache
     # ------------------------------------------------------------------
     def set_concept_progress(
-        self, concept_id: str, label: str, score: float, evidence: str = ""
+        self,
+        concept_id: str,
+        label: str,
+        score: float,
+        evidence: str = "",
+        language: str = "cpp",
     ) -> None:
         """Cache a computed mastery label.
 
-        Purely a cache: it can always be rebuilt from ``concept_evidence``.
+        Purely a cache: it can always be rebuilt from ``concept_evidence``. It is
+        keyed by ``(concept_id, language)`` because mastery is computed per
+        language, so one track's cached label must never be served for another.
         """
         conn = self.connect()
         conn.execute(
-            "INSERT INTO concept_progress (concept_id, label, score, evidence, updated_at) "
-            "VALUES (?, ?, ?, ?, ?) ON CONFLICT(concept_id) DO UPDATE SET "
+            "INSERT INTO concept_progress "
+            "(concept_id, language, label, score, evidence, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(concept_id, language) DO UPDATE SET "
             "label = excluded.label, score = excluded.score, "
             "evidence = excluded.evidence, updated_at = excluded.updated_at",
-            (concept_id, label, float(score), evidence, _utcnow()),
+            (concept_id, language, label, float(score), evidence, _utcnow()),
         )
         conn.commit()
 
-    def get_concept_progress(self, concept_id: str) -> dict | None:
+    def get_concept_progress(self, concept_id: str, language: str = "cpp") -> dict | None:
         row = self.connect().execute(
-            "SELECT * FROM concept_progress WHERE concept_id = ?", (concept_id,)
+            "SELECT * FROM concept_progress WHERE concept_id = ? AND language = ?",
+            (concept_id, language),
         ).fetchone()
         return dict(row) if row else None
 
-    def all_concept_progress(self) -> dict[str, dict]:
+    def all_concept_progress(self, language: str = "cpp") -> dict[str, dict]:
         rows = self.connect().execute(
-            "SELECT * FROM concept_progress"
+            "SELECT * FROM concept_progress WHERE language = ? ORDER BY concept_id",
+            (language,),
         ).fetchall()
         return {str(r["concept_id"]): dict(r) for r in rows}
 
@@ -661,72 +749,92 @@ class Database:
         concepts: Sequence[str] = (),
         difficulty: str = "unknown",
         milestones: Sequence[dict] = (),
+        language: str = "cpp",
     ) -> str:
         """Insert a project and its milestones. Returns the project id.
 
         Re-adding an existing project updates it rather than duplicating, so
-        regenerating recommendations is safe.
+        regenerating recommendations is safe. Keyed by ``(id, language)``: the
+        same project id may exist in two tracks.
         """
         conn = self.connect()
         stamp = _utcnow()
         conn.execute(
             "INSERT INTO projects "
-            "(id, title, purpose, concepts, difficulty, status, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, 'not_started', ?, ?) "
-            "ON CONFLICT(id) DO UPDATE SET title = excluded.title, "
+            "(id, language, title, purpose, concepts, difficulty, status, "
+            " created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, 'not_started', ?, ?) "
+            "ON CONFLICT(id, language) DO UPDATE SET title = excluded.title, "
             "purpose = excluded.purpose, concepts = excluded.concepts, "
             "difficulty = excluded.difficulty, updated_at = excluded.updated_at",
-            (project_id, title, purpose, ",".join(concepts), difficulty, stamp, stamp),
+            (
+                project_id, language, title, purpose,
+                ",".join(concepts), difficulty, stamp, stamp,
+            ),
         )
         if milestones:
-            conn.execute("DELETE FROM project_milestones WHERE project_id = ?", (project_id,))
+            conn.execute(
+                "DELETE FROM project_milestones "
+                "WHERE project_id = ? AND language = ?",
+                (project_id, language),
+            )
             for ordinal, milestone in enumerate(milestones, start=1):
                 conn.execute(
                     "INSERT INTO project_milestones "
-                    "(project_id, ordinal, title, requirements, acceptance_criteria, "
-                    " hint, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')",
+                    "(project_id, language, ordinal, title, requirements, "
+                    " acceptance_criteria, hint, status) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')",
                     (
                         project_id,
+                        language,
                         ordinal,
                         str(milestone.get("title", f"Milestone {ordinal}")),
                         str(milestone.get("requirements", "")),
-                        ",".join(str(c) for c in milestone.get("acceptance_criteria", [])),
+                        ",".join(
+                            str(c) for c in milestone.get("acceptance_criteria", [])
+                        ),
                         str(milestone.get("hint", "")),
                     ),
                 )
         conn.commit()
         return project_id
 
-    def get_project(self, project_id: str) -> dict | None:
+    def get_project(self, project_id: str, language: str = "cpp") -> dict | None:
         row = self.connect().execute(
-            "SELECT * FROM projects WHERE id = ?", (project_id,)
+            "SELECT * FROM projects WHERE id = ? AND language = ?",
+            (project_id, language),
         ).fetchone()
         return dict(row) if row else None
 
-    def list_projects(self) -> list[dict]:
+    def list_projects(self, language: str = "cpp") -> list[dict]:
         rows = self.connect().execute(
-            "SELECT * FROM projects ORDER BY created_at, id"
+            "SELECT * FROM projects WHERE language = ? ORDER BY created_at, id",
+            (language,),
         ).fetchall()
         return [dict(r) for r in rows]
 
-    def set_project_status(self, project_id: str, status: str) -> None:
+    def set_project_status(
+        self, project_id: str, status: str, language: str = "cpp"
+    ) -> None:
         conn = self.connect()
         conn.execute(
-            "UPDATE projects SET status = ?, updated_at = ? WHERE id = ?",
-            (status, _utcnow(), project_id),
+            "UPDATE projects SET status = ?, updated_at = ? "
+            "WHERE id = ? AND language = ?",
+            (status, _utcnow(), project_id, language),
         )
         conn.commit()
 
-    def milestones_for(self, project_id: str) -> list[dict]:
+    def milestones_for(self, project_id: str, language: str = "cpp") -> list[dict]:
         rows = self.connect().execute(
-            "SELECT * FROM project_milestones WHERE project_id = ? ORDER BY ordinal",
-            (project_id,),
+            "SELECT * FROM project_milestones "
+            "WHERE project_id = ? AND language = ? ORDER BY ordinal",
+            (project_id, language),
         ).fetchall()
         return [dict(r) for r in rows]
 
     def set_milestone_status(self, milestone_id: int, status: str) -> None:
-        conn = self.connect()
         completed = _utcnow() if status == "done" else None
+        conn = self.connect()
         conn.execute(
             "UPDATE project_milestones SET status = ?, completed_at = ? WHERE id = ?",
             (status, completed, milestone_id),
@@ -740,14 +848,17 @@ class Database:
         *,
         milestone_id: int | None = None,
         needed_substantial_help: bool = False,
+        language: str = "cpp",
     ) -> int:
         conn = self.connect()
         cur = conn.execute(
             "INSERT INTO project_activity "
-            "(project_id, milestone_id, notes, needed_substantial_help, created_at) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "(project_id, language, milestone_id, notes, needed_substantial_help, "
+            " created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             (
                 project_id,
+                language,
                 milestone_id,
                 notes,
                 int(bool(needed_substantial_help)),
@@ -757,36 +868,54 @@ class Database:
         conn.commit()
         return int(cur.lastrowid or 0)
 
-    def project_activity_for(self, project_id: str) -> list[dict]:
+    def project_activity_for(
+        self, project_id: str, language: str = "cpp"
+    ) -> list[dict]:
         rows = self.connect().execute(
-            "SELECT * FROM project_activity WHERE project_id = ? ORDER BY id DESC",
-            (project_id,),
+            "SELECT * FROM project_activity "
+            "WHERE project_id = ? AND language = ? ORDER BY id DESC",
+            (project_id, language),
         ).fetchall()
         return [dict(r) for r in rows]
 
     # ------------------------------------------------------------------
     # Reviews
     # ------------------------------------------------------------------
-    def add_review(self, concept_id: str, reason: str, evidence: str = "") -> int:
-        """Flag a concept for review. Deduplicates on (concept, open)."""
+    def add_review(
+        self,
+        concept_id: str,
+        reason: str,
+        evidence: str = "",
+        language: str = "cpp",
+    ) -> int:
+        """Flag a concept for review.
+
+        Deduplicates on ``(concept_id, language, open)``. A C++ pointer review
+        and a C pointer review are different flags: they point at different
+        mistakes even when the concept ids differ only by track.
+        """
         conn = self.connect()
         existing = conn.execute(
-            "SELECT id FROM reviews WHERE concept_id = ? AND status = 'open'",
-            (concept_id,),
+            "SELECT id FROM reviews "
+            "WHERE concept_id = ? AND language = ? AND status = 'open'",
+            (concept_id, language),
         ).fetchone()
         if existing is not None:
             return int(existing["id"])
         cur = conn.execute(
-            "INSERT INTO reviews (concept_id, reason, evidence, status, created_at) "
-            "VALUES (?, ?, ?, 'open', ?)",
-            (concept_id, reason, evidence, _utcnow()),
+            "INSERT INTO reviews "
+            "(concept_id, language, reason, evidence, status, created_at) "
+            "VALUES (?, ?, ?, ?, 'open', ?)",
+            (concept_id, language, reason, evidence, _utcnow()),
         )
         conn.commit()
         return int(cur.lastrowid or 0)
 
-    def open_reviews(self) -> list[dict]:
+    def open_reviews(self, language: str = "cpp") -> list[dict]:
         rows = self.connect().execute(
-            "SELECT * FROM reviews WHERE status = 'open' ORDER BY id"
+            "SELECT * FROM reviews "
+            "WHERE language = ? AND status = 'open' ORDER BY id",
+            (language,),
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -795,11 +924,14 @@ class Database:
         conn.execute("UPDATE reviews SET status = 'done' WHERE id = ?", (review_id,))
         conn.commit()
 
-    def reviews_for(self, concept_id: str) -> list[dict]:
+    def reviews_for(self, concept_id: str, language: str = "cpp") -> list[dict]:
         rows = self.connect().execute(
-            "SELECT * FROM reviews WHERE concept_id = ? ORDER BY id DESC", (concept_id,)
+            "SELECT * FROM reviews "
+            "WHERE concept_id = ? AND language = ? ORDER BY id DESC",
+            (concept_id, language),
         ).fetchall()
         return [dict(r) for r in rows]
+
 
     # ------------------------------------------------------------------
     # Aggregates used by the progress view

@@ -140,6 +140,7 @@ class MainWindow(QMainWindow):
         self.practice_view._current_exercise_id = None
         self.projects_view.database = self.database
         self.projects_view.model = self.model
+        self.projects_view.language = language
 
         self.lesson_view.toolchain = self.toolchain
         self.lesson_view.refresh_sandbox_status()
@@ -356,7 +357,7 @@ class MainWindow(QMainWindow):
             result=summary,
             language=self.language,
         )
-        self.database.record_activity("exercise_attempt", lesson_id, summary)
+        self.database.record_activity("exercise_attempt", lesson_id, summary, self.language)
         self.refresh_insights()
 
     def _on_practice_attempt(self, exercise_id: str, concept_id: str, correct: bool) -> None:
@@ -364,12 +365,13 @@ class MainWindow(QMainWindow):
             "exercise_passed" if correct else "exercise_failed",
             concept_id,
             f"{exercise_id}: {'correct' if correct else 'not correct yet'}",
+            self.language,
         )
         self.refresh_insights()
 
     def _mark_complete(self, lesson_id: str) -> None:
         self.database.mark_lesson_complete(lesson_id, self.language)
-        self.database.record_activity("lesson_complete", lesson_id, "marked complete")
+        self.database.record_activity("lesson_complete", lesson_id, "marked complete", self.language)
         self.refresh_insights()
         self.complete_button_state()
         self.statusBar().showMessage(f"{lesson_id} marked complete")
@@ -379,7 +381,7 @@ class MainWindow(QMainWindow):
             return
         for lesson in self.lessons:
             self.database.unmark_lesson_complete(lesson.id, self.language)
-        self.database.clear_activity()
+        self.database.clear_activity(self.language)
         self.refresh_all()
         self.statusBar().showMessage(
             f"Lesson progress cleared for {curriculum_registry.display_name(self.language)}"
@@ -393,7 +395,7 @@ class MainWindow(QMainWindow):
         stats = self.database.lesson_stats([l.id for l in self.lessons])
         self.dashboard.set_lessons(self.lessons)
         self.dashboard.refresh(completed, stats)
-        self.dashboard.set_activity(self.database.recent_activity(12))
+        self.dashboard.set_activity(self.database.recent_activity(12, self.language))
         self.progress_view.set_lessons(self.lessons)
         self.progress_view.refresh(self.database, self.database.completed_lessons(self.language))
 

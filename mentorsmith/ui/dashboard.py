@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ..core.curriculum import Lesson
+from ..core.mastery import LABEL_DESCRIPTIONS
 from . import theme
 
 
@@ -154,13 +155,6 @@ class DashboardView(QWidget):
             + "".join(rows)
             + "</table>"
         )
-
-    def select_lesson(self, lesson_id: str) -> None:
-        for index in range(self.lesson_list.count()):
-            item = self.lesson_list.item(index)
-            if item.data(Qt.ItemDataRole.UserRole) == lesson_id:
-                self.lesson_list.setCurrentItem(item)
-                return
 
     # ------------------------------------------------------------------
     # Events
@@ -397,6 +391,16 @@ class InsightsPanel(QWidget):
                 f"{evidence}{missing}</td>"
                 f"</tr>"
             )
+        # A bare label like "strong" means nothing to a newcomer, and the whole
+        # point of the app is that claims are explainable. The glossary was
+        # written in Phase 2 and never surfaced; this is where it belongs.
+        legend = "".join(
+            f"<tr><td style='padding:1px 8px'><b>{label.replace('_', ' ')}</b></td>"
+            f"<td style='padding:1px 8px;color:{theme.MUTED}'>"
+            f"{_escape(description)}</td></tr>"
+            for label, description in LABEL_DESCRIPTIONS.items()
+        )
+
         self.mastery_view.setHtml(
             "<table width='100%' cellspacing='0' cellpadding='0'>"
             "<tr style='color:"
@@ -406,6 +410,11 @@ class InsightsPanel(QWidget):
             "<th align='left'>Alone</th><th align='left'>Hints</th>"
             "<th align='left'>Score &amp; evidence</th></tr>"
             + "".join(rows)
+            + "</table>"
+            + f"<p style='margin-top:10px;color:{theme.MUTED}'>"
+              "<b>What the labels mean</b></p>"
+            + "<table width='100%' cellspacing='0' cellpadding='0'>"
+            + legend
             + "</table>"
         )
 

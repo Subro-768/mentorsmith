@@ -213,9 +213,6 @@ class ExerciseBank:
     def for_lesson(self, lesson_id: str) -> list[Exercise]:
         return [e for e in self.exercises if e.lesson_id == lesson_id]
 
-    def for_concepts(self, concept_ids: set[str]) -> list[Exercise]:
-        return [e for e in self.exercises if e.concept_id in concept_ids]
-
     def types_present(self) -> dict[str, int]:
         counts: dict[str, int] = {}
         for exercise in self.exercises:

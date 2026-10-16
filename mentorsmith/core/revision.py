@@ -196,7 +196,15 @@ def compute_review_regressions(attempts: list[dict]) -> dict[str, int]:
     return regressions
 
 
-def persist_reviews(database, items: list[ReviewItem]) -> list[int]:
-    """Store review flags, deduplicated on (concept, open)."""
-    return [database.add_review(item.concept_id, item.reason, "; ".join(item.evidence))
-            for item in items]
+def persist_reviews(database, items: list[ReviewItem], language: str = "cpp") -> list[int]:
+    """Store review flags, deduplicated on (concept, language, open).
+
+    A C++ pointer review and a C pointer review are different flags: they point
+    at different mistakes, so one must not satisfy the other.
+    """
+    return [
+        database.add_review(
+            item.concept_id, item.reason, "; ".join(item.evidence), language
+        )
+        for item in items
+    ]

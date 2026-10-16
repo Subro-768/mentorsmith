@@ -20,7 +20,6 @@ from ..core.concepts import ConceptModel
 from ..core.db import Database
 from ..core.exercises import ExerciseBank
 from ..core.mastery import (
-    LABEL_DESCRIPTIONS,
     MasteryAssessment,
     assess_many,
     label_rank,
@@ -29,6 +28,7 @@ from ..core.revision import (
     DISCLAIMER,
     ReviewItem,
     compute_review_regressions,
+    persist_reviews,
     recommend_reviews,
 )
 
@@ -222,11 +222,16 @@ def build_report(
         limit=review_limit,
     )
 
-    report.projects = database.list_projects()
+    # Reviews used to be computed and displayed but never written, so the
+    # `reviews` table stayed empty forever and close_review had nothing to act
+    # on. Persisted here, deduplicated on (concept, language, open).
+    persist_reviews(database, report.reviews, language)
+
+    report.projects = database.list_projects(language)
     done_milestones = 0
     total_milestones = 0
     for project in report.projects:
-        milestones = database.milestones_for(str(project["id"]))
+        milestones = database.milestones_for(str(project["id"]), language)
         total_milestones += len(milestones)
         done_milestones += sum(1 for m in milestones if m.get("status") == "done")
     report.milestone_totals = {
@@ -246,6 +251,3 @@ def _independent_for(database: Database, concept_id: str) -> int:
     return int(rows["n"]) if rows else 0
 
 
-def label_glossary() -> dict[str, str]:
-    """Plain-language descriptions of every label, for the UI."""
-    return dict(LABEL_DESCRIPTIONS)

@@ -90,11 +90,6 @@ class PracticeOutcome:
     def correct(self) -> bool:
         return self.grade.correct
 
-    @property
-    def needs_attention(self) -> bool:
-        """Whether the debugging coach should speak."""
-        return not self.grade.correct
-
     def to_dict(self) -> dict:
         return {
             "exercise_id": self.exercise.id,

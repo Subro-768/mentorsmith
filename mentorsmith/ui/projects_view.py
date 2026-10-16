@@ -47,6 +47,9 @@ class ProjectsView(QWidget):
         super().__init__(parent)
         self.database = database
         self.model = model
+        #: Tracks which language these projects belong to. Set by the main
+        #: window on a language switch; progress must not cross tracks.
+        self.language = "cpp"
         self._proposals = []
         self._current_project_id: str | None = None
         self._build_ui()
@@ -150,8 +153,8 @@ class ProjectsView(QWidget):
 
     def _refresh_progress(self) -> None:
         done = total = 0
-        for project in self.database.list_projects():
-            milestones = self.database.milestones_for(str(project["id"]))
+        for project in self.database.list_projects(self.language):
+            milestones = self.database.milestones_for(str(project["id"]), self.language)
             total += len(milestones)
             done += sum(1 for m in milestones if m.get("status") == "done")
         self.progress_bar.setValue(int(round(done * 100 / total)) if total else 0)
@@ -224,7 +227,7 @@ class ProjectsView(QWidget):
             self.status_combo.setText("Not started")
             return
 
-        milestones = self.database.milestones_for(project_id)
+        milestones = self.database.milestones_for(project_id, self.language)
         progress = milestone_progress(milestones)
         self.status_combo.setText(
             f"Project progress: {progress['done']}/{progress['total']} milestones"
@@ -241,7 +244,7 @@ class ProjectsView(QWidget):
                 + "".join(f"<li>{_escape(c)}</li>" for c in criteria if c)
                 + "</ul>"
             )
-        activity = self.database.project_activity_for(project_id)
+        activity = self.database.project_activity_for(project_id, self.language)
         if activity:
             rows.append("<h4>Recorded notes</h4><ul>")
             for entry in activity[:10]:
@@ -278,10 +281,11 @@ class ProjectsView(QWidget):
             if answer != QMessageBox.StandardButton.Yes:
                 return
 
-        save_project(self.database, proposal)
-        self.database.set_project_status(proposal.project.id, "in_progress")
+        save_project(self.database, proposal, self.language)
+        self.database.set_project_status(proposal.project.id, "in_progress", self.language)
         self.database.record_activity(
-            "project_started", None, f"{proposal.project.title} started"
+            "project_started", None, f"{proposal.project.title} started",
+            self.language,
         )
         self._render_milestones(proposal.project.id)
         self.data_changed.emit()
@@ -290,7 +294,7 @@ class ProjectsView(QWidget):
         """Advance a milestone, recording whether help was needed."""
         if not self._current_project_id:
             return
-        milestones = self.database.milestones_for(self._current_project_id)
+        milestones = self.database.milestones_for(self._current_project_id, self.language)
         pending = [m for m in milestones if m.get("status") != "done"]
         if not pending:
             QMessageBox.information(
@@ -318,14 +322,15 @@ class ProjectsView(QWidget):
             f"Milestone {milestone['ordinal']} set to {choice}",
             milestone_id=self._selected_milestone_id,
             needed_substantial_help=self.help_check.isChecked(),
+            language=self.language,
         )
 
-        remaining = [m for m in self.database.milestones_for(self._current_project_id)
+        remaining = [m for m in self.database.milestones_for(self._current_project_id, self.language)
                      if m.get("status") != "done"]
         if choice == "done" and not remaining:
-            self.database.set_project_status(self._current_project_id, "done")
+            self.database.set_project_status(self._current_project_id, "done", self.language)
         else:
-            self.database.set_project_status(self._current_project_id, "in_progress")
+            self.database.set_project_status(self._current_project_id, "in_progress", self.language)
 
         self.help_check.setChecked(False)
         self._render_milestones(self._current_project_id)
@@ -346,6 +351,7 @@ class ProjectsView(QWidget):
             self._current_project_id,
             note.strip(),
             needed_substantial_help=self.help_check.isChecked(),
+            language=self.language,
         )
         self.help_check.setChecked(False)
         self._render_milestones(self._current_project_id)

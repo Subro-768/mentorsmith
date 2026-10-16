@@ -91,20 +91,6 @@ def curriculum_path(language_id: str) -> Path:
     )
 
 
-def export_path(language_id: str) -> Path:
-    """Where the Android app's bundled copy of the curriculum is written."""
-    return (
-        Path(__file__).resolve().parent.parent.parent
-        / "android"
-        / "app"
-        / "src"
-        / "main"
-        / "assets"
-        / "curriculum"
-        / f"{language_id}.json"
-    )
-
-
 def summary() -> dict[str, str]:
     """One line per language, for the settings screen and ``--check``."""
     return {

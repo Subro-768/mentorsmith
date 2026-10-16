@@ -289,9 +289,6 @@ class MarkdownView(QTextBrowser):
         super().__init__(parent)
         self.setOpenExternalLinks(False)
 
-    def set_markdown(self, text: str) -> None:
-        self.setHtml(self.markdown_to_html(text))
-
 
 def markdown_to_html(text: str) -> str:
     """Convert the lesson Markdown subset to HTML for display."""

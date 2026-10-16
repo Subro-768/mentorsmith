@@ -1,7 +1,8 @@
 # PROJECT_STATE.md
 
 ## Current state
-- Current phase: **All five phases complete.** Order was 1 → 2 → **4** → 3 → 5
+- Current phase: **All five phases complete**, plus a reliability audit that
+  found two real defects (see below). Order was 1 → 2 → **4** → 3 → 5
   (see "Why Phase 4 came before Phase 3" below).
 - Last updated: 2026-10-16
 - Branch / repository status: `master`, four commits, clean tree. No remote.
@@ -29,6 +30,7 @@ de-risked it: if the Android toolchain had failed on JDK 25 / AGP, Phases 2 and
 | After Phase 3 | 385 | 3 |
 | Start of Phase 5 | 385 | 3 |
 | After Phase 5 | **576** | 3 |
+| After the §9 audit | **602** | **4** |
 
 All earlier tests still pass unchanged. Android adds **41** JVM unit tests.
 
@@ -242,6 +244,28 @@ but not auto-graded.
 - **No release build, no packaging, no store listing.** `assembleRelease` is
   untested and signing is not configured.
 
+### Two defects found by the Phase 5 reliability audit (§9)
+
+Phase 5 §9 says to prioritise real risks over additions. Two were found, both
+of which made a documented feature untrue:
+
+1. **Reviews were never persisted.** Phase 2 documented "concepts can be flagged
+   for review". They were computed and displayed, and `persist_reviews()` existed
+   and was tested — but nothing called it, so the `reviews` table stayed empty
+   forever and `close_review()` had no rows to act on. Now called from
+   `insights.build_report`, deduplicated on `(concept, language, open)`.
+2. **Phase 4's language isolation was incomplete.** Schema v3 covered two of
+   the eight progress tables. Fixed by migration 4 (above).
+
+Dead code removed after verifying each was unreferenced:
+`execution.export_path`, `exercises.for_concepts`,
+`practice.needs_attention`, `code_editor.set_markdown`,
+`dashboard.select_lesson`, `insights.label_glossary`.
+
+`LABEL_DESCRIPTIONS` was written in Phase 2 and never surfaced in the UI. It is
+now a "What the labels mean" legend under the Progress table, so a bare label
+like `strong` is explained rather than shown bare.
+
 ## Commands
 ### Run Linux app
 ```bash
@@ -384,7 +408,7 @@ every label must ship with evidence strings.
 - Database: `~/.local/share/mentorsmith/progress.db` (SQLite 3.51.2).
 - Work directory for compiled code: `~/.local/share/mentorsmith/workdir/<language>/`.
 - Both honour `XDG_DATA_HOME`.
-- Schema version **3**.
+- Schema version **4**.
   - v1 → Phase 1.
   - v2 → Phase 2, **strictly additive**: nine `ALTER TABLE ... ADD COLUMN`
     statements with defaults, plus five new tables.
@@ -394,6 +418,14 @@ every label must ship with evidence strings.
     a column to a primary key, so the table is created, copied, dropped and
     renamed. Every existing row is preserved with `language='cpp'`, which is
     correct because C++ was the only track at the time.
+  - v4 → the Phase 5 audit, which found that **Phase 4 had missed four tables**.
+    `reviews`, `projects`, `project_milestones`, `concept_progress`, `activity`
+    and `project_activity` had no `language` column at all, so a C++ pointer
+    review was indistinguishable from a C pointer review, project progress
+    leaked across tracks, the activity feed showed one track's events in
+    another, and `concept_progress` — a cache of per-language mastery — could
+    serve one track's label for another. Four plain `ADD COLUMN`s plus two table
+    rebuilds (`concept_progress`, `projects`).
 - Tables: `lesson_progress`, `exercise_attempts` (now carrying Phase 2
   evidence columns and a language), `activity`, `app_settings`, `concept_progress`,
   `projects`, `project_milestones`, `project_activity`, `reviews`.
