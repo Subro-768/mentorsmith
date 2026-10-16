@@ -170,6 +170,20 @@ class OpenAICompatibleProvider(LLMProvider):
                 f"{self.api_key_env}=your-key-here"
             )
 
+        # The offline switch is enforced here, at the only place that opens a
+        # socket, rather than in a caller. It used to be checked in the UI only,
+        # which meant any code path that used the provider directly - including
+        # the Phase 5 developer tools - could still make a request while the
+        # user believed they were offline. That is exactly the kind of promise
+        # that must not be kept by remembering to check in one place.
+        if not network_allowed():
+            raise ProviderNetworkError(
+                "Offline mode is on (MENTORSMITH_OFFLINE=1), so no request was "
+                "sent. Lessons, compiling and running, progress and the "
+                "developer tools all work without a network; only the AI tutor "
+                "needs one."
+            )
+
         body = json.dumps(self._payload(request)).encode("utf-8")
         req = urllib.request.Request(
             self._endpoint(), data=body, headers=self._headers(), method="POST"

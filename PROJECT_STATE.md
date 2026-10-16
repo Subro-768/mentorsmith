@@ -30,7 +30,8 @@ de-risked it: if the Android toolchain had failed on JDK 25 / AGP, Phases 2 and
 | After Phase 3 | 385 | 3 |
 | Start of Phase 5 | 385 | 3 |
 | After Phase 5 | **576** | 3 |
-| After the §9 audit | **602** | **4** |
+| After the §9 audit | 602 | **4** |
+| After the §6 offline work | **627** | 4 |
 
 All earlier tests still pass unchanged. Android adds **41** JVM unit tests.
 
@@ -231,6 +232,7 @@ but not auto-graded.
       proposed versus executed
 - [x] **Security audit** that runs real code and states what it does *not* prove
 - [x] **Delayed-review analytics** distinguishing recall from transfer
+- [x] **Offline gate enforced at the socket**, not in a caller (§6, §7)
 - [x] **Bounded output reading** (see below — this was a real bug)
 - [x] Developer page wired into the desktop UI, 31 smoke tests
 - [x] README and this document updated to match the code
@@ -265,6 +267,20 @@ Dead code removed after verifying each was unreferenced:
 `LABEL_DESCRIPTIONS` was written in Phase 2 and never surfaced in the UI. It is
 now a "What the labels mean" legend under the Progress table, so a bare label
 like `strong` is explained rather than shown bare.
+
+### A third defect: the offline switch was UI-only (§6, §7)
+
+`MENTORSMITH_OFFLINE=1` was checked in `main_window._refresh_provider_status`
+and nowhere else. That means any code path using the provider directly could
+still open a socket while the user believed they were offline — including the
+Phase 5 developer tools written the same day. The gate now lives inside
+`complete()`, the only function that sends anything, and
+`tests/test_offline.py` asserts that even a direct `urlopen` is never reached.
+
+`tests/test_offline.py` also disables the socket layer outright and checks that
+every language still compiles and runs, that lessons load, that the dashboard
+builds, that the security audit runs, and that read-only git works. "Offline"
+is verified behaviour, not a claim in a README.
 
 ## Commands
 ### Run Linux app
