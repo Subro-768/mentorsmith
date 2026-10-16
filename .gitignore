@@ -23,3 +23,17 @@ config.local.json
 admin-dashboard-panel-with-gradient-style/
 dashboard-user-panel-template/
 *.zip
+
+# Android / Gradle build output
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+android/*.iml
+android/app/*.iml
+*.apk
+*.aab
+*.ap_
+*.dex

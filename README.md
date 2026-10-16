@@ -230,6 +230,9 @@ always mocked, so the suite runs offline and costs nothing.
 
 ```
 main.py                     Entry point (--check builds the UI headlessly)
+tools/export_curriculum.py  Publishes the curriculum as the Android app's JSON
+sync_server/                Optional local sync backend (FastAPI + SQLite)
+android/                    Android companion (Kotlin, Compose, Room)
 mentorsmith/
   app.py                    QApplication bootstrap
   config.py                 Paths and non-secret settings
@@ -301,9 +304,30 @@ transferred.
 | `Ctrl+,` | Settings |
 | `Ctrl+Enter` | Send a chat message |
 
+## Android companion
+
+A read-and-revise companion app lives in `android/`. It does **not** run code —
+that stays on Linux, where the real compiler is.
+
+```bash
+python3 tools/export_curriculum.py     # publish the curriculum into assets/
+cd android
+./gradlew :app:assembleDebug           # build the APK
+./gradlew :app:testDebugUnitTest       # 41 JVM unit tests
+```
+
+It carries the same curriculum, the same mastery rules and the same output
+comparison, so both devices agree about what was learned. Progress is written
+locally first and only marked *synced* once a server confirms it.
+
+**Tutor chat is disabled on Android, on purpose.** An APK is not a secret: a key
+compiled into it can be extracted by anyone who downloads it. Chat is served by
+the optional backend instead, which holds the key server-side. See
+[docs/sync-contract.md](docs/sync-contract.md).
+
 ## Known limitations
 
-- Linux desktop only. The Android companion is not built yet.
+- Tutor chat on Android is not implemented; it needs the backend to exist first.
 - The in-app Markdown renderer covers the subset the lessons use, not the
   whole specification.
 - Exercise coverage is uneven. C++ has 53 exercises; the other tracks have

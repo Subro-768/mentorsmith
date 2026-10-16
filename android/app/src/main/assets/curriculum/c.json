@@ -1,0 +1,688 @@
+{
+  "format_version": 1,
+  "language": "c",
+  "label": "C",
+  "generated_by": "tools/export_curriculum.py",
+  "lessons": [
+    {
+      "id": "01-program-structure",
+      "title": "Program Structure",
+      "order": 1,
+      "sections": {
+        "objectives": "- Write a C program that compiles and runs.\n- Explain `main`, `int main(void)` and the exit status.\n- Use `#include` correctly and understand what it actually does.\n- Read a compiler diagnostic and find the real mistake.",
+        "explanation": "A C program has a `main` function the operating system calls:\n\n```c\n#include <stdio.h>\n\nint main(void) {\n    printf(\"Hello from C\\n\");\n    return 0;\n}\n```\n\nCompile and run:\n\n```bash\ngcc -std=c11 -Wall -Wextra program.c -o program\n./program\n```\n\n**`int main(void)`** — the two words matter. `int` is the return type. `(void)`\nmeans the function takes no parameters, which is different from `( )` where an\nempty list means \"unspecified arguments\". Always write `(void)`.\n\n`return 0` reports success. Any non-zero value reports failure.\n\n**`#include <stdio.h>`** pastes the contents of that header in before compiling.\n`stdio.h` declares `printf` and friends. The angle brackets mean \"look in the\nsystem's include directories\"; quotes mean \"look in this directory first\".\n\nC has no built-in console: every line of output comes from the standard library.\n`printf` comes from `<stdio.h>`, which is why the `#include` is required.\n\n**C is strict.** Unlike C++, a C compiler rejects things C++ accepts:\n\n- implicit function declarations\n- forgetting to return from a non-void function\n- using a variable before declaring it\n\nThose are why `-Wall -Wextra` matter, and why some warnings are promoted to\nerrors in this course.",
+        "example": "```c\n/* program_structure.c */\n#include <stdio.h>\n\nint main(void) {\n    printf(\"C is compiled, not interpreted.\\n\");\n    printf(\"A line: %d\\n\", 42);\n    return 0;\n}\n```\n\n`%d` is a conversion specifier. Getting the specifier wrong — `%d` for a\n`double`, say — is undefined behaviour, which is a real source of crashes.",
+        "knowledge_checks": "Q: Why write `int main(void)` instead of `int main()`?\nA: `(void)` states explicitly that the function takes no arguments, so the compiler checks calls. `()` leaves the arguments unspecified.\nQ: What does `#include <stdio.h>` do?\nA: It pastes the header's declarations in before compiling, which is what makes `printf` usable.\nQ: What does `return 0` from `main` mean?\nA: It becomes the process exit status. By convention 0 means success.\nQ: Why use `-Wall -Wextra`?\nA: They surface the mistakes C cannot safely accept, such as implicit declarations and missing returns.",
+        "exercise": "Write a program that prints three labelled lines: your name, a number, and a\nsum. Then remove a semicolon, compile, and read what the compiler says.\n\n```c starter\n#include <stdio.h>\n\nint main(void) {\n    /* Print \"Name: <your name>\", \"Value: 7\" and \"Double: 14\". */\n    return 0;\n}\n```",
+        "common_mistakes": "- **Forgetting `#include <stdio.h>`.** Every `printf` becomes an error.\n- **Using `console.log`.** That is JavaScript; C uses `printf`.\n- **Mismatched format specifiers,** which is undefined behaviour, not a warning.\n- **Writing `()` instead of `(void)`.**\n- **Expecting C++ conveniences.** There is no `std::string`, no references, no default arguments.",
+        "recap": "- `int main(void)` with `return 0`.\n- `#include` is a preprocessor step bringing in declarations.\n- Output comes from `<stdio.h>`.\n- Compile with `-Wall -Wextra` and read the first error, not the last."
+      },
+      "example_code": "/* program_structure.c */\n#include <stdio.h>\n\nint main(void) {\n    printf(\"C is compiled, not interpreted.\\n\");\n    printf(\"A line: %d\\n\", 42);\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    /* Print \"Name: <your name>\", \"Value: 7\" and \"Double: 14\". */\n    return 0;\n}",
+      "checks": [
+        {
+          "question": "Why write `int main(void)` instead of `int main()`?",
+          "answer": "`(void)` states explicitly that the function takes no arguments, so the compiler checks calls. `()` leaves the arguments unspecified."
+        },
+        {
+          "question": "What does `#include <stdio.h>` do?",
+          "answer": "It pastes the header's declarations in before compiling, which is what makes `printf` usable."
+        },
+        {
+          "question": "What does `return 0` from `main` mean?",
+          "answer": "It becomes the process exit status. By convention 0 means success."
+        },
+        {
+          "question": "Why use `-Wall -Wextra`?",
+          "answer": "They surface the mistakes C cannot safely accept, such as implicit declarations and missing returns."
+        }
+      ]
+    },
+    {
+      "id": "02-types",
+      "title": "Types and Storage",
+      "order": 2,
+      "sections": {
+        "objectives": "- Use the basic C types and know their sizes.\n- Choose `float` or `double` deliberately.\n- Understand integer division and the usual conversions.\n- Format values correctly with `printf`.",
+        "explanation": "| Type | Typical size | Notes |\n|---|---|---|\n| `char` | 1 byte | One character, or −128..127 |\n| `short` | 2 bytes | Rarely needed |\n| `int` | 4 bytes | The default integer |\n| `long` | 8 bytes on 64-bit Linux | Use `long long` for certainty |\n| `float` | 4 bytes | About 7 significant digits |\n| `double` | 8 bytes | About 15–17 significant digits |\n\nCheck rather than assume with `sizeof`:\n\n```c\n#include <stdio.h>\n\nint main(void) {\n    printf(\"%zu %zu %zu %zu\\n\",\n           sizeof(char), sizeof(int), sizeof(long), sizeof(double));\n    return 0;\n}\n```\n\n`%zu` is the correct specifier for `sizeof`, which has type `size_t`.\n\n**Integer division truncates.** This is C's most common surprise and it is the\nsame trap as in C++:\n\n```c\nint a = 7, b = 2;\nprintf(\"%d\\n\", a / b);     /* 3 */\nprintf(\"%.1f\\n\", a / (double)b);  /* 3.5 - cast first! */\nprintf(\"%d\\n\", a % b);     /* 1 - remainder */\n```\n\n**The usual arithmetic conversions.** When you mix types, C promotes the lower\nrank one. `int + double` becomes `double`. But `char + int` is `int`, and\ncomparisons are safest when both sides have the same type.\n\n**Signed and unsigned.** `unsigned int` cannot hold a negative value, so\ncomparing a signed value against an unsigned one is a classic bug:\n\n```c\nint size = 5;\nunsigned int n = 3;\nif (size > n) { ... }   /* fine */\nsize = -1;\nif (size > n) { ... }   /* -1 converts to a huge unsigned -> true! */\n```\n\nDeclare loop counters to match what you compare against:\n\n```c\nfor (size_t i = 0; i < count; ++i) { ... }\n```\n\n**Format specifiers must match the type**, or you get garbage:\n\n| Type | Specifier |\n|---|---|\n| `int` | `%d` |\n| `unsigned int` | `%u` |\n| `long` | `%ld` |\n| `double` | `%f` (in `printf`) |\n| `char *` | `%s` |\n| pointer | `%p` |\n\nPassing a `double` to `%d` is undefined behaviour, so it may print nonsense\nrather than failing loudly.",
+        "example": "```c\n/* types.c */\n#include <stdio.h>\n\nint main(void) {\n    int    a = 7;\n    int    b = 2;\n    double c = 7.0;\n\n    printf(\"sizes: char=%zu int=%zu long=%zu double=%zu\\n\",\n           sizeof(char), sizeof(int), sizeof(long), sizeof(double));\n\n    printf(\"7 / 2            = %d\\n\", a / b);\n    printf(\"7 %% 2            = %d\\n\", a % b);\n    printf(\"7.0 / 2          = %.2f\\n\", c / b);\n    printf(\"(double)7 / 2    = %.2f\\n\", (double)a / b);\n    printf(\"1 / 3            = %.6f\\n\", 1.0 / 3.0);\n\n    char letter = 'Z';\n    printf(\"char             = %c, as int %d\\n\", letter, letter);\n\n    float small = 1.0f / 3.0f;\n    double better = 1.0 / 3.0;\n    printf(\"float            = %.7f\\n\", small);\n    printf(\"double           = %.15f\\n\", better);\n\n    return 0;\n}\n```",
+        "knowledge_checks": "Q: What is the value of `7 / 2` when both are `int`?\nA: `3`. Integer division discards the fractional part.\nQ: Why use `sizeof` rather than assuming a type's size?\nA: Sizes are implementation-defined; `sizeof` reports what this compiler actually uses.\nQ: Why is comparing a negative `int` against an `unsigned int` dangerous?\nA: The negative value converts to a huge unsigned number, so the comparison gives the opposite of what you expected.\nQ: What does `%zu` format?\nA: A `size_t`, which is what `sizeof` returns.",
+        "exercise": "Declare an `int` numerator of 7 and denominator of 2, and print the integer\ndivision result, the remainder, and the same division promoted to `double`.\nUse the correct specifier for each and label every line.\n\n```c starter\n#include <stdio.h>\n\nint main(void) {\n    int numerator = 7;\n    int denominator = 2;\n    /* Print integer division, remainder, and the promoted result. */\n    return 0;\n}\n```\n\nExtension: print `sizeof` for `int`, `double` and `char` on one line.",
+        "common_mistakes": "- **Printing a `double` with `%d`.** Undefined behaviour; use `%f`.\n- **Dividing two `int`s and expecting a fraction.** Cast one to `double`.\n- **Comparing signed against unsigned.**\n- **Assuming `int` is 64-bit.** Use `long long` when you need the range.\n- **Using `%f` with `scanf` but `%lf` carelessly.** In `scanf`, `%f` reads a `float*` and `%lf` reads a `double*`.",
+        "recap": "- Know your sizes, but verify with `sizeof`.\n- Integer division truncates; cast to `double` to divide properly.\n- Mismatched format specifiers are undefined behaviour.\n- Signed/unsigned comparison is a common bug.\n- `size_t` for sizes and indices, and `%zu` to print it."
+      },
+      "example_code": "/* types.c */\n#include <stdio.h>\n\nint main(void) {\n    int    a = 7;\n    int    b = 2;\n    double c = 7.0;\n\n    printf(\"sizes: char=%zu int=%zu long=%zu double=%zu\\n\",\n           sizeof(char), sizeof(int), sizeof(long), sizeof(double));\n\n    printf(\"7 / 2            = %d\\n\", a / b);\n    printf(\"7 %% 2            = %d\\n\", a % b);\n    printf(\"7.0 / 2          = %.2f\\n\", c / b);\n    printf(\"(double)7 / 2    = %.2f\\n\", (double)a / b);\n    printf(\"1 / 3            = %.6f\\n\", 1.0 / 3.0);\n\n    char letter = 'Z';\n    printf(\"char             = %c, as int %d\\n\", letter, letter);\n\n    float small = 1.0f / 3.0f;\n    double better = 1.0 / 3.0;\n    printf(\"float            = %.7f\\n\", small);\n    printf(\"double           = %.15f\\n\", better);\n\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int numerator = 7;\n    int denominator = 2;\n    /* Print integer division, remainder, and the promoted result. */\n    return 0;\n}",
+      "checks": [
+        {
+          "question": "What is the value of `7 / 2` when both are `int`?",
+          "answer": "`3`. Integer division discards the fractional part."
+        },
+        {
+          "question": "Why use `sizeof` rather than assuming a type's size?",
+          "answer": "Sizes are implementation-defined; `sizeof` reports what this compiler actually uses."
+        },
+        {
+          "question": "Why is comparing a negative `int` against an `unsigned int` dangerous?",
+          "answer": "The negative value converts to a huge unsigned number, so the comparison gives the opposite of what you expected."
+        },
+        {
+          "question": "What does `%zu` format?",
+          "answer": "A `size_t`, which is what `sizeof` returns."
+        }
+      ]
+    },
+    {
+      "id": "03-conditions-and-loops",
+      "title": "Conditions and Loops",
+      "order": 3,
+      "sections": {
+        "objectives": "- Write `if`, `else` and `switch` correctly.\n- Use `while`, `do while` and `for`, and choose between them.\n- Avoid off-by-one errors and infinite loops.\n- Use `break` and `continue` deliberately.",
+        "explanation": "Conditions are the same as in C++:\n\n```c\nif (score >= 90) {\n    grade = 'A';\n} else if (score >= 80) {\n    grade = 'B';\n} else {\n    grade = 'F';\n}\n```\n\n**In C, any non-zero value is true.** This matters because comparison operators\nreturn `1` for true and `0` for false, so you can write:\n\n```c\nif (count) { ... }        /* true when count is not 0 */\n```\n\nbut you must never write `if (count = 5)`, which assigns and is almost always a\nbug. Compile with `-Wall` and the compiler will tell you.\n\n**Loops.** All three forms from C++ exist:\n\n```c\n/* while: unknown count */\nint n = 3;\nwhile (n > 0) {\n    printf(\"%d \", n);\n    --n;\n}\n\n/* do while: at least one pass */\nint value;\ndo {\n    scanf(\"%d\", &value);\n} while (value <= 0);\n\n/* for: known count */\nfor (int i = 0; i < 5; ++i) {\n    printf(\"%d \", i);\n}\nprintf(\"\\n\");\n```\n\nDeclaring `i` inside the `for` header is C99 and later. It is the modern\nidiom and it keeps the variable scoped to the loop.\n\n**`switch` only works on integral types** — not floats, not strings:\n\n```c\nswitch (choice) {\n    case 1:  printf(\"New game\\n\"); break;\n    case 2:  printf(\"Load game\\n\"); break;\n    default: printf(\"Invalid\\n\");   break;\n}\n```\n\nThe `break` is required. Without it execution falls through into the next case.\n\n**Off-by-one.** `for (i = 0; i < 5; ++i)` runs five times with `i` equal to 0..4.\nChanging `<` to `<=` adds a sixth pass.\n\n**`break` and `continue`** work as in C++. Use them sparingly; a loop with\nseveral `break`s is often clearer as two simpler loops.",
+        "example": "```c\n/* conditions_and_loops.c */\n#include <stdio.h>\n\nint main(void) {\n    int i;\n\n    for (i = 1; i <= 5; ++i) {\n        printf(\"%d \", i);\n    }\n    printf(\"\\n\");\n\n    int n = 3;\n    while (n > 0) {\n        printf(\"countdown %d\\n\", n);\n        --n;\n    }\n\n    int value = 0;\n    do {\n        ++value;\n    } while (value < 3);\n    printf(\"do while ran %d times\\n\", value);\n\n    /* A truthy value: 42 is not zero, so this branch is taken. */\n    int truthy = 42;\n    if (truthy) {\n        printf(\"non-zero is true in C\\n\");\n    }\n\n    /* switch on an integer */\n    int choice = 2;\n    switch (choice) {\n        case 1:\n            printf(\"New game\\n\");\n            break;\n        case 2:\n            printf(\"Load game\\n\");\n            break;\n        default:\n            printf(\"Invalid choice\\n\");\n            break;\n    }\n\n    /* break and continue */\n    for (i = 0; i < 6; ++i) {\n        if (i == 3) {\n            continue;              /* skip 3 */\n        }\n        if (i == 5) {\n            break;                 /* stop before 5 */\n        }\n        printf(\"kept %d\\n\", i);\n    }\n\n    return 0;\n}\n```",
+        "knowledge_checks": "Q: Which values are true in C?\nA: Any non-zero value. Zero is the only false value.\nQ: How many times does `for (i = 0; i < 5; ++i)` run?\nA: Five times, with `i` equal to 0 to 4.\nQ: What happens if a `switch` case has no `break`?\nA: Execution falls through into the next case and runs that code too.\nQ: What is the difference between `break` and `continue`?\nA: `break` exits the loop; `continue` skips to the next iteration.",
+        "exercise": "Print the first 10 multiples of 7 with a `for` loop. Then use a `while` loop to\nread integers until the user enters 0, keeping a count and sum, and print the\naverage as a `double`.\n\n```c starter\n#include <stdio.h>\n\nint main(void) {\n    int i;\n\n    /* Part 1: for loop printing 7, 14, ... 70. */\n\n    /* Part 2: while loop reading ints until 0.\n       Remember: scanf needs an address, so &value. */\n\n    return 0;\n}\n```",
+        "common_mistakes": "- **`if (x = 5)`** assigns instead of comparing.\n- **`scanf(\"%d\", value)`** without `&`. It must receive the address.\n- **`<=` where you meant `<`,** adding an extra iteration.\n- **Forgetting `break` in a `switch`.**\n- **Comparing against `'\\0'` in a loop** where you meant a digit `0`. They differ.",
+        "recap": "- Non-zero is true; zero is false.\n- `while` for unknown counts, `for` for known, `do while` for at-least-once.\n- `for (int i = 0; ...)` scopes the counter and is the modern idiom.\n- `switch` needs `break` and only handles integral types.\n- `scanf` takes addresses."
+      },
+      "example_code": "/* conditions_and_loops.c */\n#include <stdio.h>\n\nint main(void) {\n    int i;\n\n    for (i = 1; i <= 5; ++i) {\n        printf(\"%d \", i);\n    }\n    printf(\"\\n\");\n\n    int n = 3;\n    while (n > 0) {\n        printf(\"countdown %d\\n\", n);\n        --n;\n    }\n\n    int value = 0;\n    do {\n        ++value;\n    } while (value < 3);\n    printf(\"do while ran %d times\\n\", value);\n\n    /* A truthy value: 42 is not zero, so this branch is taken. */\n    int truthy = 42;\n    if (truthy) {\n        printf(\"non-zero is true in C\\n\");\n    }\n\n    /* switch on an integer */\n    int choice = 2;\n    switch (choice) {\n        case 1:\n            printf(\"New game\\n\");\n            break;\n        case 2:\n            printf(\"Load game\\n\");\n            break;\n        default:\n            printf(\"Invalid choice\\n\");\n            break;\n    }\n\n    /* break and continue */\n    for (i = 0; i < 6; ++i) {\n        if (i == 3) {\n            continue;              /* skip 3 */\n        }\n        if (i == 5) {\n            break;                 /* stop before 5 */\n        }\n        printf(\"kept %d\\n\", i);\n    }\n\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int i;\n\n    /* Part 1: for loop printing 7, 14, ... 70. */\n\n    /* Part 2: while loop reading ints until 0.\n       Remember: scanf needs an address, so &value. */\n\n    return 0;\n}",
+      "checks": [
+        {
+          "question": "Which values are true in C?",
+          "answer": "Any non-zero value. Zero is the only false value."
+        },
+        {
+          "question": "How many times does `for (i = 0; i < 5; ++i)` run?",
+          "answer": "Five times, with `i` equal to 0 to 4."
+        },
+        {
+          "question": "What happens if a `switch` case has no `break`?",
+          "answer": "Execution falls through into the next case and runs that code too."
+        },
+        {
+          "question": "What is the difference between `break` and `continue`?",
+          "answer": "`break` exits the loop; `continue` skips to the next iteration."
+        }
+      ]
+    },
+    {
+      "id": "04-functions",
+      "title": "Functions",
+      "order": 4,
+      "sections": {
+        "objectives": "- Write functions with parameters and return values.\n- Pass by value versus by pointer in C.\n- Declare functions before use.\n- Give every function exactly one job.",
+        "explanation": "```c\nint add(int a, int b) {\n    return a + b;\n}\n```\n\nC has **no references**. Every parameter is passed by value: the function\nreceives a copy. To let a function modify the caller's variable you pass a\npointer:\n\n```c\nvoid swap_values(int *a, int *b) {\n    int temp = *a;\n    *a = *b;\n    *b = temp;\n}\n\nint main(void) {\n    int x = 2, y = 1;\n    swap_values(&x, &y);\n    printf(\"%d %d\\n\", x, y);   /* 1 2 */\n    return 0;\n}\n```\n\n`&x` gives the address, `*a` reads through it. This is exactly how C++\nreferences behave, spelled with pointers instead.\n\n**To avoid copying a large value, take a pointer:**\n\n```c\n/* copies the whole array */\nvoid bad(int values[100]);\n\n/* no copy, read-only */\nvoid good(const int *values, size_t count);\n```\n\nAlways declare the parameter `const` when you only read through it.\n\n**C requires a declaration before use**, which is stricter than C++. Two\nsolutions: define the function above `main`, or add a prototype:\n\n```c\nint add(int a, int b);        /* prototype: no body */\n\nint main(void) {\n    return add(1, 2);\n}\n\nint add(int a, int b) {       /* definition */\n    return a + b;\n}\n```\n\n**Arrays cannot be returned.** You cannot write `int make_array(void)`. Either\nreturn a pointer to heap memory the caller must `free`, or pass in a buffer and\nfill it. That constraint is a direct consequence of arrays being values.\n\n**`void` versus no return.** A function that returns nothing is declared\n`void`, and a bare `return;` is the only legal way out of it early.",
+        "example": "```c\n/* functions.c */\n#include <stdio.h>\n\nint add(int a, int b);\nint triple(int x);\n\nvoid swap_values(int *a, int *b) {\n    int temp = *a;\n    *a = *b;\n    *b = temp;\n}\n\nint sum_of(const int *values, size_t count) {\n    int total = 0;\n    size_t i;\n    for (i = 0; i < count; ++i) {\n        total += values[i];\n    }\n    return total;\n}\n\nint add(int a, int b) {\n    return a + b;\n}\n\nint triple(int x) {\n    return x * 3;\n}\n\nint main(void) {\n    int x = 2, y = 1;\n    swap_values(&x, &y);\n    printf(\"after swap : %d %d\\n\", x, y);\n\n    int values[5] = {1, 2, 3, 4, 5};\n    printf(\"sum         : %d\\n\", sum_of(values, 5));\n\n    printf(\"add(3, 4)   : %d\\n\", add(3, 4));\n    printf(\"triple(7)   : %d\\n\", triple(7));\n\n    /* A function cannot change a caller's int without a pointer. */\n    int n = 5;\n    printf(\"before      : %d\\n\", n);\n\n    return 0;\n}\n```",
+        "knowledge_checks": "Q: How do you let a function change the caller's variable in C?\nA: Pass a pointer and modify through it with `*`. There are no references in C.\nQ: What is the advantage of `const int *values` over `int values[100]`?\nA: It avoids copying the whole array and documents that the function will not modify it.\nQ: Why declare a function before calling it?\nA: C requires a declaration before use; a prototype tells the compiler the signature without the body.\nQ: Why can you not return an array from a C function?\nA: An array type cannot be returned by value. Return a pointer to allocated memory instead, and the caller must free it.",
+        "exercise": "Write three functions: `void swap_values(int*, int*)`, `int sum(const int*, size_t)`\nand `int max_of(const int*, size_t)`. Then call them from `main` and print the\nresults.\n\n```c starter\n#include <stdio.h>\n#include <stddef.h>\n\nvoid swap_values(int *a, int *b) {\n    /* Swap through the pointers. */\n}\n\nint sum(const int *values, size_t count) {\n    /* Return the total. */\n}\n\nint max_of(const int *values, size_t count) {\n    /* Return the largest value. */\n}\n```",
+        "common_mistakes": "- **Passing `&x` when the parameter is `int`** — a type mismatch.\n- **Forgetting `*`** when using a pointer parameter.\n- **Modifying a pointer's target through a `const` pointer,** which the compiler correctly rejects.\n- **Returning a pointer to a local variable,** which dangles once the function returns.\n- **Omitting the prototype,** causing an implicit declaration error.",
+        "recap": "- C has no references; use pointers to modify the caller's data.\n- `const T *` avoids copying and documents read-only use.\n- Declare functions before use, or add prototypes.\n- Arrays cannot be returned by value.\n- `void` functions may only use bare `return;`."
+      },
+      "example_code": "/* functions.c */\n#include <stdio.h>\n\nint add(int a, int b);\nint triple(int x);\n\nvoid swap_values(int *a, int *b) {\n    int temp = *a;\n    *a = *b;\n    *b = temp;\n}\n\nint sum_of(const int *values, size_t count) {\n    int total = 0;\n    size_t i;\n    for (i = 0; i < count; ++i) {\n        total += values[i];\n    }\n    return total;\n}\n\nint add(int a, int b) {\n    return a + b;\n}\n\nint triple(int x) {\n    return x * 3;\n}\n\nint main(void) {\n    int x = 2, y = 1;\n    swap_values(&x, &y);\n    printf(\"after swap : %d %d\\n\", x, y);\n\n    int values[5] = {1, 2, 3, 4, 5};\n    printf(\"sum         : %d\\n\", sum_of(values, 5));\n\n    printf(\"add(3, 4)   : %d\\n\", add(3, 4));\n    printf(\"triple(7)   : %d\\n\", triple(7));\n\n    /* A function cannot change a caller's int without a pointer. */\n    int n = 5;\n    printf(\"before      : %d\\n\", n);\n\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n#include <stddef.h>\n\nvoid swap_values(int *a, int *b) {\n    /* Swap through the pointers. */\n}\n\nint sum(const int *values, size_t count) {\n    /* Return the total. */\n}\n\nint max_of(const int *values, size_t count) {\n    /* Return the largest value. */\n}",
+      "checks": [
+        {
+          "question": "How do you let a function change the caller's variable in C?",
+          "answer": "Pass a pointer and modify through it with `*`. There are no references in C."
+        },
+        {
+          "question": "What is the advantage of `const int *values` over `int values[100]`?",
+          "answer": "It avoids copying the whole array and documents that the function will not modify it."
+        },
+        {
+          "question": "Why declare a function before calling it?",
+          "answer": "C requires a declaration before use; a prototype tells the compiler the signature without the body."
+        },
+        {
+          "question": "Why can you not return an array from a C function?",
+          "answer": "An array type cannot be returned by value. Return a pointer to allocated memory instead, and the caller must free it."
+        }
+      ]
+    },
+    {
+      "id": "05-arrays-and-strings",
+      "title": "Arrays and Strings",
+      "order": 5,
+      "sections": {
+        "objectives": "- Declare and index arrays safely.\n- Understand that C strings are arrays of `char` ending in `'\\0'`.\n- Use the `<string.h>` functions correctly.\n- Avoid buffer overflows.",
+        "explanation": "```c\nint values[5];                        /* 5 uninitialised ints */\nint totals[3] = {10, 20, 30};         /* initialised */\n```\n\n**Indexes run 0 to `size - 1`.** `values[5]` on a 5-element array is out of\nbounds, and C does **not** check. It reads or writes memory that is not yours,\nwhich is the root of many security bugs.\n\nUse `sizeof` for the count:\n\n```c\nsize_t count = sizeof(values) / sizeof(values[0]);\n```\n\nThat works for real arrays but **not** for pointers, where it silently gives\nthe wrong answer.\n\n**C strings are not objects.** A string is a `char` array whose last element is\nthe null terminator:\n\n```c\nchar greeting[] = \"Hello\";    /* {'H','e','l','l','o','\\0'} - 6 bytes */\nchar *name = \"World\";         /* pointer to a read-only literal */\n```\n\nThat is why `sizeof(greeting)` is 6 but `strlen(greeting)` is 5.\n\nBecause `\"World\"` lives in read-only memory, writing through `name` is undefined\nbehaviour. Use `char name[] = \"World\";` when you intend to modify it.\n\n**`<string.h>`** gives you the operations:\n\n| Function | Purpose |\n|---|---|\n| `strlen(s)` | Length, not counting `'\\0'` |\n| `strcpy(dst, src)` | Copy — overflows if `dst` is smaller |\n| `strncpy(dst, src, n)` | Copy at most `n` — may not null-terminate |\n| `strcmp(a, b)` | Compare: 0 if equal, <0 or >0 otherwise |\n| `strcat(dst, src)` | Append — overflows if there is no room |\n\n**Buffer overflow.** `strcpy` copies as many bytes as the source holds, so a\nshort buffer overflows:\n\n```c\nchar buffer[8];\nstrcpy(buffer, \"a much longer string\");   /* overflow */\n```\n\nSafer, and always null-terminating:\n\n```c\nsnprintf(buffer, sizeof(buffer), \"%s\", source);\n```\n\n`snprintf` takes the buffer size, so it cannot write past the end. This is the\nright habit.\n\n**2D arrays** are arrays of arrays:\n\n```c\nint grid[3][4];\ngrid[row][column]\n```",
+        "example": "```c\n/* arrays_and_strings.c */\n#include <stdio.h>\n#include <string.h>\n\nint main(void) {\n    int values[5] = {10, 20, 30, 40, 50};\n    size_t count = sizeof(values) / sizeof(values[0]);\n    size_t i;\n\n    printf(\"count        : %zu\\n\", count);\n\n    int total = 0;\n    for (i = 0; i < count; ++i) {\n        total += values[i];\n    }\n    printf(\"total        : %d\\n\", total);\n\n    int largest = values[0];\n    for (i = 1; i < count; ++i) {\n        if (values[i] > largest) {\n            largest = values[i];\n        }\n    }\n    printf(\"largest      : %d\\n\", largest);\n\n    char greeting[] = \"Hello\";\n    printf(\"sizeof       : %zu bytes\\n\", sizeof(greeting));\n    printf(\"strlen       : %zu chars\\n\", strlen(greeting));\n\n    char buffer[32];\n    snprintf(buffer, sizeof(buffer), \"%s %s\", greeting, \"world\");\n    printf(\"snprintf     : %s\\n\", buffer);\n    printf(\"strcmp equal : %d\\n\", strcmp(\"abc\", \"abc\"));\n\n    /* A 2D array: 3 rows of 4 columns, all zero-initialised */\n    int grid[3][4] = {0};\n    grid[1][2] = 7;\n    printf(\"grid[1][2]   : %d\\n\", grid[1][2]);\n\n    /* Copying safely into a fixed buffer */\n    char small[8];\n    snprintf(small, sizeof(small), \"long text here\");\n    printf(\"truncated    : %s\\n\", small);\n\n    return 0;\n}\n```",
+        "knowledge_checks": "Q: Why is `sizeof(greeting)` 6 for `char greeting[] = \"Hello\";`?\nA: The array stores 5 characters plus the null terminator, so it occupies 6 bytes.\nQ: What happens if you index past the end of a C array?\nA: Nothing is checked. You read or write memory that is not yours, which is undefined behaviour.\nQ: Why prefer `snprintf` over `strcpy`?\nA: `snprintf` takes the buffer size and cannot write past the end; `strcpy` copies until the source ends and will overflow a smaller buffer.\nQ: Can you write to `char *name = \"World\";`?\nA: No. String literals live in read-only memory; writing is undefined behaviour. Use `char name[] = \"World\";`.",
+        "exercise": "Declare an array of five marks, print them, find the highest and lowest, and\ncompute the mean as a `double`. Then copy a long string into a 16-byte buffer\nsafely and print it.\n\n```c starter\n#include <stdio.h>\n\nint main(void) {\n    int marks[5] = {70, 85, 92, 60, 78};\n    size_t count = sizeof(marks) / sizeof(marks[0]);\n    size_t i;\n\n    int total = 0;\n    /* Print the marks, the highest, the lowest, and the mean as a double. */\n\n    return 0;\n}\n```",
+        "common_mistakes": "- **Looping with `i <= count`,** reading one element past the end.\n- **Using `sizeof` on a pointer** to compute an array length. Wrong.\n- **`strcpy` into a buffer that is too small.** Use `snprintf`.\n- **Forgetting that `strlen` excludes the terminator, so you must allocate one more byte.**\n- **Treating a `char *` literal as writable.**",
+        "recap": "- Indexes are 0 to `size - 1`, and C does not check.\n- `count = sizeof(a) / sizeof(a[0])` works for arrays, not pointers.\n- A C string ends in `'\\0'`, so it occupies one more byte than its length.\n- Use `snprintf` rather than `strcpy`.\n- `char *p = \"text\"` is read-only; `char a[] = \"text\"` is writable."
+      },
+      "example_code": "/* arrays_and_strings.c */\n#include <stdio.h>\n#include <string.h>\n\nint main(void) {\n    int values[5] = {10, 20, 30, 40, 50};\n    size_t count = sizeof(values) / sizeof(values[0]);\n    size_t i;\n\n    printf(\"count        : %zu\\n\", count);\n\n    int total = 0;\n    for (i = 0; i < count; ++i) {\n        total += values[i];\n    }\n    printf(\"total        : %d\\n\", total);\n\n    int largest = values[0];\n    for (i = 1; i < count; ++i) {\n        if (values[i] > largest) {\n            largest = values[i];\n        }\n    }\n    printf(\"largest      : %d\\n\", largest);\n\n    char greeting[] = \"Hello\";\n    printf(\"sizeof       : %zu bytes\\n\", sizeof(greeting));\n    printf(\"strlen       : %zu chars\\n\", strlen(greeting));\n\n    char buffer[32];\n    snprintf(buffer, sizeof(buffer), \"%s %s\", greeting, \"world\");\n    printf(\"snprintf     : %s\\n\", buffer);\n    printf(\"strcmp equal : %d\\n\", strcmp(\"abc\", \"abc\"));\n\n    /* A 2D array: 3 rows of 4 columns, all zero-initialised */\n    int grid[3][4] = {0};\n    grid[1][2] = 7;\n    printf(\"grid[1][2]   : %d\\n\", grid[1][2]);\n\n    /* Copying safely into a fixed buffer */\n    char small[8];\n    snprintf(small, sizeof(small), \"long text here\");\n    printf(\"truncated    : %s\\n\", small);\n\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int marks[5] = {70, 85, 92, 60, 78};\n    size_t count = sizeof(marks) / sizeof(marks[0]);\n    size_t i;\n\n    int total = 0;\n    /* Print the marks, the highest, the lowest, and the mean as a double. */\n\n    return 0;\n}",
+      "checks": [
+        {
+          "question": "Why is `sizeof(greeting)` 6 for `char greeting[] = \"Hello\";`?",
+          "answer": "The array stores 5 characters plus the null terminator, so it occupies 6 bytes."
+        },
+        {
+          "question": "What happens if you index past the end of a C array?",
+          "answer": "Nothing is checked. You read or write memory that is not yours, which is undefined behaviour."
+        },
+        {
+          "question": "Why prefer `snprintf` over `strcpy`?",
+          "answer": "`snprintf` takes the buffer size and cannot write past the end; `strcpy` copies until the source ends and will overflow a smaller buffer."
+        },
+        {
+          "question": "Can you write to `char *name = \"World\";`?",
+          "answer": "No. String literals live in read-only memory; writing is undefined behaviour. Use `char name[] = \"World\";`."
+        }
+      ]
+    },
+    {
+      "id": "06-pointers",
+      "title": "Pointers",
+      "order": 6,
+      "sections": {
+        "objectives": "- Declare pointers with `*` and initialise them to a real address.\n- Use `&` and `*` correctly.\n- Pass pointers to functions and dereference safely.\n- Use `NULL` and check before dereferencing.",
+        "explanation": "A pointer stores an address.\n\n```c\nint number = 42;\nint *address = &number;\n\nprintf(\"%d\\n\", number);        /* 42 */\nprintf(\"%d\\n\", *address);      /* 42 - read through the pointer */\n*address = 99;\nprintf(\"%d\\n\", number);        /* 99 - the original changed */\n```\n\n`&number` is the address-of operator. `*address` dereferences.\n\n**The declaration trap.** In `int *p, q;` only `p` is a pointer — `q` is an\n`int`. The `*` binds to the name, not the type:\n\n```c\nint *p, q;        /* p is int*, q is int  */\nint *p, *q;       /* both are pointers */\n```\n\nWhen in doubt, write `int *p; int *q;`.\n\n**Always initialise.** An uninitialised pointer holds garbage, and dereferencing\nit is undefined behaviour:\n\n```c\nint *p;           /* BAD */\nint *q = NULL;    /* GOOD: points at nothing */\nint *r = &number; /* GOOD */\n```\n\nUse `NULL`, not `0`, and never dereference without checking:\n\n```c\nif (q != NULL) {\n    printf(\"%d\\n\", *q);\n}\n```\n\nTesting an address against `NULL` is always false, which is a common bug:\n\n```c\nif (&number == NULL) { ... }   /* never true */\n```\n\n**Pointer arithmetic.** Adding an `int *` by one advances by `sizeof(int)`\nbytes, not one byte:\n\n```c\nint values[4] = {10, 20, 30, 40};\nint *p = values;\nprintf(\"%d %d\\n\", *p, *(p + 2));   /* 10 30 */\nprintf(\"%d\\n\", *++p);               /* 20 */\n```\n\nOnly `p + n` is valid — you cannot invent addresses outside the array.\n\n**Pointers in signatures.** `const` communicates intent and prevents\naccidents:\n\n```c\nvoid print_all(const int *values, size_t count);  /* read-only */\nvoid fill(int *values, size_t count);              /* modifies */\n```\n\n**`void *`** is a generic pointer that can hold any address. You must cast it\nbefore dereferencing.",
+        "example": "```c\n/* pointers.c */\n#include <stdio.h>\n#include <stddef.h>\n\nvoid increment(int *target) {\n    if (target != NULL) {\n        ++(*target);\n    }\n}\n\nvoid swap_values(int *a, int *b) {\n    int temp = *a;\n    *a = *b;\n    *b = temp;\n}\n\nint main(void) {\n    int number = 42;\n    int *address = &number;\n\n    printf(\"number       = %d\\n\", number);\n    printf(\"address      = %p\\n\", (void *)address);\n    printf(\"via pointer  = %d\\n\", *address);\n\n    *address = 99;\n    printf(\"after write  = %d\\n\", number);\n\n    int *nothing = NULL;\n    printf(\"nothing NULL = %s\\n\", nothing == NULL ? \"yes\" : \"no\");\n    if (nothing != NULL) {\n        printf(\"%d\\n\", *nothing);      /* correctly skipped */\n    } else {\n        printf(\"safely skipped a null pointer\\n\");\n    }\n\n    int x = 1, y = 2;\n    swap_values(&x, &y);\n    printf(\"after swap   = %d %d\\n\", x, y);\n    increment(&x);\n    printf(\"after inc    = %d\\n\", x);\n\n    /* Pointer arithmetic advances by the size of the element */\n    int values[4] = {10, 20, 30, 40};\n    int *p = values;\n    printf(\"first        = %d\\n\", *p);\n    printf(\"third        = %d\\n\", *(p + 2));\n    ++p;\n    printf(\"after ++p    = %d\\n\", *p);\n\n    /* Declaring two pointers needs two stars */\n    int *pa = &x;\n    int *pb = &y;\n    printf(\"two pointers = %d %d\\n\", *pa, *pb);\n\n    return 0;\n}\n```",
+        "knowledge_checks": "Q: In `int *p, q;`, what is `q`?\nA: An `int`, not a pointer. The `*` binds to the name `p` only.\nQ: Why initialise a pointer to `NULL`?\nA: An uninitialised pointer holds garbage and dereferencing it is undefined behaviour. `NULL` makes the \"points at nothing\" state explicit and testable.\nQ: Is `&number == NULL` ever true?\nA: Never. The address of a real object cannot be null, so this test is always false and is usually a bug.\nQ: What does `p + 1` do when `p` is an `int *`?\nA: Advances the pointer by `sizeof(int)` bytes, so `*(p + 1)` is the next element.",
+        "exercise": "Declare three `int` variables and three pointers. Set each variable to 100,\n200 and 300 through its pointer, print them, then swap the values of the first\ntwo using a pointer-based swap function.\n\n```c starter\n#include <stdio.h>\n\nvoid swap_values(int *a, int *b) {\n    /* Swap through the pointers. */\n}\n\nint main(void) {\n    int first = 0, second = 0, third = 0;\n    int *p_first = NULL;      /* point these at first, second, third */\n    int *p_second = NULL;\n    int *p_third = NULL;\n\n    /* Set each through its pointer, print, then swap and print again. */\n    return 0;\n}\n```",
+        "common_mistakes": "- **Writing `int *p, q;` expecting both to be pointers.**\n- **Dereferencing `NULL` or an uninitialised pointer.**\n- **Comparing `&value` against `NULL`.** Always false.\n- **Doing pointer arithmetic beyond the array,** which is undefined behaviour.\n- **Passing an array name and expecting a copy.** An array name decays to a pointer.",
+        "recap": "- A pointer holds an address; `&` takes one, `*` reads one.\n- `int *p, q;` declares only `p` as a pointer.\n- Initialise to `NULL` or a real address, and check before dereferencing.\n- `&value == NULL` is always false.\n- `const T *` in a signature documents read-only use."
+      },
+      "example_code": "/* pointers.c */\n#include <stdio.h>\n#include <stddef.h>\n\nvoid increment(int *target) {\n    if (target != NULL) {\n        ++(*target);\n    }\n}\n\nvoid swap_values(int *a, int *b) {\n    int temp = *a;\n    *a = *b;\n    *b = temp;\n}\n\nint main(void) {\n    int number = 42;\n    int *address = &number;\n\n    printf(\"number       = %d\\n\", number);\n    printf(\"address      = %p\\n\", (void *)address);\n    printf(\"via pointer  = %d\\n\", *address);\n\n    *address = 99;\n    printf(\"after write  = %d\\n\", number);\n\n    int *nothing = NULL;\n    printf(\"nothing NULL = %s\\n\", nothing == NULL ? \"yes\" : \"no\");\n    if (nothing != NULL) {\n        printf(\"%d\\n\", *nothing);      /* correctly skipped */\n    } else {\n        printf(\"safely skipped a null pointer\\n\");\n    }\n\n    int x = 1, y = 2;\n    swap_values(&x, &y);\n    printf(\"after swap   = %d %d\\n\", x, y);\n    increment(&x);\n    printf(\"after inc    = %d\\n\", x);\n\n    /* Pointer arithmetic advances by the size of the element */\n    int values[4] = {10, 20, 30, 40};\n    int *p = values;\n    printf(\"first        = %d\\n\", *p);\n    printf(\"third        = %d\\n\", *(p + 2));\n    ++p;\n    printf(\"after ++p    = %d\\n\", *p);\n\n    /* Declaring two pointers needs two stars */\n    int *pa = &x;\n    int *pb = &y;\n    printf(\"two pointers = %d %d\\n\", *pa, *pb);\n\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n\nvoid swap_values(int *a, int *b) {\n    /* Swap through the pointers. */\n}\n\nint main(void) {\n    int first = 0, second = 0, third = 0;\n    int *p_first = NULL;      /* point these at first, second, third */\n    int *p_second = NULL;\n    int *p_third = NULL;\n\n    /* Set each through its pointer, print, then swap and print again. */\n    return 0;\n}",
+      "checks": [
+        {
+          "question": "In `int *p, q;`, what is `q`?",
+          "answer": "An `int`, not a pointer. The `*` binds to the name `p` only."
+        },
+        {
+          "question": "Why initialise a pointer to `NULL`?",
+          "answer": "An uninitialised pointer holds garbage and dereferencing it is undefined behaviour. `NULL` makes the \"points at nothing\" state explicit and testable."
+        },
+        {
+          "question": "Is `&number == NULL` ever true?",
+          "answer": "Never. The address of a real object cannot be null, so this test is always false and is usually a bug."
+        },
+        {
+          "question": "What does `p + 1` do when `p` is an `int *`?",
+          "answer": "Advances the pointer by `sizeof(int)` bytes, so `*(p + 1)` is the next element."
+        }
+      ]
+    },
+    {
+      "id": "07-structures",
+      "title": "Structures",
+      "order": 7,
+      "sections": {
+        "objectives": "- Declare and initialise a `struct`.\n- Access members with `.` and `->`.\n- Pass structs by pointer to avoid copying.\n- Group related fields with a `typedef`.",
+        "explanation": "```c\nstruct Point {\n    int x;\n    int y;\n};\n```\n\nDefine one, then create a variable:\n\n```c\nstruct Point origin = {0, 0};\nstruct Point unit  = {1, 1};\n```\n\nIn C, `struct` is part of the type name. That is why `typedef` exists:\n\n```c\ntypedef struct {\n    int x;\n    int y;\n} Point;\n\nPoint origin = {0, 0};     /* no \"struct\" needed */\n```\n\n`typedef struct Point { ... } Point;` is the same type, and what you use when\nthe struct must refer to itself (a linked list node).\n\n**Member access.** `.` for a struct, `->` for a pointer to a struct:\n\n```c\nPoint p = {3, 4};\nprintf(\"%d\\n\", p.x);          /* dot on a struct */\n\nPoint *pointer = &p;\nprintf(\"%d\\n\", pointer->x);   /* arrow on a pointer */\n```\n\n`pointer->x` is exactly `(*pointer).x`. Both allocate nothing.\n\n**Passing structs.** Passing a large struct by value copies it. Pass a\npointer, and declare it `const` when you only read:\n\n```c\nvoid move_point(Point *p, int dx, int dy) {\n    p->x += dx;\n    p->y += dy;\n}\n\ndouble distance_squared(const Point *a, const Point *b);\n```\n\n**Arrays of structs** are contiguous and cache-friendly, which is why\n`struct` arrays are preferred over parallel arrays:\n\n```c\nStudent students[100];\nstudents[0].mark = 93;\n```\n\n**Anonymous structs** let you nest fields under a name:\n\n```c\ntypedef struct {\n    int id;\n    struct {\n        int width;\n        int height;\n    } size;\n} Item;\n\nItem item;\nitem.size.width = 3;\n```\n\n**Returning a struct** is allowed and copies the result, which is fine for\nsmall types:\n\n```c\nPoint make_point(int x, int y) {\n    Point p = {x, y};\n    return p;\n}\n```",
+        "example": "```c\n/* structures.c */\n#include <stdio.h>\n#include <math.h>\n\ntypedef struct {\n    int x;\n    int y;\n} Point;\n\ntypedef struct {\n    Point start;\n    Point end;\n} Line;\n\ntypedef struct {\n    char name[32];\n    int  mark;\n} Student;\n\nPoint make_point(int x, int y) {\n    Point p;\n    p.x = x;\n    p.y = y;\n    return p;\n}\n\nvoid move_point(Point *p, int dx, int dy) {\n    p->x += dx;\n    p->y += dy;\n}\n\ndouble distance_squared(const Point *a, const Point *b) {\n    double dx = (double)(a->x - b->x);\n    double dy = (double)(a->y - b->y);\n    return dx * dx + dy * dy;\n}\n\nint main(void) {\n    Point a = make_point(1, 2);\n    Point b = {7, 9};\n\n    printf(\"a = (%d, %d)\\n\", a.x, a.y);\n    printf(\"b = (%d, %d)\\n\", b.x, b.y);\n\n    a.x = 10;\n    printf(\"after a.x = 10 -> a = (%d, %d)\\n\", a.x, a.y);\n\n    Point *pointer = &a;\n    pointer->y = 20;\n    printf(\"after pointer->y = 20 -> a = (%d, %d)\\n\", a.x, a.y);\n\n    move_point(&a, -5, -10);\n    printf(\"after move -> a = (%d, %d)\\n\", a.x, a.y);\n\n    printf(\"distance squared = %.0f\\n\", distance_squared(&a, &b));\n\n    Line segment;\n    segment.start.x = 0;\n    segment.start.y = 0;\n    segment.end.x = 3;\n    segment.end.y = 4;\n    printf(\"segment length  = %.0f\\n\",\n           sqrt(distance_squared(&segment.start, &segment.end)));\n\n    Student class_list[3] = {\n        {\"Ada\", 93},\n        {\"Alan\", 81},\n        {\"Grace\", 74}\n    };\n\n    size_t i;\n    int total = 0;\n    for (i = 0; i < 3; ++i) {\n        printf(\"%s (%d)\\n\", class_list[i].name, class_list[i].mark);\n        total += class_list[i].mark;\n    }\n    printf(\"average = %.2f\\n\", (double)total / 3.0);\n\n    return 0;\n}\n```\n\nCompile with `-lm` for `sqrt`, since it lives in the math library:\n\n```bash\ngcc -std=c11 -Wall -Wextra structures.c -lm -o structures\n```",
+        "knowledge_checks": "Q: When do you use `.` and when `->`?\nA: `.` for a struct you have directly, `->` for a pointer to a struct. `->` is shorthand for `(*p).member`.\nQ: What is `typedef` for?\nA: It creates an alias so you can drop the `struct` keyword from variable declarations.\nQ: Why pass a struct as a pointer?\nA: Passing by value copies the whole struct on every call, which is wasteful for anything large. A pointer is one address.\nQ: When can you use a `struct` in its own definition?\nA: When it contains a pointer to itself, as a linked-list node does.",
+        "exercise": "Define `struct Point` with `x` and `y`. Write `void move_point(Point*, int, int)`\nand `double distance_squared(const Point*, const Point*)`. Move a point, then\nprint the squared distance from the origin.\n\n```c starter\n#include <stdio.h>\n\ntypedef struct {\n    int x;\n    int y;\n} Point;\n\nvoid move_point(Point *p, int dx, int dy) {\n    /* Modify through the pointer. */\n}\n\ndouble distance_squared(const Point *a, const Point *b) {\n    /* Return dx*dx + dy*dy as a double. */\n}\n```",
+        "common_mistakes": "- **Using `.` on a pointer,** which the compiler flags; use `->`.\n- **Forgetting `const` on a read-only pointer parameter,** losing a safety check.\n- **Copying large structs in a loop.**\n- **Returning a pointer to a local struct,** which dangles.\n- **Forgetting `-lm`** when using math functions.",
+        "recap": "- `typedef struct { ... } Name;` removes the keyword repetition.\n- `.` for a struct, `->` for a pointer to one.\n- Pass large structs as `const T *`.\n- Arrays of structs are compact and cache-friendly.\n- Math functions need `-lm`."
+      },
+      "example_code": "/* structures.c */\n#include <stdio.h>\n#include <math.h>\n\ntypedef struct {\n    int x;\n    int y;\n} Point;\n\ntypedef struct {\n    Point start;\n    Point end;\n} Line;\n\ntypedef struct {\n    char name[32];\n    int  mark;\n} Student;\n\nPoint make_point(int x, int y) {\n    Point p;\n    p.x = x;\n    p.y = y;\n    return p;\n}\n\nvoid move_point(Point *p, int dx, int dy) {\n    p->x += dx;\n    p->y += dy;\n}\n\ndouble distance_squared(const Point *a, const Point *b) {\n    double dx = (double)(a->x - b->x);\n    double dy = (double)(a->y - b->y);\n    return dx * dx + dy * dy;\n}\n\nint main(void) {\n    Point a = make_point(1, 2);\n    Point b = {7, 9};\n\n    printf(\"a = (%d, %d)\\n\", a.x, a.y);\n    printf(\"b = (%d, %d)\\n\", b.x, b.y);\n\n    a.x = 10;\n    printf(\"after a.x = 10 -> a = (%d, %d)\\n\", a.x, a.y);\n\n    Point *pointer = &a;\n    pointer->y = 20;\n    printf(\"after pointer->y = 20 -> a = (%d, %d)\\n\", a.x, a.y);\n\n    move_point(&a, -5, -10);\n    printf(\"after move -> a = (%d, %d)\\n\", a.x, a.y);\n\n    printf(\"distance squared = %.0f\\n\", distance_squared(&a, &b));\n\n    Line segment;\n    segment.start.x = 0;\n    segment.start.y = 0;\n    segment.end.x = 3;\n    segment.end.y = 4;\n    printf(\"segment length  = %.0f\\n\",\n           sqrt(distance_squared(&segment.start, &segment.end)));\n\n    Student class_list[3] = {\n        {\"Ada\", 93},\n        {\"Alan\", 81},\n        {\"Grace\", 74}\n    };\n\n    size_t i;\n    int total = 0;\n    for (i = 0; i < 3; ++i) {\n        printf(\"%s (%d)\\n\", class_list[i].name, class_list[i].mark);\n        total += class_list[i].mark;\n    }\n    printf(\"average = %.2f\\n\", (double)total / 3.0);\n\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n\ntypedef struct {\n    int x;\n    int y;\n} Point;\n\nvoid move_point(Point *p, int dx, int dy) {\n    /* Modify through the pointer. */\n}\n\ndouble distance_squared(const Point *a, const Point *b) {\n    /* Return dx*dx + dy*dy as a double. */\n}",
+      "checks": [
+        {
+          "question": "When do you use `.` and when `->`?",
+          "answer": "`.` for a struct you have directly, `->` for a pointer to a struct. `->` is shorthand for `(*p).member`."
+        },
+        {
+          "question": "What is `typedef` for?",
+          "answer": "It creates an alias so you can drop the `struct` keyword from variable declarations."
+        },
+        {
+          "question": "Why pass a struct as a pointer?",
+          "answer": "Passing by value copies the whole struct on every call, which is wasteful for anything large. A pointer is one address."
+        },
+        {
+          "question": "When can you use a `struct` in its own definition?",
+          "answer": "When it contains a pointer to itself, as a linked-list node does."
+        }
+      ]
+    },
+    {
+      "id": "08-memory",
+      "title": "Memory Management",
+      "order": 8,
+      "sections": {
+        "objectives": "- Allocate with `malloc` and free with `free`.\n- Match every allocation with exactly one free.\n- Recognise leaks, dangling pointers and double frees.\n- Explain why the caller's array cannot grow inside a function.",
+        "explanation": "Stack memory is automatic: local variables and parameters are created on entry\nand reclaimed on return.\n\n```c\nvoid demo(void) {\n    int local = 42;      /* stack */\n}                        /* local is gone */\n```\n\nHeap memory is manual. Allocate with `malloc`, release with `free`:\n\n```c\nint *value = malloc(sizeof(int) * 10);\nif (value == NULL) {\n    /* allocation failed */\n    return;\n}\nvalue[0] = 42;\nfree(value);\nvalue = NULL;            /* hygiene: a freed pointer is not usable */\n```\n\n`malloc` returns `void *`, which C converts implicitly to any pointer type.\n\n**Always check the result.** Allocation can fail, and using `NULL` is a crash.\n\n**Every `malloc` needs exactly one `free`:**\n\n- Too few frees: a **memory leak**\n- Too many: a **double free**, which is undefined behaviour\n- Using after a free: a **dangling pointer**\n\nThe pointer value still looks valid after `free`, which is why these bugs are\nhard to find. The memory now belongs to someone else.\n\n**Size arithmetic must be right.** This is the classic bug:\n\n```c\nint *values = malloc(10 * sizeof(int));    /* correct: 10 ints */\n```\n\n```c\nint *values = malloc(10);                  /* WRONG: 10 bytes = 2 ints */\n```\n\nWrite `malloc(count * sizeof(*values))`, where `sizeof(*values)` is the size of\nwhat the pointer points to — this cannot go wrong if the type changes.\n\n**You cannot grow a caller's array.** A function cannot change the length of an\narray it was given, because it only has a pointer to the first element and no\nway to update the caller's size:\n\n```c\nvoid grow(int *values, int *count);   /* the caller's count cannot be updated */\n```\n\nThe usual solution is to allocate a new, larger array, copy into it, and free the\nold one — and return the new pointer so the caller can use it.\n\n**`calloc` zeroes memory**, which `malloc` does not:\n\n```c\nint *values = calloc(10, sizeof(int));   /* all bytes set to 0 */\n```\n\n**Other functions:** `realloc` resizes an existing block (and may move it, so\nalways use the returned pointer), `free(NULL)` is safe and does nothing.",
+        "example": "```c\n/* memory.c */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint *leaky_allocate(void) {\n    int *value = malloc(sizeof(int));\n    *value = 42;\n    return value;              /* BUG: the local pointer dies, memory leaks */\n}\n\nint *frees_memory(void) {\n    int *value = malloc(sizeof(int));\n    *value = 42;\n    int copy = *value;\n    free(value);\n    printf(\"freed safely, value was %d\\n\", copy);\n    return NULL;\n}\n\nint *make_values(size_t count) {\n    /* sizeof(*values) cannot go stale if the type changes */\n    int *values = malloc(count * sizeof(*values));\n    if (values == NULL) {\n        return NULL;           /* allocation failed - caller must check */\n    }\n    size_t i;\n    for (i = 0; i < count; ++i) {\n        values[i] = (int)i * 2;\n    }\n    return values;\n}\n\nint *grown_copy(const int *values, size_t count) {\n    size_t new_count = count * 2;\n    int *bigger = malloc(new_count * sizeof(*bigger));\n    if (bigger == NULL) {\n        return NULL;\n    }\n    memcpy(bigger, values, count * sizeof(*bigger));\n    size_t i;\n    for (i = count; i < new_count; ++i) {\n        bigger[i] = -1;\n    }\n    return bigger;\n}\n\nint main(void) {\n    /* 1. Automatic storage: created and destroyed by scope */\n    {\n        int local = 42;\n        printf(\"stack local = %d\\n\", local);\n    }\n\n    /* 2. Explicit allocation, checked, then freed */\n    int *values = make_values(4);\n    if (values == NULL) {\n        printf(\"allocation failed\\n\");\n        return 1;\n    }\n    size_t i;\n    for (i = 0; i < 4; ++i) {\n        printf(\"values[%zu] = %d\\n\", i, values[i]);\n    }\n\n    /* 3. Growing requires a new block and a copy */\n    int *bigger = grown_copy(values, 4);\n    if (bigger != NULL) {\n        printf(\"grown first free slot = %d\\n\", bigger[4]);\n        free(bigger);\n    }\n\n    free(values);\n    values = NULL;\n    printf(\"freed values\\n\");\n\n    /* 4. calloc zeroes */\n    int *zeroed = calloc(3, sizeof(int));\n    printf(\"calloc [0] = %d (zeroed)\\n\", zeroed[0]);\n    free(zeroed);\n\n    /* 5. free(NULL) is safe */\n    free(NULL);\n    printf(\"free(NULL) = no crash\\n\");\n\n    /* 6. int *p = NULL; free(p);  is also safe */\n\n    /* deliberately not calling leaky_allocate(): it leaks on purpose */\n    printf(\"\\nleaky_allocate() would leak 4 bytes.\\n\");\n\n    return 0;\n}\n```\n\nFind leaks with:\n\n```bash\ngcc -std=c11 -Wall -Wextra -fsanitize=address,leak memory.c -o memory\n./memory\n```",
+        "knowledge_checks": "Q: What happens if you `free` a pointer twice?\nA: Undefined behaviour, usually a crash. There is no portable way to make it safe.\nQ: Why is `malloc(10)` wrong when you want 10 ints?\nA: It allocates 10 *bytes*, not 10 ints. Write `malloc(10 * sizeof(int))`.\nQ: Why check the result of `malloc`?\nA: Allocation can fail. Using `NULL` is a crash; ignoring the failure loses data silently.\nQ: Why can a function not make the caller's array grow?\nA: It only receives a pointer to the first element and has no way to update the caller's length variable.",
+        "exercise": "Write three functions: `int *alloc_array(size_t)` returning a checked\nallocation, `void fill(int *, size_t)` setting each element to its index\ndoubled, and `void release(int *)` that frees and sets nothing (returning NULL\nrequires returning `int *`). Call them, print, and free.\n\n```c starter\n#include <stdlib.h>\n#include <stdio.h>\n\nint *alloc_array(size_t count) {\n    /* malloc and return NULL on failure */\n}\n\nvoid fill(int *values, size_t count) {\n    /* set values[i] = i * 2 */\n}\n```",
+        "common_mistakes": "- **`malloc(10)` instead of `malloc(10 * sizeof(int))`.** Allocate the wrong number of bytes.\n- **Not checking for `NULL`.**\n- **Freeing twice, or freeing a stack address.**\n- **Ignoring the pointer returned by `realloc`,** which invalidates the old pointer.\n- **Using a pointer after freeing it.**",
+        "recap": "- Stack is automatic; heap is manual.\n- `malloc(count * sizeof(*p))`, checked for `NULL`.\n- Exactly one `free` per allocation; a dangling pointer still looks valid.\n- A caller's array cannot grow in place.\n- `calloc` zeroes; `free(NULL)` is safe.\n- Compile with `-fsanitize=address,leak` to find real leaks."
+      },
+      "example_code": "/* memory.c */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint *leaky_allocate(void) {\n    int *value = malloc(sizeof(int));\n    *value = 42;\n    return value;              /* BUG: the local pointer dies, memory leaks */\n}\n\nint *frees_memory(void) {\n    int *value = malloc(sizeof(int));\n    *value = 42;\n    int copy = *value;\n    free(value);\n    printf(\"freed safely, value was %d\\n\", copy);\n    return NULL;\n}\n\nint *make_values(size_t count) {\n    /* sizeof(*values) cannot go stale if the type changes */\n    int *values = malloc(count * sizeof(*values));\n    if (values == NULL) {\n        return NULL;           /* allocation failed - caller must check */\n    }\n    size_t i;\n    for (i = 0; i < count; ++i) {\n        values[i] = (int)i * 2;\n    }\n    return values;\n}\n\nint *grown_copy(const int *values, size_t count) {\n    size_t new_count = count * 2;\n    int *bigger = malloc(new_count * sizeof(*bigger));\n    if (bigger == NULL) {\n        return NULL;\n    }\n    memcpy(bigger, values, count * sizeof(*bigger));\n    size_t i;\n    for (i = count; i < new_count; ++i) {\n        bigger[i] = -1;\n    }\n    return bigger;\n}\n\nint main(void) {\n    /* 1. Automatic storage: created and destroyed by scope */\n    {\n        int local = 42;\n        printf(\"stack local = %d\\n\", local);\n    }\n\n    /* 2. Explicit allocation, checked, then freed */\n    int *values = make_values(4);\n    if (values == NULL) {\n        printf(\"allocation failed\\n\");\n        return 1;\n    }\n    size_t i;\n    for (i = 0; i < 4; ++i) {\n        printf(\"values[%zu] = %d\\n\", i, values[i]);\n    }\n\n    /* 3. Growing requires a new block and a copy */\n    int *bigger = grown_copy(values, 4);\n    if (bigger != NULL) {\n        printf(\"grown first free slot = %d\\n\", bigger[4]);\n        free(bigger);\n    }\n\n    free(values);\n    values = NULL;\n    printf(\"freed values\\n\");\n\n    /* 4. calloc zeroes */\n    int *zeroed = calloc(3, sizeof(int));\n    printf(\"calloc [0] = %d (zeroed)\\n\", zeroed[0]);\n    free(zeroed);\n\n    /* 5. free(NULL) is safe */\n    free(NULL);\n    printf(\"free(NULL) = no crash\\n\");\n\n    /* 6. int *p = NULL; free(p);  is also safe */\n\n    /* deliberately not calling leaky_allocate(): it leaks on purpose */\n    printf(\"\\nleaky_allocate() would leak 4 bytes.\\n\");\n\n    return 0;\n}",
+      "starter_code": "#include <stdlib.h>\n#include <stdio.h>\n\nint *alloc_array(size_t count) {\n    /* malloc and return NULL on failure */\n}\n\nvoid fill(int *values, size_t count) {\n    /* set values[i] = i * 2 */\n}",
+      "checks": [
+        {
+          "question": "What happens if you `free` a pointer twice?",
+          "answer": "Undefined behaviour, usually a crash. There is no portable way to make it safe."
+        },
+        {
+          "question": "Why is `malloc(10)` wrong when you want 10 ints?",
+          "answer": "It allocates 10 *bytes*, not 10 ints. Write `malloc(10 * sizeof(int))`."
+        },
+        {
+          "question": "Why check the result of `malloc`?",
+          "answer": "Allocation can fail. Using `NULL` is a crash; ignoring the failure loses data silently."
+        },
+        {
+          "question": "Why can a function not make the caller's array grow?",
+          "answer": "It only receives a pointer to the first element and has no way to update the caller's length variable."
+        }
+      ]
+    },
+    {
+      "id": "09-files",
+      "title": "File Handling",
+      "order": 9,
+      "sections": {
+        "objectives": "- Open, read and write files with `<stdio.h>`.\n- Choose between text and binary modes.\n- Check every stream operation.\n- Parse simple delimited text safely.",
+        "explanation": "C uses `FILE *` streams from `<stdio.h>`:\n\n```c\n#include <stdio.h>\n\nint main(void) {\n    FILE *file = fopen(\"notes.txt\", \"r\");\n    if (file == NULL) {\n        perror(\"notes.txt\");       /* prints the reason, e.g. \"No such file\" */\n        return 1;\n    }\n\n    char line[256];\n    while (fgets(line, sizeof(line), file) != NULL) {\n        printf(\"%s\", line);\n    }\n\n    if (ferror(file)) {\n        printf(\"error while reading\\n\");\n    }\n\n    fclose(file);\n    return 0;\n}\n```\n\n**Always check `fopen`.** It returns `NULL` when the file is missing or\npermission is denied. `perror` prints the system's own reason, which is more\nuseful than inventing one.\n\n**Modes:**\n\n| Mode | Meaning |\n|---|---|\n| `\"r\"` | Read |\n| `\"w\"` | Write, truncating |\n| `\"a\"` | Append |\n| `\"r+\"` | Read and write, no truncation |\n| `\"rb\"` / `\"wb\"` | Binary, for portability |\n\nWithout `b` the file is opened in text mode, which on Windows translates\nnewlines. Always use `b` for binary data on any platform.\n\n**`fgets` is the safe way to read a line.** Give it the buffer size and it can\nnever overflow:\n\n```c\nchar line[256];\nif (fgets(line, sizeof(line), file) == NULL) {\n    /* end of file or error */\n}\n```\n\n`fgets` keeps the newline, and returns `NULL` at end of file — which is the\nloop condition above. Note that `scanf` stops at whitespace and is easy to\nmisuse; prefer `fgets` for text.\n\n**Writing** is the same shape:\n\n```c\nFILE *out = fopen(\"data.txt\", \"w\");\nif (out == NULL) {\n    perror(\"data.txt\");\n    return 1;\n}\nfprintf(out, \"first\\n\");\nfprintf(out, \"value = %d\\n\", 42);\nif (fclose(out) != 0) {\n    printf(\"error flushing on close\\n\");\n}\n```\n\n`fclose` can fail on a buffered write, so check it on files you care about.\n\n**Parsing delimited text.** `sscanf` reads fields out of a string:\n\n```c\nchar line[] = \"Ada,93\";\nchar name[32];\nint mark;\nif (sscanf(line, \"%31[^,],%d\", name, &mark) == 2) {\n    printf(\"%s scored %d\\n\", name, mark);\n}\n```\n\n`%31[^,]` reads at most 31 characters up to a comma, which respects the buffer\nsize — note the field width, which is what makes `sscanf` safe.",
+        "example": "```c\n/* files.c */\n#include <stdio.h>\n#include <string.h>\n\ntypedef struct {\n    char name[32];\n    int  mark;\n} Record;\n\nint write_records(const char *path, const Record *records, size_t count) {\n    FILE *file = fopen(path, \"w\");\n    if (file == NULL) {\n        perror(path);\n        return -1;\n    }\n    size_t i;\n    for (i = 0; i < count; ++i) {\n        fprintf(file, \"%s,%d\\n\", records[i].name, records[i].mark);\n    }\n    if (fclose(file) != 0) {\n        printf(\"error closing %s\\n\", path);\n        return -1;\n    }\n    return 0;\n}\n\nint read_records(const char *path, Record *out, size_t capacity) {\n    FILE *file = fopen(path, \"r\");\n    if (file == NULL) {\n        return -1;                 /* caller reports the reason */\n    }\n\n    char line[256];\n    size_t found = 0;\n    while (fgets(line, sizeof(line), file) != NULL) {\n        if (found >= capacity) {\n            printf(\"stopping at capacity\\n\");\n            break;\n        }\n        char name[32];\n        int mark;\n        if (sscanf(line, \"%31[^,],%d\", name, &mark) != 2) {\n            printf(\"skipping malformed line: %s\", line);\n            continue;\n        }\n        strncpy(out[found].name, name, sizeof(out[found].name) - 1);\n        out[found].name[sizeof(out[found].name) - 1] = '\\0';\n        out[found].mark = mark;\n        ++found;\n    }\n\n    if (ferror(file)) {\n        printf(\"read error on %s\\n\", path);\n        fclose(file);\n        return -1;\n    }\n    fclose(file);\n    return (int)found;\n}\n\nint main(void) {\n    const char *path = \"marks.txt\";\n\n    Record seed[3] = {\n        {\"Ada\", 93},\n        {\"Alan\", 81},\n        {\"Grace\", 74}\n    };\n\n    if (write_records(path, seed, 3) != 0) {\n        return 1;\n    }\n    printf(\"wrote 3 records to %s\\n\", path);\n\n    Record loaded[10];\n    int found = read_records(path, loaded, 10);\n    if (found < 0) {\n        perror(path);\n        return 1;\n    }\n\n    int total = 0;\n    int i;\n    printf(\"loaded %d records:\\n\", found);\n    for (i = 0; i < found; ++i) {\n        printf(\"  %s %d\\n\", loaded[i].name, loaded[i].mark);\n        total += loaded[i].mark;\n    }\n    printf(\"average = %.2f\\n\", (double)total / found);\n\n    /* A missing file is reported, not crashed on */\n    Record missing[1];\n    if (read_records(\"no_such_file.txt\", missing, 1) < 0) {\n        printf(\"expected failure: cannot read no_such_file.txt\\n\");\n    }\n\n    return 0;\n}\n```",
+        "knowledge_checks": "Q: What does `fopen` return when it fails, and why must you check?\nA: `NULL`. An unchecked stream produces no data, and the failure appears much later as a confusing symptom.\nQ: Why prefer `fgets` over `scanf` for reading text lines?\nA: `fgets` takes a buffer size and cannot overflow; `scanf` stops at whitespace and is easy to misuse.\nQ: What does mode `\"a\"` do?\nA: Opens for appending, creating the file if needed and never truncating.\nQ: Why add `b` to the mode for binary data?\nA: Text mode can translate newlines on some platforms, corrupting binary data.",
+        "exercise": "Write `append_line(const char *path, const char *text)` that appends one line\nusing mode `\"a\"`. Then write `count_lines(const char *path)` that returns how\nmany lines the file has, returning −1 if it cannot be opened.\n\n```c starter\n#include <stdio.h>\n\nint append_line(const char *path, const char *text) {\n    /* fopen(path, \"a\"), fprintf, fclose. Return 0 or -1. */\n}\n\nint count_lines(const char *path) {\n    /* fopen(path, \"r\"). If NULL return -1. Count fgets calls. */\n}\n```",
+        "common_mistakes": "- **Not checking `fopen`.** The program then silently does nothing.\n- **Using mode `\"w\"` when you meant `\"a\"`,** destroying existing content.\n- **Using `gets`,** which cannot be used safely. It was removed from the standard.\n- **Passing an unbounded format string to `fprintf`.** Use `%s`, not the value itself.\n- **Ignoring `fclose`,** which can hide a failed flush.",
+        "recap": "- `FILE *` from `<stdio.h>`; always check `fopen` for `NULL`.\n- `perror` explains the failure in the system's own words.\n- `fgets(buffer, size, file)` is the safe way to read a line.\n- `\"r\"`, `\"w\"` (truncates), `\"a\"`; add `b` for binary.\n- `sscanf` with a field width, such as `%31[^,]`, respects the buffer size."
+      },
+      "example_code": "/* files.c */\n#include <stdio.h>\n#include <string.h>\n\ntypedef struct {\n    char name[32];\n    int  mark;\n} Record;\n\nint write_records(const char *path, const Record *records, size_t count) {\n    FILE *file = fopen(path, \"w\");\n    if (file == NULL) {\n        perror(path);\n        return -1;\n    }\n    size_t i;\n    for (i = 0; i < count; ++i) {\n        fprintf(file, \"%s,%d\\n\", records[i].name, records[i].mark);\n    }\n    if (fclose(file) != 0) {\n        printf(\"error closing %s\\n\", path);\n        return -1;\n    }\n    return 0;\n}\n\nint read_records(const char *path, Record *out, size_t capacity) {\n    FILE *file = fopen(path, \"r\");\n    if (file == NULL) {\n        return -1;                 /* caller reports the reason */\n    }\n\n    char line[256];\n    size_t found = 0;\n    while (fgets(line, sizeof(line), file) != NULL) {\n        if (found >= capacity) {\n            printf(\"stopping at capacity\\n\");\n            break;\n        }\n        char name[32];\n        int mark;\n        if (sscanf(line, \"%31[^,],%d\", name, &mark) != 2) {\n            printf(\"skipping malformed line: %s\", line);\n            continue;\n        }\n        strncpy(out[found].name, name, sizeof(out[found].name) - 1);\n        out[found].name[sizeof(out[found].name) - 1] = '\\0';\n        out[found].mark = mark;\n        ++found;\n    }\n\n    if (ferror(file)) {\n        printf(\"read error on %s\\n\", path);\n        fclose(file);\n        return -1;\n    }\n    fclose(file);\n    return (int)found;\n}\n\nint main(void) {\n    const char *path = \"marks.txt\";\n\n    Record seed[3] = {\n        {\"Ada\", 93},\n        {\"Alan\", 81},\n        {\"Grace\", 74}\n    };\n\n    if (write_records(path, seed, 3) != 0) {\n        return 1;\n    }\n    printf(\"wrote 3 records to %s\\n\", path);\n\n    Record loaded[10];\n    int found = read_records(path, loaded, 10);\n    if (found < 0) {\n        perror(path);\n        return 1;\n    }\n\n    int total = 0;\n    int i;\n    printf(\"loaded %d records:\\n\", found);\n    for (i = 0; i < found; ++i) {\n        printf(\"  %s %d\\n\", loaded[i].name, loaded[i].mark);\n        total += loaded[i].mark;\n    }\n    printf(\"average = %.2f\\n\", (double)total / found);\n\n    /* A missing file is reported, not crashed on */\n    Record missing[1];\n    if (read_records(\"no_such_file.txt\", missing, 1) < 0) {\n        printf(\"expected failure: cannot read no_such_file.txt\\n\");\n    }\n\n    return 0;\n}",
+      "starter_code": "#include <stdio.h>\n\nint append_line(const char *path, const char *text) {\n    /* fopen(path, \"a\"), fprintf, fclose. Return 0 or -1. */\n}\n\nint count_lines(const char *path) {\n    /* fopen(path, \"r\"). If NULL return -1. Count fgets calls. */\n}",
+      "checks": [
+        {
+          "question": "What does `fopen` return when it fails, and why must you check?",
+          "answer": "`NULL`. An unchecked stream produces no data, and the failure appears much later as a confusing symptom."
+        },
+        {
+          "question": "Why prefer `fgets` over `scanf` for reading text lines?",
+          "answer": "`fgets` takes a buffer size and cannot overflow; `scanf` stops at whitespace and is easy to misuse."
+        },
+        {
+          "question": "What does mode `\"a\"` do?",
+          "answer": "Opens for appending, creating the file if needed and never truncating."
+        },
+        {
+          "question": "Why add `b` to the mode for binary data?",
+          "answer": "Text mode can translate newlines on some platforms, corrupting binary data."
+        }
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "c-program",
+      "title": "Program Structure",
+      "lesson_id": "01-program-structure",
+      "summary": "main, the exit status, #include and compiling with warnings.",
+      "prerequisites": [],
+      "error_categories": [
+        "missing_include",
+        "missing_semicolon",
+        "implicit_declaration"
+      ]
+    },
+    {
+      "id": "c-types",
+      "title": "Types and Storage",
+      "lesson_id": "02-types",
+      "summary": "Basic types, integer division, conversions and format specifiers.",
+      "prerequisites": [
+        "c-program"
+      ],
+      "error_categories": [
+        "format_mismatch",
+        "integer_division",
+        "signed_unsigned"
+      ]
+    },
+    {
+      "id": "c-flow",
+      "title": "Conditions and Loops",
+      "lesson_id": "03-conditions-and-loops",
+      "summary": "if/else/switch and the three loop forms.",
+      "prerequisites": [
+        "c-types"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "infinite_loop",
+        "assignment_vs_comparison"
+      ]
+    },
+    {
+      "id": "c-functions",
+      "title": "Functions",
+      "lesson_id": "04-functions",
+      "summary": "Parameters, pointers as the only pass-by-reference, prototypes.",
+      "prerequisites": [
+        "c-flow"
+      ],
+      "error_categories": [
+        "missing_prototype",
+        "dangling_pointer",
+        "array_return"
+      ]
+    },
+    {
+      "id": "c-arrays-strings",
+      "title": "Arrays and Strings",
+      "lesson_id": "05-arrays-and-strings",
+      "summary": "Fixed-size arrays, null-terminated strings and safe copying.",
+      "prerequisites": [
+        "c-types",
+        "c-flow"
+      ],
+      "error_categories": [
+        "buffer_overflow",
+        "out_of_bounds",
+        "missing_null_terminator"
+      ]
+    },
+    {
+      "id": "c-pointers",
+      "title": "Pointers",
+      "lesson_id": "06-pointers",
+      "summary": "Addresses, dereferencing, NULL and pointer arithmetic.",
+      "prerequisites": [
+        "c-types",
+        "c-arrays-strings"
+      ],
+      "error_categories": [
+        "null_dereference",
+        "uninitialised_pointer",
+        "wrong_pointer_decl"
+      ]
+    },
+    {
+      "id": "c-structures",
+      "title": "Structures",
+      "lesson_id": "07-structures",
+      "summary": "Grouping data, . versus ->, typedef and arrays of structs.",
+      "prerequisites": [
+        "c-types",
+        "c-pointers"
+      ],
+      "error_categories": [
+        "member_access",
+        "missing_typedef"
+      ]
+    },
+    {
+      "id": "c-memory",
+      "title": "Memory Management",
+      "lesson_id": "08-memory",
+      "summary": "malloc, free, leaks, double frees and growing an array.",
+      "prerequisites": [
+        "c-pointers"
+      ],
+      "error_categories": [
+        "memory_leak",
+        "double_free",
+        "use_after_free",
+        "wrong_malloc_size"
+      ]
+    },
+    {
+      "id": "c-files",
+      "title": "File Handling",
+      "lesson_id": "09-files",
+      "summary": "fopen, fgets, fprintf, modes and safe parsing.",
+      "prerequisites": [
+        "c-arrays-strings",
+        "c-structures"
+      ],
+      "error_categories": [
+        "file_not_checked",
+        "wrong_mode",
+        "buffer_overflow"
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "c-types-format",
+      "concept_id": "c-types",
+      "lesson_id": "02-types",
+      "type": "find-a-bug",
+      "title": "Wrong format specifier",
+      "prompt": "This prints garbage because a double is printed with %d. Fix the specifier so it prints 3.50.",
+      "code": "#include <stdio.h>\n\nint main(void) {\n    double result = 3.5;\n    printf(\"%.2f\\n\", result);\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    double result = 3.5;\n    printf(\"%.2f\\n\", result);\n    return 0;\n}\n",
+      "expected_stdout": "3.50\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "format"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-types-intdiv",
+      "concept_id": "c-types",
+      "lesson_id": "02-types",
+      "type": "predict-output",
+      "title": "Integer division truncates",
+      "prompt": "Predict both lines exactly.",
+      "code": "#include <stdio.h>\n\nint main(void) {\n    int a = 7, b = 2;\n    printf(\"%d\\n\", a / b);\n    printf(\"%.1f\\n\", (double)a / b);\n    return 0;\n}\n",
+      "starter_code": "",
+      "expected_stdout": "3\n3.5\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "integer-division"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-flow-offbyone",
+      "concept_id": "c-flow",
+      "lesson_id": "03-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "One extra pass",
+      "prompt": "It prints 1 2 3 4 5 6. Fix it so it prints 1 2 3 4 5.",
+      "code": "#include <stdio.h>\n\nint main(void) {\n    int i;\n    for (i = 1; i <= 5; ++i) printf(\"%d \", i);\n    printf(\"\\n\");\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int i;\n    for (i = 1; i < 5; ++i) printf(\"%d \", i);\n    printf(\"\\n\");\n    return 0;\n}\n",
+      "expected_stdout": "1 2 3 4 5 \n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "off-by-one"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-functions-swap",
+      "concept_id": "c-functions",
+      "lesson_id": "04-functions",
+      "type": "find-a-bug",
+      "title": "The change that vanishes",
+      "prompt": "The function is called but nothing changes. Fix it so this prints 11.",
+      "code": "#include <stdio.h>\n\nvoid increment(int x) {\n    x = x + 1;\n}\n\nint main(void) {\n    int n = 10;\n    increment(n);\n    printf(\"%d\\n\", n);\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\nvoid increment(int *x) {\n    *x = *x + 1;\n}\n\nint main(void) {\n    int n = 10;\n    increment(&n);\n    printf(\"%d\\n\", n);\n    return 0;\n}\n",
+      "expected_stdout": "11\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "pass-by-pointer"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-arrays-overflow",
+      "concept_id": "c-arrays-strings",
+      "lesson_id": "05-arrays-and-strings",
+      "type": "find-a-bug",
+      "title": "Reading past the end",
+      "prompt": "This reads one element beyond the array. Fix the loop so the sum is 10.",
+      "code": "#include <stdio.h>\n\nint main(void) {\n    int nums[4] = {1, 2, 3, 4};\n    int sum = 0;\n    for (int i = 0; i <= 4; ++i) sum += nums[i];\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int nums[4] = {1, 2, 3, 4};\n    int sum = 0;\n    for (int i = 0; i < 4; ++i) sum += nums[i];\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
+      "expected_stdout": "10\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "out-of-bounds",
+        "off-by-one"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-arrays-strlen",
+      "concept_id": "c-arrays-strings",
+      "lesson_id": "05-arrays-and-strings",
+      "type": "predict-output",
+      "title": "sizeof versus strlen",
+      "prompt": "Predict both numbers, and explain the difference in your own words afterwards.",
+      "code": "#include <stdio.h>\n#include <string.h>\n\nint main(void) {\n    char greeting[] = \"Hello\";\n    printf(\"%zu\\n\", sizeof(greeting));\n    printf(\"%zu\\n\", strlen(greeting));\n    return 0;\n}\n",
+      "starter_code": "",
+      "expected_stdout": "6\n5\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "string"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-pointers-decl",
+      "concept_id": "c-pointers",
+      "lesson_id": "06-pointers",
+      "type": "find-a-bug",
+      "title": "Only one pointer",
+      "prompt": "The compiler warns because q is not a pointer. Fix the declaration so both are pointers and this prints 1 2.",
+      "code": "#include <stdio.h>\n\nint main(void) {\n    int a = 1, b = 2;\n    int *p, q;\n    p = &a;\n    q = &b;\n    printf(\"%d %d\\n\", *p, *q);\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int a = 1, b = 2;\n    int *p, *q;\n    p = &a;\n    q = &b;\n    printf(\"%d %d\\n\", *p, *q);\n    return 0;\n}\n",
+      "expected_stdout": "1 2\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "declaration"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-memory-malloc-size",
+      "concept_id": "c-memory",
+      "lesson_id": "08-memory",
+      "type": "find-a-bug",
+      "title": "Ten bytes, not ten ints",
+      "prompt": "This allocates the wrong number of bytes and then reads past it. Make it allocate room for 10 ints and print their sum as 45.",
+      "code": "#include <stdio.h>\n#include <stdlib.h>\n\nint main(void) {\n    int *values = malloc(10);\n    int total = 0;\n    for (int i = 0; i < 10; ++i) { values[i] = i; total += values[i]; }\n    printf(\"%d\\n\", total);\n    free(values);\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n#include <stdlib.h>\n\nint main(void) {\n    int *values = malloc(10 * sizeof(*values));\n    int total = 0;\n    for (int i = 0; i < 10; ++i) { values[i] = i; total += values[i]; }\n    printf(\"%d\\n\", total);\n    free(values);\n    return 0;\n}\n",
+      "expected_stdout": "45\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "malloc",
+        "sizeof"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-files-check",
+      "concept_id": "c-files",
+      "lesson_id": "09-files",
+      "type": "find-a-bug",
+      "title": "The unchecked open",
+      "prompt": "For a missing file this silently does nothing. Make it print 'missing'.",
+      "code": "#include <stdio.h>\n\nint main(void) {\n    FILE *file = fopen(\"no_such_file.txt\", \"r\");\n    if (file != NULL) {\n        fclose(file);\n    }\n    printf(\"missing\\n\");\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    FILE *file = fopen(\"no_such_file.txt\", \"r\");\n    if (file == NULL) {\n        printf(\"missing\\n\");\n        return 1;\n    }\n    fclose(file);\n    printf(\"opened\\n\");\n    return 0;\n}\n",
+      "expected_stdout": "missing\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "file-not-checked"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-program-explicit-void",
+      "concept_id": "c-program",
+      "lesson_id": "01-program-structure",
+      "type": "find-a-bug",
+      "title": "Unspecified arguments",
+      "prompt": "The compiler warns about unspecified arguments. Fix the signature so this compiles cleanly and prints the total.",
+      "code": "#include <stdio.h>\n\nint main() {\n    int total = 7;\n    printf(\"%d\\n\", total);\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int total = 7;\n    printf(\"%d\\n\", total);\n    return 0;\n}\n",
+      "expected_stdout": "7\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "main-signature"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "c-structures-arrow",
+      "concept_id": "c-structures",
+      "lesson_id": "07-structures",
+      "type": "find-a-bug",
+      "title": "Dot where you need an arrow",
+      "prompt": "This does not compile because of the member access. Fix it so it prints 12.",
+      "code": "#include <stdio.h>\n\ntypedef struct { int x; int y; } Point;\n\nint main(void) {\n    Point p = {3, 4};\n    Point *pointer = &p;\n    printf(\"%d\\n\", pointer.x * pointer.y);\n    return 0;\n}\n",
+      "starter_code": "#include <stdio.h>\n\ntypedef struct { int x; int y; } Point;\n\nint main(void) {\n    Point p = {3, 4};\n    Point *pointer = &p;\n    printf(\"%d\\n\", pointer->x * pointer->y);\n    return 0;\n}\n",
+      "expected_stdout": "12\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "member-access"
+      ],
+      "graded_by": "deterministic"
+    }
+  ],
+  "projects": [],
+  "comparisons": [
+    {
+      "id": "division",
+      "concept": "Integer versus true division",
+      "languages": [
+        "c",
+        "python"
+      ],
+      "same": "The `/` operator divides two values.",
+      "different": [
+        "In C, `7 / 2` with two ints is `3`: the fractional part is discarded.",
+        "In Python, `7 / 2` is always `3.5`, because `/` is true division.",
+        "Python's `//` is the integer answer, so `7 // 2` is `3`.",
+        "This is the single most common bug when moving between them: a C program that works becomes silently wrong in Python."
+      ],
+      "snippets": [
+        "int a = 7, b = 2;\nprintf(\"%d\\n\", a / b);      /* 3 */\nprintf(\"%.1f\\n\", (double)a / b); /* 3.5 - cast first */",
+        "a, b = 7, 2\nprint(a / b)        # 3.5 - always true division\nprint(a // b)       # 3    - floor division"
+      ],
+      "question": "You port a C function that averaged two integers to Python. What changes, and what test would catch the mistake?"
+    },
+    {
+      "id": "pointers-vs-references",
+      "concept": "What a pointer really is",
+      "languages": [
+        "c",
+        "cpp"
+      ],
+      "same": "Both store an address, and `&` takes one while `*` dereferences one.",
+      "different": [
+        "C has no references at all: modifying through a pointer is the only way to change a caller's variable.",
+        "C++ has both. A reference is an alias that can never be reseated and can never be null; a pointer can do both.",
+        "A C++ reference is closer in spirit to a Python reference or a JavaScript object binding than to a C pointer."
+      ],
+      "snippets": [
+        "void bump(int *x) { *x += 1; }   /* may be NULL */\nint n = 1; bump(&n);",
+        "void bump(int &x) { x += 1; }    /* always refers to something */\nint n = 1; bump(n);"
+      ],
+      "question": "Why can a C++ reference never be compared against null, and what would you lose if you tried to allow it?"
+    }
+  ]
+}

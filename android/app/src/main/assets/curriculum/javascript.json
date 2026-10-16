@@ -1,0 +1,644 @@
+{
+  "format_version": 1,
+  "language": "javascript",
+  "label": "JavaScript",
+  "generated_by": "tools/export_curriculum.py",
+  "lessons": [
+    {
+      "id": "01-variables-and-types",
+      "title": "Variables and Types",
+      "order": 1,
+      "sections": {
+        "objectives": "- Declare variables with `const` and `let` and know when each is right.\n- Use the primitives: `number`, `string`, `boolean`, `null`, `undefined`.\n- Understand that JavaScript is dynamically typed.\n- Avoid the number-versus-string coercion trap.",
+        "explanation": "Prefer `const` by default and use `let` only when you must reassign:\n\n```javascript\nconst name = \"Ada\";   // binding cannot be changed\nlet count = 0;        // binding can be reassigned\ncount += 1;\n```\n\n`var` is legacy. It is function-scoped rather than block-scoped, which causes\nbugs that `let` and `const` do not have. Do not use it in new code.\n\n**Primitives:**\n\n| Type | Example | Notes |\n|---|---|---|\n| `number` | `42`, `3.14` | One type for integers and floats |\n| `string` | `\"Ada\"` | Immutable |\n| `boolean` | `true` | |\n| `null` | `null` | Deliberately \"no value\" |\n| `undefined` | — | Assigned by the engine when a value is missing |\n\nThere is no separate `int` and `double`, so `5 / 2` is `2.5` — matching Python\nrather than C and C++.\n\n**`typeof` and falsy values.** `typeof 42` is `\"number\"`. But `typeof null` is\n`\"object\"`, a long-standing bug in the language that you simply have to know.\n\n**Falsy values** are treated as false in a condition:\n\n```javascript\nfalse, 0, -0, 0n, \"\", null, undefined, NaN\n```\n\nEverything else is truthy — including `\"0\"`, `\"false\"` and `[]`. That last one\nsurprises people: an empty array is truthy.\n\n**The coercion trap.** JavaScript converts types as needed:\n\n```javascript\n\"5\" + 3      // \"53\"   string concatenation wins\n\"5\" - 3      // 2      arithmetic converts\n\"5\" == 5     // true   loose equality coerces\n\"5\" === 5    // false  strict equality does not\n```\n\nAlways use `===` and `!==`. `==` applies coercion rules that were designed for\nan era before `===` existed, and they produce surprises rather than conveniences.\n\n**Check for missing values with `== null`:**\n\n```javascript\nif (value === null || value === undefined) { ... }\n```\n\nThat is the one place `==` is correct and idiomatic, because it matches both\n`null` and `undefined` in a single readable test.",
+        "example": "```javascript\n// variables_and_types.mjs\nconst name = \"Ada\";\nlet count = 0;\n\ncount += 1;\nconsole.log(name, typeof name);\nconsole.log(count, typeof count);\n\n// One number type: no integer division\nconsole.log(7 / 2);            // 3.5\nconsole.log(7 % 2);            // 1\nconsole.log(7 / 0);            // Infinity\nconsole.log(typeof null);      // \"object\" - a famous language bug\n\n// Falsy values\nconsole.log(Boolean(0), Boolean(\"\"), Boolean([]), Boolean(\"false\"));\n// false false true true\n\n// Coercion traps\nconsole.log(\"5\" + 3);          // \"53\"\nconsole.log(\"5\" - 3);          // 2\nconsole.log(\"5\" == 5);         // true  - avoid\nconsole.log(\"5\" === 5);        // false - correct\n\n// The idiomatic missing-value check\nfunction describe(value) {\n  if (value == null) return \"missing\";   // matches null and undefined\n  return `present: ${value}`;\n}\nconsole.log(describe(null));      // missing\nconsole.log(describe(undefined)); // missing\nconsole.log(describe(0));         // present: 0\n```",
+        "knowledge_checks": "Q: When should you use `let` instead of `const`?\nA: Only when the binding genuinely needs to be reassigned. `const` prevents accidental reassignment and documents intent.\nQ: What does `typeof null` return, and why is it surprising?\nA: `\"object\"`. It is a long-standing bug in the language that cannot be changed without breaking existing code, so you simply need to know it.\nQ: Is an empty array `[]` truthy?\nA: Yes. All objects and arrays are truthy, even when empty. Use `array.length` to test for emptiness.\nQ: Why prefer `===` over `==`?\nA: `==` applies type coercion, so `\"5\" == 5` is true. `===` compares both value and type, which is almost always what you mean.",
+        "exercise": "Create a `const` for a product name, a `let` for a quantity that starts at 1, a\n`number` price, a `boolean` inStock, and a `null` discount. Print each value\nwith `typeof`, then increment the quantity and print the new stock message using\na template literal.\n\n```javascript starter\nconst product = \"Notebook\";\nlet quantity = 1;\nconst price = 4.5;\nconst inStock = true;\nlet discount = null;\n\n// Print each value with typeof. Then quantity += 2 and print a sentence.\n```",
+        "common_mistakes": "- **Using `var`.** It is function-scoped and causes closure bugs. Use `const`/`let`.\n- **Using `==`.** Coercion produces surprising results; use `===`.\n- **Expecting integer division.** `7 / 2` is `3.5`.\n- **Treating an empty array or an empty string as falsy.** Only `\"\"` is falsy; `[]` is truthy.\n- **Using `typeof x === \"object\"` to detect `null`.** Test `x === null` instead.",
+        "recap": "- `const` by default, `let` when reassigning, never `var`.\n- Primitives: `number`, `string`, `boolean`, `null`, `undefined`.\n- One `number` type, so `/` is true division.\n- Always `===` and `!==`; use `== null` for the missing-value check.\n- Empty arrays are truthy."
+      },
+      "example_code": "// variables_and_types.mjs\nconst name = \"Ada\";\nlet count = 0;\n\ncount += 1;\nconsole.log(name, typeof name);\nconsole.log(count, typeof count);\n\n// One number type: no integer division\nconsole.log(7 / 2);            // 3.5\nconsole.log(7 % 2);            // 1\nconsole.log(7 / 0);            // Infinity\nconsole.log(typeof null);      // \"object\" - a famous language bug\n\n// Falsy values\nconsole.log(Boolean(0), Boolean(\"\"), Boolean([]), Boolean(\"false\"));\n// false false true true\n\n// Coercion traps\nconsole.log(\"5\" + 3);          // \"53\"\nconsole.log(\"5\" - 3);          // 2\nconsole.log(\"5\" == 5);         // true  - avoid\nconsole.log(\"5\" === 5);        // false - correct\n\n// The idiomatic missing-value check\nfunction describe(value) {\n  if (value == null) return \"missing\";   // matches null and undefined\n  return `present: ${value}`;\n}\nconsole.log(describe(null));      // missing\nconsole.log(describe(undefined)); // missing\nconsole.log(describe(0));         // present: 0",
+      "starter_code": "const product = \"Notebook\";\nlet quantity = 1;\nconst price = 4.5;\nconst inStock = true;\nlet discount = null;\n\n// Print each value with typeof. Then quantity += 2 and print a sentence.",
+      "checks": [
+        {
+          "question": "When should you use `let` instead of `const`?",
+          "answer": "Only when the binding genuinely needs to be reassigned. `const` prevents accidental reassignment and documents intent."
+        },
+        {
+          "question": "What does `typeof null` return, and why is it surprising?",
+          "answer": "`\"object\"`. It is a long-standing bug in the language that cannot be changed without breaking existing code, so you simply need to know it."
+        },
+        {
+          "question": "Is an empty array `[]` truthy?",
+          "answer": "Yes. All objects and arrays are truthy, even when empty. Use `array.length` to test for emptiness."
+        },
+        {
+          "question": "Why prefer `===` over `==`?",
+          "answer": "`==` applies type coercion, so `\"5\" == 5` is true. `===` compares both value and type, which is almost always what you mean."
+        }
+      ]
+    },
+    {
+      "id": "02-conditions-and-loops",
+      "title": "Conditions and Loops",
+      "order": 2,
+      "sections": {
+        "objectives": "- Write `if`, `else` and `switch`.\n- Use `for`, `for...of` and `while` correctly.\n- Choose `for...of` over `for...in` for arrays.\n- Avoid the classic loop-closure bug.",
+        "explanation": "Conditions read much like C++:\n\n```javascript\nif (score >= 90) {\n  grade = \"A\";\n} else if (score >= 80) {\n  grade = \"B\";\n} else {\n  grade = \"F\";\n}\n```\n\n**Loops.** `for...of` iterates over the *values* of an iterable, which is what\nyou almost always want:\n\n```javascript\nfor (const mark of marks) {\n  console.log(mark);\n}\n\nfor (const [index, value] of marks.entries()) {\n  console.log(index, value);\n}\n```\n\n`for...in` iterates over *keys*, and is a bug magnet on arrays because it also\nwalks inherited enumerable properties. Use `Object.keys()` or `Object.entries()`\nfor objects:\n\n```javascript\nfor (const key of Object.keys(person)) {\n  console.log(key, person[key]);\n}\n```\n\nClassic loops:\n\n```javascript\nfor (let i = 0; i < 5; i++) { ... }\n\nlet n = 3;\nwhile (n > 0) { n--; }\n\ndo { ... } while (condition);      // runs at least once\n```\n\n**`for...in` is wrong for arrays:**\n\n```javascript\nfor (const i in [10, 20]) { ... }   // i is \"0\", \"1\" - strings!\n```\n\n**The closure-in-loop bug.** `let` in a `for` head gives each iteration its own\nbinding; `var` does not:\n\n```javascript\nconst fns = [];\nfor (let i = 0; i < 3; i++) fns.push(() => i);\nconsole.log(fns.map(f => f()));    // [0, 1, 2] - correct\n\nconst bad = [];\nfor (var j = 0; j < 3; j++) bad.push(() => j);\nconsole.log(bad.map(f => f()));    // [3, 3, 3] - classic bug\n```\n\nThis is a real reason to prefer `let` over `var`.\n\n`break` and `continue` work as expected, and you can label loops:\n\n```javascript\nouter:\nfor (let i = 0; i < 3; i++) {\n  for (let j = 0; j < 3; j++) {\n    if (i * j > 4) break outer;\n  }\n}\n```",
+        "example": "```javascript\n// conditions_and_loops.mjs\nconst marks = [70, 85, 92, 60, 78];\n\nfunction gradeFor(mark) {\n  if (mark >= 90) return \"A\";\n  if (mark >= 80) return \"B\";\n  if (mark >= 70) return \"C\";\n  return \"F\";\n}\n\nfor (const mark of marks) {\n  console.log(mark, gradeFor(mark));\n}\n\nconst total = marks.reduce((sum, mark) => sum + mark, 0);\nconsole.log(\"total:\", total, \"average:\", total / marks.length);\n\n// for...of with the index\nfor (const [index, mark] of marks.entries()) {\n  console.log(`${index}: ${mark}`);\n}\n\n// for...in is wrong for arrays - it yields keys as strings\nfor (const key in marks) {\n  console.log(\"key:\", key, typeof key);   // \"0\", \"1\" ... as strings\n}\nfor (const value of marks) {\n  console.log(\"value:\", value, typeof value);  // numbers\n}\n\n// while with a countdown\nlet countdown = 3;\nwhile (countdown > 0) {\n  console.log(\"countdown\", countdown);\n  countdown--;\n}\n\n// let gives each iteration its own closure binding\nconst fns = [];\nfor (let i = 0; i < 3; i++) fns.push(() => i);\nconsole.log(\"closures:\", fns.map(f => f()));   // [0, 1, 2]\n\n// break and continue\nfor (const value of [1, 2, 3, 4, 5]) {\n  if (value === 3) continue;\n  if (value === 5) break;\n  console.log(\"kept\", value);\n}\n\n// switch on a primitive\nconst choice = 2;\nswitch (choice) {\n  case 1:\n    console.log(\"new game\");\n    break;\n  case 2:\n    console.log(\"load game\");\n    break;\n  default:\n    console.log(\"invalid\");\n}\n```",
+        "knowledge_checks": "Q: When should you use `for...of` rather than `for...in`?\nA: `for...of` iterates over values and works on any iterable. `for...in` iterates over keys and also walks inherited properties, which makes it a bug magnet for arrays.\nQ: What does the loop-closure bug look like?\nA: With `var` in the `for` head, every captured closure sees the final value — `[3, 3, 3]` instead of `[0, 1, 2]`. Using `let` gives each iteration its own binding.\nQ: When does `do...while` run its body?\nA: At least once, because the condition is tested after the body.\nQ: What does `break` do inside `switch`?\nA: It exits the `switch`. Without it, execution falls through to the next case.",
+        "exercise": "Print the even numbers from 1 to 10 with a `for` loop. Then use `for...of` to\nprint each mark in an array in reverse using `entries()`, and use a `while` loop\nto count down from 5.\n\n```javascript starter\nconst marks = [70, 85, 92, 60];\n\n// Part 1: for loop printing 2, 4, 6, 8, 10.\n// Part 2: for...of with entries() printing marks in reverse index order.\n// Part 3: while loop counting down from 5 to 1.\n```",
+        "common_mistakes": "- **`for...in` over an array,** yielding string indices and inherited properties.\n- **Using `var` in a loop and capturing it in a closure.**\n- **Writing `i = 0` in the `for` header,** which assigns instead of declaring.\n- **Assuming `continue` runs the update expression.** It jumps to the update, but skipping it can loop forever.\n- **Forgetting that `===` compares types** when checking loop counters from `parseInt`.",
+        "recap": "- `for...of` for values, `for...in` only for keys of an object.\n- `let` in the `for` head fixes the closure bug; `var` does not.\n- `while` for unknown counts, `for` for known, `do...while` for at-least-once.\n- `break` and `continue` behave as in C++, and loops can be labelled.\n- `switch` needs `break`."
+      },
+      "example_code": "// conditions_and_loops.mjs\nconst marks = [70, 85, 92, 60, 78];\n\nfunction gradeFor(mark) {\n  if (mark >= 90) return \"A\";\n  if (mark >= 80) return \"B\";\n  if (mark >= 70) return \"C\";\n  return \"F\";\n}\n\nfor (const mark of marks) {\n  console.log(mark, gradeFor(mark));\n}\n\nconst total = marks.reduce((sum, mark) => sum + mark, 0);\nconsole.log(\"total:\", total, \"average:\", total / marks.length);\n\n// for...of with the index\nfor (const [index, mark] of marks.entries()) {\n  console.log(`${index}: ${mark}`);\n}\n\n// for...in is wrong for arrays - it yields keys as strings\nfor (const key in marks) {\n  console.log(\"key:\", key, typeof key);   // \"0\", \"1\" ... as strings\n}\nfor (const value of marks) {\n  console.log(\"value:\", value, typeof value);  // numbers\n}\n\n// while with a countdown\nlet countdown = 3;\nwhile (countdown > 0) {\n  console.log(\"countdown\", countdown);\n  countdown--;\n}\n\n// let gives each iteration its own closure binding\nconst fns = [];\nfor (let i = 0; i < 3; i++) fns.push(() => i);\nconsole.log(\"closures:\", fns.map(f => f()));   // [0, 1, 2]\n\n// break and continue\nfor (const value of [1, 2, 3, 4, 5]) {\n  if (value === 3) continue;\n  if (value === 5) break;\n  console.log(\"kept\", value);\n}\n\n// switch on a primitive\nconst choice = 2;\nswitch (choice) {\n  case 1:\n    console.log(\"new game\");\n    break;\n  case 2:\n    console.log(\"load game\");\n    break;\n  default:\n    console.log(\"invalid\");\n}",
+      "starter_code": "const marks = [70, 85, 92, 60];\n\n// Part 1: for loop printing 2, 4, 6, 8, 10.\n// Part 2: for...of with entries() printing marks in reverse index order.\n// Part 3: while loop counting down from 5 to 1.",
+      "checks": [
+        {
+          "question": "When should you use `for...of` rather than `for...in`?",
+          "answer": "`for...of` iterates over values and works on any iterable. `for...in` iterates over keys and also walks inherited properties, which makes it a bug magnet for arrays."
+        },
+        {
+          "question": "What does the loop-closure bug look like?",
+          "answer": "With `var` in the `for` head, every captured closure sees the final value — `[3, 3, 3]` instead of `[0, 1, 2]`. Using `let` gives each iteration its own binding."
+        },
+        {
+          "question": "When does `do...while` run its body?",
+          "answer": "At least once, because the condition is tested after the body."
+        },
+        {
+          "question": "What does `break` do inside `switch`?",
+          "answer": "It exits the `switch`. Without it, execution falls through to the next case."
+        }
+      ]
+    },
+    {
+      "id": "03-functions",
+      "title": "Functions",
+      "order": 3,
+      "sections": {
+        "objectives": "- Declare functions with `function`, `const` and arrow syntax.\n- Pass arguments, default parameters and rest parameters.\n- Return values, including early returns.\n- Understand that JavaScript passes objects by reference and primitives by value.",
+        "explanation": "Three equivalent ways to write a function:\n\n```javascript\nfunction add(a, b) { return a + b; }\n\nconst add = function (a, b) { return a + b; };\n\nconst add = (a, b) => a + b;\n```\n\n**Arrow functions** have two differences that matter, and both come from not\nhaving their own `this`:\n\n1. **They cannot be called as constructors.** `new (() => {})` throws.\n2. **They inherit `this` from where they are defined**, which makes them the\n   right choice for callbacks and the wrong choice for object methods that need\n   their own `this`.\n\n**Parameters.** Defaults, destructuring and rest all work:\n\n```javascript\nfunction greet(name = \"there\") { return `Hello, ${name}`; }\ngreet();             // \"Hello, there\"\n\nfunction total(...values) { return values.reduce((s, v) => s + v, 0); }\ntotal(1, 2, 3);      // 6\n\nconst { first, last } = person;          // destructure an object\nconst [x, y] = [10, 20];                 // destructure an array\n```\n\n**Objects are passed by reference, primitives by value.** Passing a primitive\ngives the callee a copy; passing an object lets the callee mutate what the caller\nholds:\n\n```javascript\nfunction tryToChange(n) { n = 99; }        // no effect on the caller\nfunction tryToMutate(o) { o.count = 99; }  // DOES change the caller's object\n\nlet number = 5;\ntryToChange(number);\nconsole.log(number);        // 5\n\nconst settings = { count: 1 };\ntryToMutate(settings);\nconsole.log(settings.count);  // 99\n```\n\nThis is the same distinction Python draws between rebinding and mutating, and\nit is *not* the same as C++'s by-value/by-reference, because there is no way to\npass an object by value cheaply and no address-of syntax.\n\n**Returning objects** is idiomatic, and literal shorthand saves typing:\n\n```javascript\nfunction makePoint(x, y) {\n  return { x, y };            // same as { x: x, y: y }\n}\n```\n\n**Arrow functions and `return`.** A concise body returns implicitly; a block\nbody does not:\n\n```javascript\nconst a = x => x * 2;                 // returns 4 for x=2\nconst b = x => { x * 2 };             // returns undefined\n```\n\nForgetting this is a common and silent bug.",
+        "example": "```javascript\n// functions.mjs\nfunction greet(name = \"there\") {\n  return `Hello, ${name}`;\n}\n\nconst square = (x) => x * x;\nconst cube = (x) => x * x * x;\n\nfunction sumAll(...values) {\n  return values.reduce((total, value) => total + value, 0);\n}\n\nfunction makePoint(x, y) {\n  return { x, y };               // shorthand for { x: x, y: y }\n}\n\nfunction describe({ name, age }) {  // destructured parameter\n  return `${name} is ${age}`;\n}\n\nfunction tryToChange(n) {\n  n = 99;                          // rebinds a copy\n}\n\nfunction tryToMutate(options) {\n  options.enabled = false;         // mutates the caller's object\n}\n\nconsole.log(greet(), \"|\", greet(\"Ada\"));\nconsole.log(square(4), cube(3));\nconsole.log(\"sum:\", sumAll(1, 2, 3));\n\nconst point = makePoint(3, 4);\nconsole.log(\"point:\", point);\n\nconsole.log(describe({ name: \"Ada\", age: 36 }));\n\nlet number = 5;\ntryToChange(number);\nconsole.log(\"number unchanged:\", number);          // 5\n\nconst settings = { enabled: true, retries: 3 };\ntryToMutate(settings);\nconsole.log(\"settings mutated:\", settings);        // enabled: false\n\n// The implicit-return trap\nconst implicit = (x) => x * 2;\nconst explicit = (x) => { x * 2; };\nconsole.log(\"implicit return:\", implicit(2));      // 4\nconsole.log(\"explicit return:\", explicit(2));      // undefined\n```",
+        "knowledge_checks": "Q: When can you not use an arrow function?\nA: As a constructor with `new`, and as an object method that needs its own `this`, because arrows inherit `this` from their definition site.\nQ: How are objects passed compared to primitives?\nA: Objects are passed by reference, so the callee can mutate what the caller holds. Primitives are passed by value, giving the callee a copy.\nQ: Why does `(x) => { x * 2 }` return `undefined`?\nA: A concise arrow body returns implicitly, but a block body needs an explicit `return`.\nQ: What does a default parameter do when the argument is `undefined`?\nA: It substitutes the default. Note that passing `null` explicitly does *not* trigger the default.",
+        "exercise": "Write `add(a, b = 0)`, `sumAll(...values)` using `reduce`, and\n`makePerson(name, age)` returning an object. Then call each and print the\nresults.\n\n```javascript starter\nfunction add(a, b = 0) {\n  // return a + b\n}\n\nfunction sumAll(...values) {\n  // reduce to a total, starting from 0\n}\n\nfunction makePerson(name, age) {\n  // return an object with those properties\n}\n```",
+        "common_mistakes": "- **Forgetting `return` inside a block-bodied arrow function.**\n- **Using an arrow function as a constructor,** which throws.\n- **Expecting a primitive parameter change to be visible,** which it is not.\n- **Using `arguments` in an arrow function,** where it refers to the enclosing scope.\n- **Declaring `const add` and also `function add`,** which is a redeclaration error.",
+        "recap": "- Three declaration forms; arrows have no `this` of their own.\n- Defaults, rest and destructuring all work in parameters.\n- Objects pass by reference, primitives by value.\n- Concise arrows return implicitly; block bodies need `return`.\n- `{ x, y }` is shorthand for `{ x: x, y: y }`."
+      },
+      "example_code": "// functions.mjs\nfunction greet(name = \"there\") {\n  return `Hello, ${name}`;\n}\n\nconst square = (x) => x * x;\nconst cube = (x) => x * x * x;\n\nfunction sumAll(...values) {\n  return values.reduce((total, value) => total + value, 0);\n}\n\nfunction makePoint(x, y) {\n  return { x, y };               // shorthand for { x: x, y: y }\n}\n\nfunction describe({ name, age }) {  // destructured parameter\n  return `${name} is ${age}`;\n}\n\nfunction tryToChange(n) {\n  n = 99;                          // rebinds a copy\n}\n\nfunction tryToMutate(options) {\n  options.enabled = false;         // mutates the caller's object\n}\n\nconsole.log(greet(), \"|\", greet(\"Ada\"));\nconsole.log(square(4), cube(3));\nconsole.log(\"sum:\", sumAll(1, 2, 3));\n\nconst point = makePoint(3, 4);\nconsole.log(\"point:\", point);\n\nconsole.log(describe({ name: \"Ada\", age: 36 }));\n\nlet number = 5;\ntryToChange(number);\nconsole.log(\"number unchanged:\", number);          // 5\n\nconst settings = { enabled: true, retries: 3 };\ntryToMutate(settings);\nconsole.log(\"settings mutated:\", settings);        // enabled: false\n\n// The implicit-return trap\nconst implicit = (x) => x * 2;\nconst explicit = (x) => { x * 2; };\nconsole.log(\"implicit return:\", implicit(2));      // 4\nconsole.log(\"explicit return:\", explicit(2));      // undefined",
+      "starter_code": "function add(a, b = 0) {\n  // return a + b\n}\n\nfunction sumAll(...values) {\n  // reduce to a total, starting from 0\n}\n\nfunction makePerson(name, age) {\n  // return an object with those properties\n}",
+      "checks": [
+        {
+          "question": "When can you not use an arrow function?",
+          "answer": "As a constructor with `new`, and as an object method that needs its own `this`, because arrows inherit `this` from their definition site."
+        },
+        {
+          "question": "How are objects passed compared to primitives?",
+          "answer": "Objects are passed by reference, so the callee can mutate what the caller holds. Primitives are passed by value, giving the callee a copy."
+        },
+        {
+          "question": "Why does `(x) => { x * 2 }` return `undefined`?",
+          "answer": "A concise arrow body returns implicitly, but a block body needs an explicit `return`."
+        },
+        {
+          "question": "What does a default parameter do when the argument is `undefined`?",
+          "answer": "It substitutes the default. Note that passing `null` explicitly does *not* trigger the default."
+        }
+      ]
+    },
+    {
+      "id": "04-arrays-and-objects",
+      "title": "Arrays and Objects",
+      "order": 4,
+      "sections": {
+        "objectives": "- Read and write array elements, and use the common array methods.\n- Create and read object properties safely.\n- Choose between an array, a plain object and a `Map`.\n- Avoid mutating arrays in ways that surprise the reader.",
+        "explanation": "**Arrays** hold ordered values:\n\n```javascript\nconst marks = [70, 85, 92];\nmarks[0];              // 70\nmarks.length;          // 3\nmarks.push(60);        // append, returns new length\nmarks.pop();           // remove and return the last\n```\n\nThe methods that do most of the work:\n\n| Method | Does |\n|---|---|\n| `map(fn)` | New array, same length, transformed |\n| `filter(fn)` | New array of items where `fn` is true |\n| `reduce(fn, start)` | Collapse to a single value |\n| `find(fn)` | First matching item, or `undefined` |\n| `some(fn)` / `every(fn)` | Any match / all match |\n| `sort(cmp)` | Sort **in place** and return the same array |\n| `slice(a, b)` | Copy a range, end exclusive |\n| `includes(v)` | Membership test |\n\n```javascript\nconst doubled = marks.map(m => m * 2);         // [140, 170, 184]\nconst passing = marks.filter(m => m >= 80);    // [85, 92]\nconst total = marks.reduce((s, m) => s + m, 0);\nconst first = marks.find(m => m > 80);         // 85\nconst sorted = [...marks].sort((a, b) => a - b);\n```\n\n**`sort` mutates and needs a comparator.** `marks.sort()` sorts *strings* —\n`[10, 9, 100].sort()` gives `[10, 100, 9]`. Always pass `(a, b) => a - b`.\n\n**Spread avoids mutating**: `[...marks].sort(...)` sorts a copy.\n\n**Objects** map keys to values:\n\n```javascript\nconst person = { name: \"Ada\", age: 36 };\nperson.name;                  // \"Ada\"\nperson[\"age\"];                // 36\nperson.city = \"London\";       // add\nconst missing = person.nickname;      // undefined, no error\nperson.nickname ??= \"unknown\";        // set if null/undefined\n```\n\nUse `Object.keys`, `Object.values` and `Object.entries` to iterate:\n\n```javascript\nfor (const [key, value] of Object.entries(person)) {\n  console.log(key, value);\n}\n```\n\n`??` (nullish coalescing) substitutes only for `null` and `undefined`, unlike\n`||` which also substitutes for `0`, `\"\"` and `false`. That distinction matters:\n\n```javascript\n0 || \"fallback\"     // \"fallback\"  - probably not what you wanted\n0 ?? \"fallback\"     // 0           - correct\n```\n\n**Destructuring** reads cleanly:\n\n```javascript\nconst { name, age } = person;\nconst [first, ...rest] = marks;\n```\n\n**`Map` versus object.** Use a `Map` when keys are not strings, when you want\ninsertion order guaranteed, or when you need to delete frequently. `Map` keys\ncan be any value:\n\n```javascript\nconst counts = new Map();\ncounts.set(\"Ada\", 1);\ncounts.get(\"Ada\");     // 1\ncounts.size;           // 1\n```\n\nObjects coerce keys to strings, so `{1: \"a\"}` and `{\"1\": \"b\"}` collide.",
+        "example": "```javascript\n// arrays_and_objects.mjs\nconst marks = [70, 85, 92, 60, 78];\n\nconsole.log(\"length:\", marks.length);\nconsole.log(\"first:\", marks[0], \"last:\", marks[marks.length - 1]);\n\nconsole.log(\"doubled :\", marks.map(m => m * 2));\nconsole.log(\"passing :\", marks.filter(m => m >= 80));\nconsole.log(\"total   :\", marks.reduce((s, m) => s + m, 0));\nconsole.log(\"average :\", marks.reduce((s, m) => s + m, 0) / marks.length);\nconsole.log(\"first>80:\", marks.find(m => m > 80));\nconsole.log(\"any>90  :\", marks.some(m => m > 90));\nconsole.log(\"all>60  :\", marks.every(m => m > 60));\n\n// sort mutates: use a copy\nconst unsorted = [10, 9, 100];\nconsole.log(\"bad sort :\", [...unsorted].sort());                 // 10,100,9\nconsole.log(\"good sort:\", [...unsorted].sort((a, b) => a - b)); // 9,10,100\nconsole.log(\"original :\", unsorted, \"(unchanged)\");\n\n// slice copies, end exclusive\nconsole.log(\"slice 1:3:\", marks.slice(1, 3));\nconsole.log(\"includes 92:\", marks.includes(92));\n\nconst person = { name: \"Ada\", age: 36 };\nperson.city = \"London\";\nconsole.log(\"person   :\", person);\nconsole.log(\"missing  :\", person.nickname);        // undefined\n\n// ?? vs ||\nconst zero = 0;\nconsole.log(\"0 || 'x' :\", zero || \"x\");\nconsole.log(\"0 ?? 'x' :\", zero ?? \"x\");\n\n// destructuring\nconst { name, age } = person;\nconst [first, ...rest] = marks;\nconsole.log(\"destruct :\", name, age, first, rest);\n\n// entries\nfor (const [key, value] of Object.entries(person)) {\n  console.log(`  ${key} = ${value}`);\n}\n\n// Map with non-string keys\nconst counts = new Map();\nfor (const mark of marks) {\n  const band = mark >= 80 ? \"high\" : \"low\";\n  counts.set(band, (counts.get(band) ?? 0) + 1);\n}\nconsole.log(\"map counts:\", [...counts.entries()]);\n```",
+        "knowledge_checks": "Q: What does `[10, 9, 100].sort()` produce, and why?\nA: `[10, 100, 9]`. With no comparator, elements are compared as strings, and `\"10\"` sorts before `\"9\"`.\nQ: When should you use `??` instead of `||`?\nA: When you want to substitute only for `null` and `undefined`. `||` also substitutes for `0`, `\"\"` and `false`.\nQ: Does reading a property that does not exist throw?\nA: No. It returns `undefined`.\nQ: When is a `Map` better than a plain object?\nA: When keys are not strings, when you need guaranteed insertion order, or when you delete frequently.",
+        "exercise": "Build an array of five marks. Print the array, its length, the doubled values,\nthe values at least 80, the total and the mean. Then build an object counting\nhow many marks fall into each of two bands, and print it.\n\n```javascript starter\nconst marks = [70, 85, 92, 60, 78];\n\n// Print length, marks.map(m => m*2), marks.filter(m => m >= 80).\n// Print the reduced total and the mean.\n// Build an object of band -> count for \"high\" (>=80) and \"low\", then print it.\n```",
+        "common_mistakes": "- **`sort()` with no comparator,** sorting lexicographically.\n- **Forgetting that `sort` mutates** and modifying an array someone else holds.\n- **Using `||` to default,** which replaces valid `0` and `\"\"` values.\n- **Iterating an object with `for...in`** when `Object.entries()` is clearer.\n- **Using an array as a map** with non-numeric keys.",
+        "recap": "- `map`, `filter`, `reduce`, `find`, `some`, `every` return new values.\n- `sort` mutates and needs `(a, b) => a - b`.\n- `slice` copies and excludes the end index.\n- `??` replaces only `null`/`undefined`; `||` replaces all falsy values.\n- Use a `Map` when keys are not strings."
+      },
+      "example_code": "// arrays_and_objects.mjs\nconst marks = [70, 85, 92, 60, 78];\n\nconsole.log(\"length:\", marks.length);\nconsole.log(\"first:\", marks[0], \"last:\", marks[marks.length - 1]);\n\nconsole.log(\"doubled :\", marks.map(m => m * 2));\nconsole.log(\"passing :\", marks.filter(m => m >= 80));\nconsole.log(\"total   :\", marks.reduce((s, m) => s + m, 0));\nconsole.log(\"average :\", marks.reduce((s, m) => s + m, 0) / marks.length);\nconsole.log(\"first>80:\", marks.find(m => m > 80));\nconsole.log(\"any>90  :\", marks.some(m => m > 90));\nconsole.log(\"all>60  :\", marks.every(m => m > 60));\n\n// sort mutates: use a copy\nconst unsorted = [10, 9, 100];\nconsole.log(\"bad sort :\", [...unsorted].sort());                 // 10,100,9\nconsole.log(\"good sort:\", [...unsorted].sort((a, b) => a - b)); // 9,10,100\nconsole.log(\"original :\", unsorted, \"(unchanged)\");\n\n// slice copies, end exclusive\nconsole.log(\"slice 1:3:\", marks.slice(1, 3));\nconsole.log(\"includes 92:\", marks.includes(92));\n\nconst person = { name: \"Ada\", age: 36 };\nperson.city = \"London\";\nconsole.log(\"person   :\", person);\nconsole.log(\"missing  :\", person.nickname);        // undefined\n\n// ?? vs ||\nconst zero = 0;\nconsole.log(\"0 || 'x' :\", zero || \"x\");\nconsole.log(\"0 ?? 'x' :\", zero ?? \"x\");\n\n// destructuring\nconst { name, age } = person;\nconst [first, ...rest] = marks;\nconsole.log(\"destruct :\", name, age, first, rest);\n\n// entries\nfor (const [key, value] of Object.entries(person)) {\n  console.log(`  ${key} = ${value}`);\n}\n\n// Map with non-string keys\nconst counts = new Map();\nfor (const mark of marks) {\n  const band = mark >= 80 ? \"high\" : \"low\";\n  counts.set(band, (counts.get(band) ?? 0) + 1);\n}\nconsole.log(\"map counts:\", [...counts.entries()]);",
+      "starter_code": "const marks = [70, 85, 92, 60, 78];\n\n// Print length, marks.map(m => m*2), marks.filter(m => m >= 80).\n// Print the reduced total and the mean.\n// Build an object of band -> count for \"high\" (>=80) and \"low\", then print it.",
+      "checks": [
+        {
+          "question": "What does `[10, 9, 100].sort()` produce, and why?",
+          "answer": "`[10, 100, 9]`. With no comparator, elements are compared as strings, and `\"10\"` sorts before `\"9\"`."
+        },
+        {
+          "question": "When should you use `??` instead of `||`?",
+          "answer": "When you want to substitute only for `null` and `undefined`. `||` also substitutes for `0`, `\"\"` and `false`."
+        },
+        {
+          "question": "Does reading a property that does not exist throw?",
+          "answer": "No. It returns `undefined`."
+        },
+        {
+          "question": "When is a `Map` better than a plain object?",
+          "answer": "When keys are not strings, when you need guaranteed insertion order, or when you delete frequently."
+        }
+      ]
+    },
+    {
+      "id": "05-scope",
+      "title": "Scope and Closures",
+      "order": 5,
+      "sections": {
+        "objectives": "- Distinguish global, module, function and block scope.\n- Explain the temporal dead zone.\n- Create and use a closure.\n- Understand why `let` in a loop fixes the classic closure bug.",
+        "explanation": "Scope decides where a name is visible.\n\n```javascript\nconst global = \"anywhere\";\n\nfunction example() {\n  const inFunction = \"inside only\";\n  if (true) {\n    let inBlock = \"inside the block only\";\n  }\n  // inBlock is not visible here\n}\n```\n\n`let` and `const` are **block-scoped**: they exist only within the braces that\ncontain them. `var` is function-scoped, so it leaks out of blocks and loops.\nThat difference is the main practical reason to stop using `var`.\n\n**Hoisting.** Declarations are processed before the code runs, but the effect\ndiffers:\n\n```javascript\nconsole.log(x);       // undefined, not an error\nvar x = 1;\n\nconsole.log(y);       // ReferenceError!\nlet y = 2;\n```\n\n`var` is hoisted and initialised to `undefined`. `let` and `const` are hoisted\ninto the *temporal dead zone* — they exist but cannot be touched until the\ndeclaration executes. That is why `let` fails loudly where `var` fails quietly.\n\n**Closures.** A function keeps access to the variables in the scope where it was\ndefined, even after that scope has exited:\n\n```javascript\nfunction makeCounter() {\n  let count = 0;              // private to this closure\n  return function increment() {\n    count += 1;\n    return count;\n  };\n}\n\nconst counter = makeCounter();\nconsole.log(counter());   // 1\nconsole.log(counter());   // 2\n\nconst other = makeCounter();\nconsole.log(other());     // 1 - a separate private count\n```\n\nEach call to `makeCounter` creates a fresh `count`. That is how you get private\nstate without classes.\n\n**The loop-closure bug** is the same idea gone wrong:\n\n```javascript\nconst bad = [];\nfor (var i = 0; i < 3; i++) bad.push(() => i);\nconsole.log(bad.map(f => f()));    // [3, 3, 3]\n\nconst good = [];\nfor (let j = 0; j < 3; j++) good.push(() => j);\nconsole.log(good.map(f => f()));   // [0, 1, 2]\n```\n\nAll three closures share one `var`. With `let`, each iteration gets its own\nbinding, so each closure remembers its own number.\n\n**Arrow functions inherit `this`**, which is why they are convenient as\ncallbacks but wrong as object methods:\n\n```javascript\nconst timer = {\n  seconds: 0,\n  startBad() {\n    setTimeout(function () { console.log(this.seconds); }, 100);  // undefined `this`\n  },\n  startGood() {\n    setTimeout(() => console.log(this.seconds), 100);              // arrow inherits it\n  }\n};\n```",
+        "example": "```javascript\n// scope.mjs\nconst global = \"visible everywhere\";\n\nfunction blockScopeDemo() {\n  const inFunction = \"function scope\";\n  if (true) {\n    let inBlock = \"block scope\";\n    console.log(\"inside block:\", inBlock);\n  }\n  // console.log(inBlock);   // ReferenceError if uncommented\n  return inFunction;\n}\n\nconsole.log(blockScopeDemo());\n\n// Temporal dead zone\nconsole.log(\"var hoisting  :\", typeof maybeLater);   // \"undefined\"\nvar maybeLater = 1;\n// console.log(maybeLater);  // would throw if it were let\n\n// Closures give private state\nfunction makeCounter(start = 0) {\n  let count = start;\n  return {\n    increment() { count += 1; return count; },\n    get value() { return count; },\n  };\n}\n\nconst counter = makeCounter(10);\nconsole.log(counter.increment(), counter.increment(), counter.value);\n\nconst separate = makeCounter();\nconsole.log(\"independent:\", separate.value);   // 0, not 20\n\n// The loop-closure bug\nconst withVar = [];\nfor (var i = 0; i < 3; i++) withVar.push(() => i);\nconsole.log(\"with var:\", withVar.map(f => f()));    // [3, 3, 3]\n\nconst withLet = [];\nfor (let j = 0; j < 3; j++) withLet.push(() => j);\nconsole.log(\"with let:\", withLet.map(f => f()));   // [0, 1, 2]\n\n// Closures over a loop variable declared with let in a for-of\nconst names = [\"Ada\", \"Alan\", \"Grace\"];\nconst greeters = [];\nfor (const name of names) {\n  greeters.push(() => `Hello, ${name}`);\n}\nconsole.log(greeters.map(g => g()));   // each has its own name\n\n// this: arrow functions inherit it\nconst timer = {\n  label: \"mine\",\n  withFunction() {\n    return (function () { return this; })();     // undefined in strict mode\n  },\n  withArrow() {\n    return (() => this)();                      // the timer object\n  },\n};\nconsole.log(\"function this:\", timer.withFunction());\nconsole.log(\"arrow this   :\", timer.withArrow().label);\n```",
+        "knowledge_checks": "Q: What is the difference in scope between `var` and `let`?\nA: `var` is function-scoped and leaks out of blocks and loops. `let` is block-scoped and exists only inside its braces.\nQ: What is the temporal dead zone?\nA: The span between when a `let` or `const` is hoisted and when its declaration executes. Touching the name in that span throws a `ReferenceError`.\nQ: Why does `var` in a loop give `[3, 3, 3]`?\nA: All closures share the single function-scoped `var`, so each sees its final value. `let` creates a fresh binding per iteration.\nQ: Why prefer arrow functions as callbacks?\nA: They inherit `this` from the surrounding scope instead of receiving their own, which is usually what a callback wants.",
+        "exercise": "Write `makeCounter(start)` returning an object with `increment`, `decrement` and\na `value` getter, all closing over a private `count`. Create two counters and\nprove they do not share state.\n\n```javascript starter\nfunction makeCounter(start = 0) {\n  let count = start;\n  return {\n    increment() { /* count += 1; return count */ },\n    decrement() { /* count -= 1; return count */ },\n    get value() { /* return count */ },\n  };\n}\n\nconst a = makeCounter(5);\nconst b = makeCounter();\n// Prove a and b are independent.\n```",
+        "common_mistakes": "- **Using `var`**, which leaks out of blocks and breaks loop closures.\n- **Reading a `let` before its declaration,** which throws rather than returning `undefined`.\n- **Expecting a closure to see the final loop value** when written with `var`.\n- **Using a `function` as a callback where `this` matters.**\n- **Expecting a closure over a loop variable in a `for...of` to share state.** It does not.",
+        "recap": "- `let` and `const` are block-scoped; `var` is function-scoped.\n- `var` hoists to `undefined`; `let`/`const` sit in a temporal dead zone.\n- A closure remembers the scope where it was defined, not the current values.\n- Closures over `let` loop variables capture each iteration's value.\n- Arrow functions inherit `this`; regular functions do not."
+      },
+      "example_code": "// scope.mjs\nconst global = \"visible everywhere\";\n\nfunction blockScopeDemo() {\n  const inFunction = \"function scope\";\n  if (true) {\n    let inBlock = \"block scope\";\n    console.log(\"inside block:\", inBlock);\n  }\n  // console.log(inBlock);   // ReferenceError if uncommented\n  return inFunction;\n}\n\nconsole.log(blockScopeDemo());\n\n// Temporal dead zone\nconsole.log(\"var hoisting  :\", typeof maybeLater);   // \"undefined\"\nvar maybeLater = 1;\n// console.log(maybeLater);  // would throw if it were let\n\n// Closures give private state\nfunction makeCounter(start = 0) {\n  let count = start;\n  return {\n    increment() { count += 1; return count; },\n    get value() { return count; },\n  };\n}\n\nconst counter = makeCounter(10);\nconsole.log(counter.increment(), counter.increment(), counter.value);\n\nconst separate = makeCounter();\nconsole.log(\"independent:\", separate.value);   // 0, not 20\n\n// The loop-closure bug\nconst withVar = [];\nfor (var i = 0; i < 3; i++) withVar.push(() => i);\nconsole.log(\"with var:\", withVar.map(f => f()));    // [3, 3, 3]\n\nconst withLet = [];\nfor (let j = 0; j < 3; j++) withLet.push(() => j);\nconsole.log(\"with let:\", withLet.map(f => f()));   // [0, 1, 2]\n\n// Closures over a loop variable declared with let in a for-of\nconst names = [\"Ada\", \"Alan\", \"Grace\"];\nconst greeters = [];\nfor (const name of names) {\n  greeters.push(() => `Hello, ${name}`);\n}\nconsole.log(greeters.map(g => g()));   // each has its own name\n\n// this: arrow functions inherit it\nconst timer = {\n  label: \"mine\",\n  withFunction() {\n    return (function () { return this; })();     // undefined in strict mode\n  },\n  withArrow() {\n    return (() => this)();                      // the timer object\n  },\n};\nconsole.log(\"function this:\", timer.withFunction());\nconsole.log(\"arrow this   :\", timer.withArrow().label);",
+      "starter_code": "function makeCounter(start = 0) {\n  let count = start;\n  return {\n    increment() { /* count += 1; return count */ },\n    decrement() { /* count -= 1; return count */ },\n    get value() { /* return count */ },\n  };\n}\n\nconst a = makeCounter(5);\nconst b = makeCounter();\n// Prove a and b are independent.",
+      "checks": [
+        {
+          "question": "What is the difference in scope between `var` and `let`?",
+          "answer": "`var` is function-scoped and leaks out of blocks and loops. `let` is block-scoped and exists only inside its braces."
+        },
+        {
+          "question": "What is the temporal dead zone?",
+          "answer": "The span between when a `let` or `const` is hoisted and when its declaration executes. Touching the name in that span throws a `ReferenceError`."
+        },
+        {
+          "question": "Why does `var` in a loop give `[3, 3, 3]`?",
+          "answer": "All closures share the single function-scoped `var`, so each sees its final value. `let` creates a fresh binding per iteration."
+        },
+        {
+          "question": "Why prefer arrow functions as callbacks?",
+          "answer": "They inherit `this` from the surrounding scope instead of receiving their own, which is usually what a callback wants."
+        }
+      ]
+    },
+    {
+      "id": "06-error-handling",
+      "title": "Error Handling",
+      "order": 6,
+      "sections": {
+        "objectives": "- Distinguish the error types JavaScript gives you.\n- Use `try`/`catch`/`finally` and `throw`.\n- Write error messages that say what to do next.\n- Know when *not* to use exceptions.",
+        "explanation": "JavaScript has several error types, and knowing which you have tells you what\nto do:\n\n| Type | Cause |\n|---|---|\n| `TypeError` | Wrong type or shape (`undefined.x`) |\n| `RangeError` | Value outside the allowed range |\n| `ReferenceError` | Name does not exist |\n| `SyntaxError` | The code does not parse |\n| `Error` | The general case you raise yourself |\n\n```javascript\ntry {\n  const result = JSON.parse(text);\n  console.log(result);\n} catch (error) {\n  if (error instanceof SyntaxError) {\n    console.log(\"That was not valid JSON.\");\n  } else {\n    throw error;                  // do not swallow what you do not understand\n}\n} finally {\n  console.log(\"always runs\");\n}\n```\n\n**Throw your own errors with a useful message:**\n\n```javascript\nfunction withdraw(balance, amount) {\n  if (amount <= 0) {\n    throw new RangeError(\"amount must be greater than zero\");\n  }\n  if (amount > balance) {\n    throw new RangeError(`cannot withdraw ${amount} from a balance of ${balance}`);\n  }\n  return balance - amount;\n}\n```\n\nThe message should tell the caller what to fix. `\"Error\"` helps nobody.\n\n**`finally` always runs**, including when the error propagates. Use it for\ncleanup.\n\n**Re-throwing to add context** while keeping the original:\n\n```javascript\ntry {\n  JSON.parse(text);\n} catch (error) {\n  throw new Error(`could not parse the config: ${error.message}`, { cause: error });\n}\n```\n\nThe second argument sets `cause`, which keeps the original error reachable.\n\n**Do not swallow errors.** An empty `catch` that does nothing hides real bugs\nand is the single most common way a JavaScript program becomes undebuggable:\n\n```javascript\ntry { risky(); } catch { }        // BAD: everything vanishes\n```\n\nIf a particular failure is genuinely expected and recoverable, handle it\nspecifically. Otherwise re-throw.\n\n**Prefer returning a result object** when failure is an ordinary outcome, not\nan exceptional one. Parsing user input is routine; a network outage is not:\n\n```javascript\nfunction tryParse(text) {\n  try {\n    return { ok: true, value: JSON.parse(text) };\n  } catch {\n    return { ok: false, error: \"invalid JSON\" };\n  }\n}\n```\n\n**Assertion helper.** To require a value and fail loudly if it is missing,\nwhich is useful in tests:\n\n```javascript\nfunction mustBeDefined(value, label = \"value\") {\n  if (value === undefined || value === null) {\n    throw new Error(`${label} is missing`);\n  }\n  return value;\n}\n```\n\n**Errors and async.** In an `async` function, `throw` rejects the returned\npromise, so you need `await` plus `try`/`catch` — a bare `catch` on a\nnon-awaited promise will not run. That is covered in the async lesson.",
+        "example": "```javascript\n// error_handling.mjs\nclass ValidationError extends Error {\n  constructor(message, field) {\n    super(message);\n    this.name = \"ValidationError\";\n    this.field = field;\n  }\n}\n\nfunction withdraw(balance, amount) {\n  if (typeof amount !== \"number\") {\n    throw new TypeError(\"amount must be a number\");\n  }\n  if (amount <= 0) {\n    throw new RangeError(\"amount must be greater than zero\");\n  }\n  if (amount > balance) {\n    throw new ValidationError(\n      `cannot withdraw ${amount} from a balance of ${balance}`,\n      \"amount\"\n    );\n  }\n  return balance - amount;\n}\n\nfunction parseConfig(text) {\n  try {\n    return JSON.parse(text);\n  } catch (error) {\n    // Add context but keep the original reachable.\n    throw new Error(`could not parse the config: ${error.message}`, { cause: error });\n  }\n}\n\nconsole.log(\"valid   :\", withdraw(100, 40));\n\ntry {\n  withdraw(100, 500);\n} catch (error) {\n  console.log(\"name    :\", error.name);\n  console.log(\"message :\", error.message);\n  console.log(\"field   :\", error.field);\n}\n\ntry {\n  withdraw(100, \"50\");\n} catch (error) {\n  console.log(\"type    :\", error instanceof TypeError);\n}\n\n// Distinguishing error types\ntry {\n  parseConfig(\"{ not json\");\n} catch (error) {\n  console.log(\"context :\", error.message);\n  console.log(\"cause   :\", error.cause instanceof SyntaxError);\n}\n\n// Expected failure returns a value instead of throwing\nfunction tryParse(text) {\n  try {\n    return { ok: true, value: JSON.parse(text) };\n  } catch (error) {\n    return { ok: false, error: \"invalid JSON\" };\n  }\n}\nconsole.log(\"tryParse ok  :\", tryParse('{\"a\":1}'));\nconsole.log(\"tryParse bad :\", tryParse(\"{ nope\"));\n\n// finally always runs\nlet cleaned = false;\ntry {\n  throw new Error(\"boom\");\n} catch {\n  console.log(\"caught the boom\");\n} finally {\n  cleaned = true;\n  console.log(\"cleaned up in finally:\", cleaned);\n}\n```",
+        "knowledge_checks": "Q: Why should an empty `catch` block be avoided?\nA: It discards the error, hiding genuine bugs and making the program impossible to debug. Handle what you understand and re-throw the rest.\nQ: What does the `cause` option on `new Error(...)` do?\nA: Attaches the original error, so the underlying cause stays reachable instead of being lost.\nQ: When is returning an error value better than throwing?\nA: When failure is an ordinary, expected outcome such as invalid user input, where the caller branches on the result anyway.\nQ: When does `finally` run?\nA: On every path: after a normal return, after a caught error, and while an error propagates outward.",
+        "exercise": "Write `parseAge(text)` that converts a string to an integer age, throwing a\n`TypeError` for non-numeric text and a `RangeError` for anything outside 0 to\n150. Then call it with a valid value, a non-numeric string, and a negative\nnumber, catching each case separately.\n\n```javascript starter\nfunction parseAge(text) {\n  // Number() it; throw TypeError if NaN\n  // throw RangeError if < 0 or > 150\n  // otherwise return the integer\n}\n\nfor (const input of [\"36\", \"abc\", \"-5\"]) {\n  try {\n    console.log(input, \"->\", parseAge(input));\n  } catch (error) {\n    console.log(input, \"-> rejected:\", error.name, error.message);\n  }\n}\n```",
+        "common_mistakes": "- **An empty `catch` block,** swallowing every failure.\n- **`catch` with no parameter,** which makes it easy to ignore the error by accident.\n- **Re-throwing without context,** losing what the caller needs to know.\n- **Throwing strings or numbers** instead of `Error` objects.\n- **Assuming `catch` fires for a promise rejection** without `await`.",
+        "recap": "- Catch specific error types; re-throw what you do not understand.\n- Throw `Error` subclasses with messages that say what to fix.\n- `finally` always runs; use it for cleanup.\n- `cause` preserves the original error.\n- For routine failures, return a result object instead of throwing."
+      },
+      "example_code": "// error_handling.mjs\nclass ValidationError extends Error {\n  constructor(message, field) {\n    super(message);\n    this.name = \"ValidationError\";\n    this.field = field;\n  }\n}\n\nfunction withdraw(balance, amount) {\n  if (typeof amount !== \"number\") {\n    throw new TypeError(\"amount must be a number\");\n  }\n  if (amount <= 0) {\n    throw new RangeError(\"amount must be greater than zero\");\n  }\n  if (amount > balance) {\n    throw new ValidationError(\n      `cannot withdraw ${amount} from a balance of ${balance}`,\n      \"amount\"\n    );\n  }\n  return balance - amount;\n}\n\nfunction parseConfig(text) {\n  try {\n    return JSON.parse(text);\n  } catch (error) {\n    // Add context but keep the original reachable.\n    throw new Error(`could not parse the config: ${error.message}`, { cause: error });\n  }\n}\n\nconsole.log(\"valid   :\", withdraw(100, 40));\n\ntry {\n  withdraw(100, 500);\n} catch (error) {\n  console.log(\"name    :\", error.name);\n  console.log(\"message :\", error.message);\n  console.log(\"field   :\", error.field);\n}\n\ntry {\n  withdraw(100, \"50\");\n} catch (error) {\n  console.log(\"type    :\", error instanceof TypeError);\n}\n\n// Distinguishing error types\ntry {\n  parseConfig(\"{ not json\");\n} catch (error) {\n  console.log(\"context :\", error.message);\n  console.log(\"cause   :\", error.cause instanceof SyntaxError);\n}\n\n// Expected failure returns a value instead of throwing\nfunction tryParse(text) {\n  try {\n    return { ok: true, value: JSON.parse(text) };\n  } catch (error) {\n    return { ok: false, error: \"invalid JSON\" };\n  }\n}\nconsole.log(\"tryParse ok  :\", tryParse('{\"a\":1}'));\nconsole.log(\"tryParse bad :\", tryParse(\"{ nope\"));\n\n// finally always runs\nlet cleaned = false;\ntry {\n  throw new Error(\"boom\");\n} catch {\n  console.log(\"caught the boom\");\n} finally {\n  cleaned = true;\n  console.log(\"cleaned up in finally:\", cleaned);\n}",
+      "starter_code": "function parseAge(text) {\n  // Number() it; throw TypeError if NaN\n  // throw RangeError if < 0 or > 150\n  // otherwise return the integer\n}\n\nfor (const input of [\"36\", \"abc\", \"-5\"]) {\n  try {\n    console.log(input, \"->\", parseAge(input));\n  } catch (error) {\n    console.log(input, \"-> rejected:\", error.name, error.message);\n  }\n}",
+      "checks": [
+        {
+          "question": "Why should an empty `catch` block be avoided?",
+          "answer": "It discards the error, hiding genuine bugs and making the program impossible to debug. Handle what you understand and re-throw the rest."
+        },
+        {
+          "question": "What does the `cause` option on `new Error(...)` do?",
+          "answer": "Attaches the original error, so the underlying cause stays reachable instead of being lost."
+        },
+        {
+          "question": "When is returning an error value better than throwing?",
+          "answer": "When failure is an ordinary, expected outcome such as invalid user input, where the caller branches on the result anyway."
+        },
+        {
+          "question": "When does `finally` run?",
+          "answer": "On every path: after a normal return, after a caught error, and while an error propagates outward."
+        }
+      ]
+    },
+    {
+      "id": "07-modules",
+      "title": "Modules",
+      "order": 7,
+      "sections": {
+        "objectives": "- Export and import named and default bindings.\n- Choose the `.mjs` extension or `type: module` for ES modules.\n- Avoid circular imports.\n- Understand what importing a module actually does.",
+        "explanation": "An ES module is a file whose exports are explicitly declared:\n\n```javascript\n// geometry.mjs\nexport const PI = 3.14159;\n\nexport function area(radius) {\n  return PI * radius * radius;\n}\n\nexport default class Shape { }\n```\n\n```javascript\n// main.mjs\nimport { area, PI } from \"./geometry.mjs\";\nimport Shape from \"./geometry.mjs\";\nimport * as geometry from \"./geometry.mjs\";\n\nconsole.log(area(2), PI, new Shape() instanceof Shape, geometry.area(3));\n```\n\nThree styles:\n\n- **Named exports** — `{ area, PI }`. Explicit, and refactoring-safe.\n- **Default export** — `import Shape from ...`. One per file, and the name can\n  be anything at the import site, so it is easy to misread.\n- **Namespace import** — `import * as geometry`. Useful for exploring.\n\n**Prefer named exports.** A default export hides where a value came from, and a\nwrong name fails late:\n\n```javascript\nimport { area as circleArea } from \"./geometry.mjs\";   // rename on import\n```\n\n**Importing runs the module once.** Its top-level code executes the first time\nanything imports it, then the module is cached. This is why modules are a good\nplace for constants and a bad place for side effects.\n\n**File extensions are required in ES modules** for relative paths:\n\n```javascript\nimport { area } from \"./geometry.mjs\";   // correct - extension included\nimport { area } from \"./geometry\";        // error in ES modules\n```\n\nThis differs from CommonJS.\n\n**Getting ES modules working.** Use the `.mjs` extension, or add\n`\"type\": \"module\"` to `package.json`. Without one of those, Node treats `.js`\nas CommonJS and `import` fails.\n\n```bash\nnode main.mjs\n```\n\n**Dynamic import** loads a module at runtime and returns a promise — which is\nhow you conditionally load code:\n\n```javascript\nconst { area } = await import(\"./geometry.mjs\");\n```\n\n**Circular imports** (`a` imports `b`, `b` imports `a`) are fragile: the module\nthat is entered second may see unfinished bindings, producing `undefined` where\nyou expected a value. Break the cycle by extracting shared code into a third\nmodule that both depend on, or by using dynamic `import()` inside the function\nthat needs it.\n\n**Node built-ins** need the `node:` prefix so they are clearly distinguished\nfrom your own files:\n\n```javascript\nimport { readFileSync } from \"node:fs\";\nimport { fileURLToPath } from \"node:url\";\n```",
+        "example": "```javascript\n// geometry.mjs\nexport const PI = 3.14159;\n\nexport function area(radius) {\n  if (radius < 0) throw new RangeError(\"radius cannot be negative\");\n  return PI * radius * radius;\n}\n\nexport function circumference(radius) {\n  return 2 * PI * radius;\n}\n\nexport default function describeShape(name) {\n  return `a ${name}`;\n}\n```\n\n```javascript\n// main.mjs\nimport Shape from \"./geometry.mjs\";\nimport { area, circumference, PI } from \"./geometry.mjs\";\nimport * as geometry from \"./geometry.mjs\";\n\nconsole.log(\"named     :\", area(2));\nconsole.log(\"circumf.  :\", circumference(2));\nconsole.log(\"PI        :\", PI);\nconsole.log(\"namespace :\", geometry.area(3));\nconsole.log(\"default   :\", Shape(\"circle\"));\n\n// renaming on import keeps the source name visible at the call site\nimport { area as circleArea } from \"./geometry.mjs\";\nconsole.log(\"renamed   :\", circleArea(1));\n\n// a module runs once, then is cached\nimport { PI as cachedPI } from \"./geometry.mjs\";\nconsole.log(\"cached    :\", cachedPI === PI);\n\n// dynamic import happens at runtime\nconst late = await import(\"./geometry.mjs\");\nconsole.log(\"dynamic   :\", late.area(4));\n\ntry {\n  area(-1);\n} catch (error) {\n  console.log(\"rejected  :\", error.name, \"-\", error.message);\n}\n```\n\nRun it:\n\n```bash\nnode main.mjs\n```",
+        "knowledge_checks": "Q: Why do ES modules require the file extension on relative imports?\nA: The resolution rule is explicit and unambiguous, unlike CommonJS. It also means a `.js` file cannot be silently picked up when you meant `.mjs`.\nQ: What happens when a module is imported twice?\nA: Its top-level code runs once. The second import uses the cached, already-initialised module.\nQ: Why prefer named exports over a default export?\nA: Named exports say where a value came from, survive refactoring, and a wrong name fails immediately rather than resolving to `undefined`.\nQ: What breaks with circular imports?\nA: The second module entered may see unfinished bindings and get `undefined` where a value was expected.",
+        "exercise": "Create `shapes.mjs` exporting `PI`, `circleArea(r)` and `default`\n`describeShape(name)`. Then create `main.mjs` that imports all three, calls\neach, and also imports the module as a namespace.\n\n```javascript starter\n// shapes.mjs\nexport const PI = 3.14159;\nexport function circleArea(r) {\n  return PI * r * r;\n}\nexport default function describeShape(name) {\n  return `a ${name}`;\n}\n```",
+        "common_mistakes": "- **Forgetting `\"type\": \"module\"` or the `.mjs` extension,** so `import` fails.\n- **Omitting the extension on a relative path.**\n- **Using a default export and expecting the importing name to matter.**\n- **Circular imports** producing `undefined`.\n- **Using CommonJS `require`/`module.exports`** in a file that uses `import`.",
+        "recap": "- Named exports are explicit; default exports are convenient but vague.\n- Use `.mjs` or `\"type\": \"module\"`.\n- Relative imports need the full extension.\n- A module body runs once, then is cached.\n- Break cycles by extracting shared code or using dynamic `import()`."
+      },
+      "example_code": "// geometry.mjs\nexport const PI = 3.14159;\n\nexport function area(radius) {\n  if (radius < 0) throw new RangeError(\"radius cannot be negative\");\n  return PI * radius * radius;\n}\n\nexport function circumference(radius) {\n  return 2 * PI * radius;\n}\n\nexport default function describeShape(name) {\n  return `a ${name}`;\n}",
+      "starter_code": "// shapes.mjs\nexport const PI = 3.14159;\nexport function circleArea(r) {\n  return PI * r * r;\n}\nexport default function describeShape(name) {\n  return `a ${name}`;\n}",
+      "checks": [
+        {
+          "question": "Why do ES modules require the file extension on relative imports?",
+          "answer": "The resolution rule is explicit and unambiguous, unlike CommonJS. It also means a `.js` file cannot be silently picked up when you meant `.mjs`."
+        },
+        {
+          "question": "What happens when a module is imported twice?",
+          "answer": "Its top-level code runs once. The second import uses the cached, already-initialised module."
+        },
+        {
+          "question": "Why prefer named exports over a default export?",
+          "answer": "Named exports say where a value came from, survive refactoring, and a wrong name fails immediately rather than resolving to `undefined`."
+        },
+        {
+          "question": "What breaks with circular imports?",
+          "answer": "The second module entered may see unfinished bindings and get `undefined` where a value was expected."
+        }
+      ]
+    },
+    {
+      "id": "08-async",
+      "title": "Asynchronous Fundamentals",
+      "order": 8,
+      "sections": {
+        "objectives": "- Explain the event loop and why synchronous code blocks everything.\n- Use promises with `async`/`await`.\n- Handle rejection properly.\n- Know when a promise-based API is the wrong tool.",
+        "explanation": "JavaScript runs on one thread. Code that waits blocks the only thread there is,\nso the interface freezes.\n\n```javascript\nconsole.log(\"one\");\nconsole.log(\"two\");\n```\n\nThat is predictable because there is no waiting involved. Add a wait and the\nordering becomes non-obvious:\n\n```javascript\nconsole.log(\"A\");\nsetTimeout(() => console.log(\"B\"), 0);   // runs last\nPromise.resolve().then(() => console.log(\"C\"));\nconsole.log(\"D\");\n// A, D, C, B\n```\n\nThe explanation is the **event loop**: synchronous code runs to completion\nfirst, then queued microtasks (promise callbacks), then queued macrotasks\n(`setTimeout`). `await` is sugar that lets you write asynchronous code in\nreading order without callbacks:\n\n```javascript\nasync function load() {\n  const first = await fetchValue();     // pauses here, not the thread\n  const second = await fetchOther();    // starts only when the first resolves\n  return first + second;\n}\n```\n\n**Promises** have three states: pending, fulfilled and rejected. A promise that\nsettles never changes again.\n\n```javascript\nconst promise = new Promise((resolve, reject) => {\n  setTimeout(() => resolve(\"done\"), 100);\n});\n```\n\nIn practice you rarely construct one; you consume them.\n\n**Error handling must include rejection.** A `try`/`catch` around an `await`\ndoes catch a rejection — but a `catch` around a promise you never awaited does\nnot run, and the rejection becomes an unhandled rejection:\n\n```javascript\n// BAD: the catch never runs\ntry {\n  doAsync();               // returns a rejected promise, not awaited\n} catch { }\n\n// GOOD\ntry {\n  await doAsync();\n} catch (error) { }\n```\n\n**Run independent work in parallel.** Awaiting inside a loop serialises it:\n\n```javascript\nconst sequential = [];\nfor (const id of ids) sequential.push(await load(id));   // one after another\n\nconst parallel = await Promise.all(ids.map(id => load(id)));   // concurrently\n```\n\n**`Promise.all` fails fast**: if one rejects, the whole thing rejects.\n`Promise.allSettled` waits for everything and reports each outcome, which is\nusually what you want when each operation is independent.\n\n**`AbortController`** cancels work that is no longer needed:\n\n```javascript\nconst controller = new AbortController();\nconst promise = doWork({ signal: controller.signal });\ncontroller.abort();\n```\n\n**Never block the event loop.** A `while (true) {}` loop freezes the page and,\nin Node, stops everything including the timers that would have stopped it.\nMentorSmith runs untrusted code in a separate process with a timeout for exactly\nthis reason.",
+        "example": "```javascript\n// async.mjs\nfunction delay(value, ms) {\n  return new Promise((resolve) => setTimeout(() => resolve(value), ms));\n}\n\nfunction maybeFail(shouldFail) {\n  return new Promise((resolve, reject) => {\n    setTimeout(() => {\n      if (shouldFail) reject(new Error(\"the operation failed\"));\n      else resolve(\"succeeded\");\n    }, 10);\n  });\n}\n\nasync function sequential() {\n  const started = Date.now();\n  const a = await delay(\"a\", 50);\n  const b = await delay(\"b\", 50);\n  return `${a}${b} in about 100ms (took ${Date.now() - started}ms)`;\n}\n\nasync function parallel() {\n  const started = Date.now();\n  const [a, b] = await Promise.all([delay(\"a\", 50), delay(\"b\", 50)]);\n  return `${a}${b} in about 50ms (took ${Date.now() - started}ms)`;\n}\n\nasync function safeAll() {\n  const results = await Promise.allSettled([\n    maybeFail(false),\n    maybeFail(true),\n  ]);\n  return results.map((r) =>\n    r.status === \"fulfilled\" ? `ok: ${r.value}` : `failed: ${r.reason.message}`\n  );\n}\n\n// Ordering explained\nconsole.log(\"1 sync\");\nsetTimeout(() => console.log(\"5 timeout\"), 0);\nPromise.resolve().then(() => console.log(\"4 microtask\"));\nconsole.log(\"2 sync\");\n\nasync function main() {\n  console.log(await sequential());\n  console.log(await parallel());\n  console.log(await safeAll());\n\n  // awaiting inside try/catch does catch a rejection\n  try {\n    await maybeFail(true);\n  } catch (error) {\n    console.log(\"caught:\", error.message);\n  }\n\n  // a cancellation\n  const controller = new AbortController();\n  controller.abort();\n  console.log(\"aborted:\", controller.signal.aborted);\n}\n\nawait main();\nconsole.log(\"done\");\n```",
+        "knowledge_checks": "Q: In what order do the event loop stages run for this code: a synchronous log, `setTimeout(0)`, and a resolved promise?\nA: Synchronous first, then promise microtasks, then `setTimeout` callbacks last.\nQ: Why does `Promise.allSettled` differ from `Promise.all`?\nA: `Promise.all` rejects as soon as any promise rejects. `allSettled` waits for every promise and reports each result or reason, which suits independent operations.\nQ: Why must you `await` a promise for `try`/`catch` to catch its rejection?\nA: The `catch` runs on synchronous throw and on rejection of an awaited promise. A rejection on a promise you never await escapes as an unhandled rejection.\nQ: Why is an infinite loop especially damaging in JavaScript?\nA: The single thread runs the loop forever, so nothing else happens — including the timer that might have interrupted it. Blocking work belongs in a worker or a separate process.",
+        "exercise": "Write `wait(ms)` returning a promise that resolves after `ms`. Then write\n`fetchAll()` that awaits three `wait` calls sequentially and reports the total\ntime, and `fetchAllFast()` that runs them concurrently with `Promise.all` and\nreports the total time. The fast version should take roughly a third as long.\n\n```javascript starter\nfunction wait(ms) {\n  // new Promise + setTimeout\n}\n\nasync function fetchAll() {\n  // three sequential awaits, then return elapsed ms\n}\n\nasync function fetchAllFast() {\n  // Promise.all over the three waits\n}\n```",
+        "common_mistakes": "- **Using `await` inside a loop** and needlessly serialising independent work.\n- **Forgetting to `await`,** so the `catch` never runs.\n- **Using `Promise.all`** when a single failure should not cancel the rest.\n- **Blocking the event loop** with a tight loop or a synchronous heavy computation.\n- **Assuming `await` makes code parallel.** It makes code readable; the work still runs concurrently only when started together.",
+        "recap": "- The event loop runs sync code, then microtasks, then timers.\n- `await` pauses one async function, not the whole thread.\n- `try`/`catch` catches a rejection only for an awaited promise.\n- `Promise.all` is concurrent but fails fast; `allSettled` waits for all.\n- Never block the event loop; heavy or untrusted work belongs elsewhere."
+      },
+      "example_code": "// async.mjs\nfunction delay(value, ms) {\n  return new Promise((resolve) => setTimeout(() => resolve(value), ms));\n}\n\nfunction maybeFail(shouldFail) {\n  return new Promise((resolve, reject) => {\n    setTimeout(() => {\n      if (shouldFail) reject(new Error(\"the operation failed\"));\n      else resolve(\"succeeded\");\n    }, 10);\n  });\n}\n\nasync function sequential() {\n  const started = Date.now();\n  const a = await delay(\"a\", 50);\n  const b = await delay(\"b\", 50);\n  return `${a}${b} in about 100ms (took ${Date.now() - started}ms)`;\n}\n\nasync function parallel() {\n  const started = Date.now();\n  const [a, b] = await Promise.all([delay(\"a\", 50), delay(\"b\", 50)]);\n  return `${a}${b} in about 50ms (took ${Date.now() - started}ms)`;\n}\n\nasync function safeAll() {\n  const results = await Promise.allSettled([\n    maybeFail(false),\n    maybeFail(true),\n  ]);\n  return results.map((r) =>\n    r.status === \"fulfilled\" ? `ok: ${r.value}` : `failed: ${r.reason.message}`\n  );\n}\n\n// Ordering explained\nconsole.log(\"1 sync\");\nsetTimeout(() => console.log(\"5 timeout\"), 0);\nPromise.resolve().then(() => console.log(\"4 microtask\"));\nconsole.log(\"2 sync\");\n\nasync function main() {\n  console.log(await sequential());\n  console.log(await parallel());\n  console.log(await safeAll());\n\n  // awaiting inside try/catch does catch a rejection\n  try {\n    await maybeFail(true);\n  } catch (error) {\n    console.log(\"caught:\", error.message);\n  }\n\n  // a cancellation\n  const controller = new AbortController();\n  controller.abort();\n  console.log(\"aborted:\", controller.signal.aborted);\n}\n\nawait main();\nconsole.log(\"done\");",
+      "starter_code": "function wait(ms) {\n  // new Promise + setTimeout\n}\n\nasync function fetchAll() {\n  // three sequential awaits, then return elapsed ms\n}\n\nasync function fetchAllFast() {\n  // Promise.all over the three waits\n}",
+      "checks": [
+        {
+          "question": "In what order do the event loop stages run for this code: a synchronous log, `setTimeout(0)`, and a resolved promise?",
+          "answer": "Synchronous first, then promise microtasks, then `setTimeout` callbacks last."
+        },
+        {
+          "question": "Why does `Promise.allSettled` differ from `Promise.all`?",
+          "answer": "`Promise.all` rejects as soon as any promise rejects. `allSettled` waits for every promise and reports each result or reason, which suits independent operations."
+        },
+        {
+          "question": "Why must you `await` a promise for `try`/`catch` to catch its rejection?",
+          "answer": "The `catch` runs on synchronous throw and on rejection of an awaited promise. A rejection on a promise you never await escapes as an unhandled rejection."
+        },
+        {
+          "question": "Why is an infinite loop especially damaging in JavaScript?",
+          "answer": "The single thread runs the loop forever, so nothing else happens — including the timer that might have interrupted it. Blocking work belongs in a worker or a separate process."
+        }
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "js-variables",
+      "title": "Variables and Types",
+      "lesson_id": "01-variables-and-types",
+      "summary": "const/let, primitives, truthiness and coercion.",
+      "prerequisites": [],
+      "error_categories": [
+        "coercion",
+        "type_error",
+        "using_var"
+      ]
+    },
+    {
+      "id": "js-flow",
+      "title": "Conditions and Loops",
+      "lesson_id": "02-conditions-and-loops",
+      "summary": "if/switch, for/for-of/while and the loop closure bug.",
+      "prerequisites": [
+        "js-variables"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "for_in_on_array",
+        "closure_in_loop",
+        "infinite_loop"
+      ]
+    },
+    {
+      "id": "js-functions",
+      "title": "Functions",
+      "lesson_id": "03-functions",
+      "summary": "Declarations, arrows, defaults, rest and passing rules.",
+      "prerequisites": [
+        "js-variables"
+      ],
+      "error_categories": [
+        "missing_return",
+        "arrow_this",
+        "constructor_arrow"
+      ]
+    },
+    {
+      "id": "js-collections",
+      "title": "Arrays and Objects",
+      "lesson_id": "04-arrays-and-objects",
+      "summary": "map/filter/reduce, sort with a comparator, objects and Map.",
+      "prerequisites": [
+        "js-variables",
+        "js-flow"
+      ],
+      "error_categories": [
+        "sort_without_comparator",
+        "mutating_sort",
+        "undefined_property",
+        "or_instead_of_nullish"
+      ]
+    },
+    {
+      "id": "js-scope",
+      "title": "Scope and Closures",
+      "lesson_id": "05-scope",
+      "summary": "Block scope, the temporal dead zone and closure privacy.",
+      "prerequisites": [
+        "js-functions"
+      ],
+      "error_categories": [
+        "var_scope_leak",
+        "temporal_dead_zone",
+        "closure_capture_bug"
+      ]
+    },
+    {
+      "id": "js-errors",
+      "title": "Error Handling",
+      "lesson_id": "06-error-handling",
+      "summary": "Error types, throw/catch/finally, cause and not swallowing.",
+      "prerequisites": [
+        "js-functions",
+        "js-collections"
+      ],
+      "error_categories": [
+        "swallowed_error",
+        "bare_catch",
+        "throwing_non_error"
+      ]
+    },
+    {
+      "id": "js-modules",
+      "title": "Modules",
+      "lesson_id": "07-modules",
+      "summary": "Named and default exports, extension rules and circular imports.",
+      "prerequisites": [
+        "js-functions"
+      ],
+      "error_categories": [
+        "missing_extension",
+        "circular_import",
+        "commonjs_mix"
+      ]
+    },
+    {
+      "id": "js-async",
+      "title": "Asynchronous Fundamentals",
+      "lesson_id": "08-async",
+      "summary": "Event loop, promises, async/await and parallel work.",
+      "prerequisites": [
+        "js-functions",
+        "js-errors"
+      ],
+      "error_categories": [
+        "missing_await",
+        "sequential_await",
+        "blocking_event_loop",
+        "unhandled_rejection"
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "js-vars-coercion",
+      "concept_id": "js-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Strict equality",
+      "prompt": "The comparison fails even though the numbers look the same. Fix it with strict equality so it prints true.",
+      "code": "const total = \"5\";\nconsole.log(total === 5);\n",
+      "starter_code": "const total = 5;\nconsole.log(total === 5);\n",
+      "expected_stdout": "true\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "coercion"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-vars-truthy",
+      "concept_id": "js-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "predict-output",
+      "title": "Surprising truthiness",
+      "prompt": "Predict all three lines exactly. One of them surprises most people.",
+      "code": "console.log(Boolean(0));\nconsole.log(Boolean(\"\"));\nconsole.log(Boolean([]));\n",
+      "starter_code": "",
+      "expected_stdout": "false\nfalse\ntrue\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "truthiness"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-flow-forin",
+      "concept_id": "js-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "Keys instead of values",
+      "prompt": "The loop prints indices as strings. Make it print the values 10, 20, 30.",
+      "code": "const values = [10, 20, 30];\nfor (const item in values) {\n  console.log(item);\n}\n",
+      "starter_code": "const values = [10, 20, 30];\nfor (const item of values) {\n  console.log(item);\n}\n",
+      "expected_stdout": "10\n20\n30\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "for-in"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-flow-closure",
+      "concept_id": "js-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "Every closure shares one variable",
+      "prompt": "This prints 3, 3, 3. Make it print 0, 1, 2.",
+      "code": "const fns = [];\nfor (var i = 0; i < 3; i++) {\n  fns.push(() => i);\n}\nfor (const fn of fns) console.log(fn());\n",
+      "starter_code": "const fns = [];\nfor (let i = 0; i < 3; i++) {\n  fns.push(() => i);\n}\nfor (const fn of fns) console.log(fn());\n",
+      "expected_stdout": "0\n1\n2\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "closure",
+        "var"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-fn-implicit-return",
+      "concept_id": "js-functions",
+      "lesson_id": "03-functions",
+      "type": "find-a-bug",
+      "title": "Silent undefined",
+      "prompt": "This prints undefined. Make it print 4.",
+      "code": "const double = (x) => { x * 2 };\nconsole.log(double(2));\n",
+      "starter_code": "const double = (x) => { return x * 2 };\nconsole.log(double(2));\n",
+      "expected_stdout": "4\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "arrow",
+        "return"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-coll-sort",
+      "concept_id": "js-collections",
+      "lesson_id": "04-arrays-and-objects",
+      "type": "find-a-bug",
+      "title": "String sort",
+      "prompt": "It prints 10, 100, 9. Make it print the numbers ascending without changing the original array.",
+      "code": "const values = [10, 9, 100];\nconsole.log([...values].sort().join(\",\"));\n",
+      "starter_code": "const values = [10, 9, 100];\nconsole.log([...values].sort((a, b) => a - b).join(\",\"));\n",
+      "expected_stdout": "9,10,100\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "sort"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-coll-nullish",
+      "concept_id": "js-collections",
+      "lesson_id": "04-arrays-and-objects",
+      "type": "find-a-bug",
+      "title": "Zero replaced by the fallback",
+      "prompt": "It prints fallback instead of 0. Make it print 0 while still defaulting a genuine null.",
+      "code": "const count = 0;\nconsole.log(count || \"fallback\");\nconsole.log(count ?? \"fallback\");\n",
+      "starter_code": "const count = 0;\nconsole.log(count || \"fallback\");\nconsole.log(count ?? \"fallback\");\n",
+      "expected_stdout": "fallback\n0\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "nullish"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-errors-swallow",
+      "concept_id": "js-errors",
+      "lesson_id": "06-error-handling",
+      "type": "find-a-bug",
+      "title": "The invisible error",
+      "prompt": "Nothing is reported. Make it print 'invalid' for bad input.",
+      "code": "function parse(text) {\n  try {\n    return Number(text);\n  } catch {\n  }\n  return null;\n}\n\nconsole.log(parse(\"abc\"));\n",
+      "starter_code": "function parse(text) {\n  const value = Number(text);\n  if (Number.isNaN(value)) {\n    console.log(\"invalid\");\n    return null;\n  }\n  return value;\n}\n\nconsole.log(parse(\"abc\"));\n",
+      "expected_stdout": "invalid\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "swallowed"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-async-missing-await",
+      "concept_id": "js-async",
+      "lesson_id": "08-async",
+      "type": "find-a-bug",
+      "title": "The catch that never runs",
+      "prompt": "This prints nothing because the promise was never awaited. Make it print 'caught: boom'.",
+      "code": "async function work() {\n  throw new Error(\"boom\");\n}\n\ntry {\n  work();\n} catch (error) {\n  console.log(\"caught:\", error.message);\n}\n",
+      "starter_code": "async function work() {\n  throw new Error(\"boom\");\n}\n\nasync function main() {\n  try {\n    await work();\n  } catch (error) {\n    console.log(\"caught:\", error.message);\n  }\n}\n\nawait main();\n",
+      "expected_stdout": "caught: boom\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "await",
+        "rejection"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-scope-let-deadzone",
+      "concept_id": "js-scope",
+      "lesson_id": "05-scope",
+      "type": "find-a-bug",
+      "title": "Reading before the declaration",
+      "prompt": "This throws a ReferenceError. Fix it so it prints 99 without touching the binding early.",
+      "code": "console.log(later);\nlet later = 99;\n",
+      "starter_code": "let later = 99;\nconsole.log(later);\n",
+      "expected_stdout": "99\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "tdz"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "js-modules-extension",
+      "concept_id": "js-modules",
+      "lesson_id": "07-modules",
+      "type": "find-a-bug",
+      "title": "The missing extension",
+      "prompt": "ES modules need the full extension on relative imports. Fix it so it prints 6.28.",
+      "code": "import { PI } from './constants';\n\nconsole.log(PI.toFixed(2));\n",
+      "starter_code": "import { PI } from './constants.mjs';\n\nconsole.log(PI.toFixed(2));\n",
+      "expected_stdout": "6.28\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "extensions"
+      ],
+      "graded_by": "deterministic"
+    }
+  ],
+  "projects": [],
+  "comparisons": [
+    {
+      "id": "equality",
+      "concept": "Equality and truthiness",
+      "languages": [
+        "cpp",
+        "javascript"
+      ],
+      "same": "Both compare values and both have a loose comparison people regret.",
+      "different": [
+        "C++ compares only the type you ask for, and `==` on a pointer is an address comparison, not a contents comparison.",
+        "JavaScript `==` coerces: `\"5\" == 5` is true, and `[] == false` is also true.",
+        "JavaScript has `===`, which compares type and value. C++ has no equivalent because the types are already usually fixed.",
+        "C++ treats any non-zero value as true; JavaScript treats an empty array as true, which surprises people coming from C."
+      ],
+      "snippets": [
+        "if (x) { }              /* any non-zero */\nif (x == 5) { }",
+        "if (x) { }              /* 0, \"\" and null are false, [] is TRUE */\nif (x === 5) { }        /* prefer this */"
+      ],
+      "question": "Write the JavaScript equivalent of C's `if (count)`, then explain what a JavaScript learner would wrongly assume about an empty array?"
+    },
+    {
+      "id": "errors",
+      "concept": "Handling failure",
+      "languages": [
+        "cpp",
+        "javascript"
+      ],
+      "same": "Both have exceptions and both can propagate them up the stack.",
+      "different": [
+        "C++ requires either an exception type or a value convention, and `catch` order matters because the first match wins.",
+        "JavaScript has one `Error` class plus built-in subtypes, and the same first-match-wins rule applies.",
+        "C++ destructors run during unwinding, which is why RAII cleanup works without any catch block.",
+        "JavaScript has no destructors, so cleanup must be explicit in a `finally` block."
+      ],
+      "snippets": [
+        "try { risky(); }\ncatch (const std::runtime_error& e) { /* RAII still cleans up */ }",
+        "try { risky(); }\ncatch (error) { /* no automatic cleanup */ }\nfinally { cleanup(); }"
+      ],
+      "question": "Why does C++ not usually need a `finally`-style block to release a file, and what is the JavaScript equivalent obligation?"
+    }
+  ]
+}

@@ -1,0 +1,715 @@
+{
+  "format_version": 1,
+  "language": "python",
+  "label": "Python",
+  "generated_by": "tools/export_curriculum.py",
+  "lessons": [
+    {
+      "id": "01-variables-and-types",
+      "title": "Variables and Types",
+      "order": 1,
+      "sections": {
+        "objectives": "- Create variables and understand that names, not types, hold the meaning.\n- Meet the core built-in types: `int`, `float`, `str`, `bool`.\n- Explain why Python has no declaration keyword.\n- Use `type()` and `isinstance()` to inspect a value.",
+        "explanation": "Python has no `int x = 5;` declaration. A name simply starts pointing at a\nvalue:\n\n```python\nage = 30\npi = 3.14159\nname = \"Ada\"\nis_valid = True\n```\n\nThe core types:\n\n| Type | Example | Notes |\n|---|---|---|\n| `int` | `30` | Arbitrarily large — `2**100` is fine |\n| `float` | `3.14` | Floating point, so `0.1 + 0.2 != 0.3` |\n| `str` | `\"Ada\"` | Immutable text |\n| `bool` | `True` | Subclass of `int`; `True == 1` is True |\n\n**Python is dynamically typed**, meaning the type belongs to the value, not the\nname. You can rebind a name to a different type, which is legal but usually a\nmistake:\n\n```python\nx = 10\nx = \"ten\"        # legal, but confusing — pick a new name instead\n```\n\n`type(value)` reports the type. `isinstance(value, int)` is more useful when you\nwant to ask a question rather than print a label.\n\n`int` is unbounded, which removes a whole class of C++ overflow bugs:\n\n```python\nbig = 2 ** 200\nprint(big)          # a very long number, no overflow\n```\n\nWatch the trap that carries over from C++: division between two `int`s gives a\n`float` in Python, unlike C and C++.\n\n```python\nprint(7 / 2)        # 3.5  <- Python's true division\nprint(7 // 2)       # 3    <- floor division, the integer answer\n```",
+        "example": "```python\n# variables_and_types.py\nname = \"Ada\"\nage = 36\nheight = 1.62\nis_student = False\n\nprint(name, type(name).__name__)\nprint(age, type(age).__name__)\nprint(height, type(height).__name__)\nprint(is_student, type(is_student).__name__)\n\nprint(isinstance(age, int))          # True\nprint(isinstance(age, float))        # False\nprint(isinstance(height, (int, float)))  # either is acceptable\n\ntotal = 7 / 2\nwhole = 7 // 2\nprint(total, whole)                  # 3.5 3\n```",
+        "knowledge_checks": "Q: Why does Python not need `int age = 30;`?\nA: Python is dynamically typed, so a name is bound to a value and the type travels with the value rather than being declared.\nQ: What does `7 / 2` produce in Python, and how do you get the integer answer?\nA: `3.5`. Use `7 // 2` for floor division, which gives `3`.\nQ: What happens if you assign a string to a variable that held an integer?\nA: Nothing errors. Python allows rebinding, and the name then refers to a `str` instead. It is legal but usually confusing.",
+        "exercise": "Create variables for a book: `title` (a string), `pages` (an integer), `price`\n(a float) and `in_stock` (a boolean). Print each value on its own line with its\ntype name, then print `True` or `False` for whether the book costs more than 10.\n\n```python starter\ntitle = \"Dune\"\npages = 412\nprice = 9.99\nin_stock = True\n\n# Print each value followed by its type name, one per line.\n# Then print whether price is more than 10.\n```",
+        "common_mistakes": "- **Using `;`** at line ends. Python uses newlines; a semicolon is legal but wrong style.\n- **Expecting C++ integer division.** `7 / 2` is `3.5`, not `3`.\n- **Assuming a name has a fixed type.** It can be rebound to anything.\n- **Using `=` for comparison.** In Python assignment is `=` and comparison is `==`, unlike C++ where both meanings exist.\n- **Shadowing a builtin** by calling a variable `list` or `sum`.",
+        "recap": "- Names bind to values; types belong to values.\n- Core types: `int`, `float`, `str`, `bool`.\n- `int` does not overflow.\n- `/` is true division, `//` is floor division.\n- `type()` and `isinstance()` are your inspection tools."
+      },
+      "example_code": "# variables_and_types.py\nname = \"Ada\"\nage = 36\nheight = 1.62\nis_student = False\n\nprint(name, type(name).__name__)\nprint(age, type(age).__name__)\nprint(height, type(height).__name__)\nprint(is_student, type(is_student).__name__)\n\nprint(isinstance(age, int))          # True\nprint(isinstance(age, float))        # False\nprint(isinstance(height, (int, float)))  # either is acceptable\n\ntotal = 7 / 2\nwhole = 7 // 2\nprint(total, whole)                  # 3.5 3",
+      "starter_code": "title = \"Dune\"\npages = 412\nprice = 9.99\nin_stock = True\n\n# Print each value followed by its type name, one per line.\n# Then print whether price is more than 10.",
+      "checks": [
+        {
+          "question": "Why does Python not need `int age = 30;`?",
+          "answer": "Python is dynamically typed, so a name is bound to a value and the type travels with the value rather than being declared."
+        },
+        {
+          "question": "What does `7 / 2` produce in Python, and how do you get the integer answer?",
+          "answer": "`3.5`. Use `7 // 2` for floor division, which gives `3`."
+        },
+        {
+          "question": "What happens if you assign a string to a variable that held an integer?",
+          "answer": "Nothing errors. Python allows rebinding, and the name then refers to a `str` instead. It is legal but usually confusing."
+        }
+      ]
+    },
+    {
+      "id": "02-conditions-and-loops",
+      "title": "Conditions and Loops",
+      "order": 2,
+      "sections": {
+        "objectives": "- Write `if` / `elif` / `else` chains.\n- Use `while` and `for` loops and choose between them.\n- Apply Python's `elif` (spelled differently from C++'s `else if`).\n- Use `range()` correctly and avoid off-by-one errors.",
+        "explanation": "Python's conditional is spelled `elif`, not `else if`:\n\n```python\nif score >= 90:\n    grade = \"A\"\nelif score >= 80:\n    grade = \"B\"\nelif score >= 70:\n    grade = \"C\"\nelse:\n    grade = \"F\"\n```\n\nThis is one place a familiar C++ habit actively hurts. `else if` in Python is\nvalid but unusual, and writing it by habit signals you are not reading the code.\n\n**`for` loops iterate over things**, unlike C++ where `for` is a counting\nconstruct:\n\n```python\nfor mark in marks:\n    print(mark)\n\nfor letter in \"tutor\":\n    print(letter)\n```\n\nTo count, reach for `range()`:\n\n```python\nfor i in range(5):        # 0, 1, 2, 3, 4  — five values\n    print(i)\n\nfor i in range(1, 6):     # 1, 2, 3, 4, 5\n    print(i)\n\nfor i in range(10, 0, -1):\n    print(i)\n```\n\n`range(5)` excludes 5, exactly like `i < 5` in C++. The off-by-one instinct\ntransfers.\n\n**`while` repeats while true**, and is the right choice when you do not know the\ncount:\n\n```python\ntotal = 0\nwhile True:\n    value = int(input(\"Number (0 to stop): \"))\n    if value == 0:\n        break\n    total += value\nprint(total)\n```\n\n`break` leaves the loop; `continue` skips to the next iteration.\n\nThe walrus operator `:=` assigns and returns a value in one step, which makes\nloop conditions tidier:\n\n```python\nwhile (line := input(\"> \")) != \"\":\n    print(line)\n```",
+        "example": "```python\n# conditions_and_loops.py\nmarks = [70, 85, 92, 60, 78]\n\ntotal = 0\nfor mark in marks:\n    total += mark\nprint(\"total:\", total)\nprint(\"average:\", total / len(marks))     # true division, no cast needed\n\n# Counting loop\nfor i in range(1, 4):\n    print(i, \"squared is\", i * i)\n\n# while with a break\ncount = 0\nwhile True:\n    if count >= 3:\n        break\n    print(\"count is\", count)\n    count += 1\n\n# continue skips one value\nfor value in [1, 2, 3, 4, 5]:\n    if value % 2 == 0:\n        continue\n    print(\"odd:\", value)\n\n# Grade chain, most specific first\ndef grade_for(mark):\n    if mark >= 90:\n        return \"A\"\n    elif mark >= 80:\n        return \"B\"\n    elif mark >= 70:\n        return \"C\"\n    return \"F\"\n\nfor mark in marks:\n    print(mark, grade_for(mark))\n```",
+        "knowledge_checks": "Q: How does Python spell the middle of an if/else chain?\nA: `elif`. `else if` is technically valid in Python but is not idiomatic.\nQ: What does `range(5)` produce?\nA: The values 0, 1, 2, 3 and 4 — five values, excluding the upper bound.\nQ: When should you choose `while` over `for`?\nA: When the number of iterations is not known in advance and depends on a condition evaluated each pass.\nQ: What is the difference between `break` and `continue`?\nA: `break` leaves the loop entirely; `continue` skips to the next iteration.",
+        "exercise": "Print the multiplication table for 7 from `7 * 1` to `7 * 10` using a `for`\nloop. Then use a `while` loop to read numbers until the user types `0`,\nprinting how many were read.\n\n```python starter\n# Part 1: for loop printing 7, 14, ... 70.\n# Part 2: while loop reading ints until 0, then printing the count.\n```",
+        "common_mistakes": "- **Writing `else if`** by habit from C++.\n- **Using `range(1, 5)` expecting five values.** It gives four.\n- **Modifying a list while iterating over it.** Python raises an error or behaves unexpectedly; iterate over a copy.\n- **Forgetting `break`** in a `while True` loop, so it never exits.\n- **Using `++` or `--`.** Python has no increment operator; use `+= 1`.",
+        "recap": "- `elif`, not `else if`.\n- `for` iterates over an iterable; use `range()` to count.\n- `while` for unknown counts, and it must advance toward its exit.\n- `range(n)` excludes `n`.\n- Python has no `++`; use `+= 1`."
+      },
+      "example_code": "# conditions_and_loops.py\nmarks = [70, 85, 92, 60, 78]\n\ntotal = 0\nfor mark in marks:\n    total += mark\nprint(\"total:\", total)\nprint(\"average:\", total / len(marks))     # true division, no cast needed\n\n# Counting loop\nfor i in range(1, 4):\n    print(i, \"squared is\", i * i)\n\n# while with a break\ncount = 0\nwhile True:\n    if count >= 3:\n        break\n    print(\"count is\", count)\n    count += 1\n\n# continue skips one value\nfor value in [1, 2, 3, 4, 5]:\n    if value % 2 == 0:\n        continue\n    print(\"odd:\", value)\n\n# Grade chain, most specific first\ndef grade_for(mark):\n    if mark >= 90:\n        return \"A\"\n    elif mark >= 80:\n        return \"B\"\n    elif mark >= 70:\n        return \"C\"\n    return \"F\"\n\nfor mark in marks:\n    print(mark, grade_for(mark))",
+      "starter_code": "# Part 1: for loop printing 7, 14, ... 70.\n# Part 2: while loop reading ints until 0, then printing the count.",
+      "checks": [
+        {
+          "question": "How does Python spell the middle of an if/else chain?",
+          "answer": "`elif`. `else if` is technically valid in Python but is not idiomatic."
+        },
+        {
+          "question": "What does `range(5)` produce?",
+          "answer": "The values 0, 1, 2, 3 and 4 — five values, excluding the upper bound."
+        },
+        {
+          "question": "When should you choose `while` over `for`?",
+          "answer": "When the number of iterations is not known in advance and depends on a condition evaluated each pass."
+        },
+        {
+          "question": "What is the difference between `break` and `continue`?",
+          "answer": "`break` leaves the loop entirely; `continue` skips to the next iteration."
+        }
+      ]
+    },
+    {
+      "id": "03-functions",
+      "title": "Functions",
+      "order": 3,
+      "sections": {
+        "objectives": "- Define and call functions with `def`.\n- Return values, including early returns.\n- Use default arguments and keyword arguments.\n- Understand Python's lack of a separate pass-by-reference keyword.",
+        "explanation": "Functions are defined with `def` and always end with a colon; the body is\nindented:\n\n```python\ndef greet(name):\n    return f\"Hello, {name}\"\n\nprint(greet(\"Ada\"))\n```\n\nIndentation *is* the syntax. Four spaces is the convention. A wrong indent is a\nsyntax error, not a style complaint.\n\n**Returning.** `return` sends a value back and ends the function. A function\nwithout `return` returns `None`, which is Python's null.\n\n```python\ndef classify(n):\n    if n < 0:\n        return \"negative\"\n    elif n == 0:\n        return \"zero\"\n    return \"positive\"\n```\n\n**Default and keyword arguments.** Defaults are evaluated once, at definition\ntime — a trap when the default is a mutable value:\n\n```python\ndef collect(item, bucket=[]):      # BUG: the list is created once\n    bucket.append(item)\n    return bucket\n\nprint(collect(\"a\"))    # ['a']\nprint(collect(\"b\"))    # ['a', 'b']  <- surprising!\n\ndef collect(item, bucket=None):    # correct\n    if bucket is None:\n        bucket = []\n    bucket.append(item)\n    return bucket\n```\n\n**No pass-by-reference keyword.** Python passes objects, and rebinding a\nparameter never changes the caller's variable:\n\n```python\ndef double(x):\n    x = x * 2          # rebinds the local name only\n    return x\n\nn = 5\ndouble(n)\nprint(n)               # still 5\n```\n\nTo modify a caller's object, mutate it:\n\n```python\ndef push(values, item):\n    values.append(item)   # mutates the caller's list\n\nitems = [1, 2]\npush(items, 3)\nprint(items)              # [1, 2, 3]\n```\n\nCompare that with C++: where C++ distinguishes `T&` from `const T&`, Python has\none model. A list is passed as one object, and calling a method on it changes\nwhat the caller sees.\n\n**Multiple return values** are just a tuple:\n\n```python\ndef min_max(values):\n    return min(values), max(values)\n\nlow, high = min_max([3, 1, 4])\n```",
+        "example": "```python\n# functions.py\ndef add(a, b=0):\n    \"\"\"Return a + b. The second argument is optional.\"\"\"\n    return a + b\n\n\ndef safe_divide(a, b):\n    \"\"\"Raise rather than guess when the denominator is zero.\"\"\"\n    if b == 0:\n        raise ValueError(\"division by zero\")\n    return a / b\n\n\ndef swap_pair(pair):\n    a, b = pair\n    return b, a\n\n\ndef apply_to_all(values, function):\n    \"\"\"A higher-order function: takes a function as an argument.\"\"\"\n    return [function(value) for value in values]\n\n\nprint(add(2, 3), add(2))                 # 5 2\nprint(safe_divide(7, 2))                 # 3.5\n\ntry:\n    safe_divide(1, 0)\nexcept ValueError as error:\n    print(\"refused:\", error)\n\nprint(swap_pair((1, 2)))                 # (2, 1)\nprint(apply_to_all([1, 2, 3], add))      # needs 2 args; use a lambda instead\nprint([x * 2 for x in [1, 2, 3]])        # 2, 4, 6\n\n# keyword arguments make calls readable\nprint(add(a=1, b=4))                     # 5\n```",
+        "knowledge_checks": "Q: Why is `def f(bucket=[])` dangerous?\nA: The default list is created once when the function is defined and then shared between calls, so results accumulate unexpectedly. Use `None` as the default and build the list inside.\nQ: Does modifying a parameter inside a function change the caller's variable?\nA: Rebinding a name never does. Mutating a mutable object the caller also holds does.\nQ: What does a function without `return` give back?\nA: `None`.",
+        "exercise": "Write three functions: `is_even(n)` returning a boolean, `average(values)`\nreturning the mean as a float and `0.0` for an empty list, and\n`count_words(text)` returning how many space-separated words there are. Then\ncall each and print the result.\n\n```python starter\ndef is_even(n):\n    # Return True when n is divisible by 2.\n\n\ndef average(values):\n    # Return the mean as a float, or 0.0 for an empty list.\n\n\ndef count_words(text):\n    # Split on whitespace and return how many words there are.\n```",
+        "common_mistakes": "- **Mutable default arguments.** Use `None` and construct inside.\n- **Using `;` or braces instead of indentation.** Indentation is the syntax.\n- **Forgetting `return`** and then using the result, which is `None`.\n- **Expecting assignment inside a function to change the caller's variable.** It does not.\n- **Comparing with `=` instead of `==`.**",
+        "recap": "- `def name(params):` with an indented body.\n- `return` ends the function; no `return` means `None`.\n- Never use a mutable default; use `None`.\n- Rebinding a parameter does not affect the caller; mutating does.\n- Multiple returns are a tuple you can unpack."
+      },
+      "example_code": "# functions.py\ndef add(a, b=0):\n    \"\"\"Return a + b. The second argument is optional.\"\"\"\n    return a + b\n\n\ndef safe_divide(a, b):\n    \"\"\"Raise rather than guess when the denominator is zero.\"\"\"\n    if b == 0:\n        raise ValueError(\"division by zero\")\n    return a / b\n\n\ndef swap_pair(pair):\n    a, b = pair\n    return b, a\n\n\ndef apply_to_all(values, function):\n    \"\"\"A higher-order function: takes a function as an argument.\"\"\"\n    return [function(value) for value in values]\n\n\nprint(add(2, 3), add(2))                 # 5 2\nprint(safe_divide(7, 2))                 # 3.5\n\ntry:\n    safe_divide(1, 0)\nexcept ValueError as error:\n    print(\"refused:\", error)\n\nprint(swap_pair((1, 2)))                 # (2, 1)\nprint(apply_to_all([1, 2, 3], add))      # needs 2 args; use a lambda instead\nprint([x * 2 for x in [1, 2, 3]])        # 2, 4, 6\n\n# keyword arguments make calls readable\nprint(add(a=1, b=4))                     # 5",
+      "starter_code": "def is_even(n):\n    # Return True when n is divisible by 2.\n\n\ndef average(values):\n    # Return the mean as a float, or 0.0 for an empty list.\n\n\ndef count_words(text):\n    # Split on whitespace and return how many words there are.",
+      "checks": [
+        {
+          "question": "Why is `def f(bucket=[])` dangerous?",
+          "answer": "The default list is created once when the function is defined and then shared between calls, so results accumulate unexpectedly. Use `None` as the default and build the list inside."
+        },
+        {
+          "question": "Does modifying a parameter inside a function change the caller's variable?",
+          "answer": "Rebinding a name never does. Mutating a mutable object the caller also holds does."
+        },
+        {
+          "question": "What does a function without `return` give back?",
+          "answer": "`None`."
+        }
+      ]
+    },
+    {
+      "id": "04-collections",
+      "title": "Collections",
+      "order": 4,
+      "sections": {
+        "objectives": "- Use `list`, `tuple`, `dict` and `set` for the right job.\n- Slice sequences.\n- Use comprehensions to build collections concisely.\n- Avoid mutating a collection while iterating over it.",
+        "explanation": "| Type | Ordered | Mutable | Duplicates | Use for |\n|---|---|---|---|---|\n| `list` | yes | yes | yes | A sequence you will change |\n| `tuple` | yes | **no** | yes | A fixed record, a constant |\n| `dict` | insertion | yes | keys unique | Key/value lookup |\n| `set` | no | yes | **no** | Membership tests, uniqueness |\n\n```python\nmarks = [70, 85, 92]              # list\npoint = (3, 4)                    # tuple\nages = {\"Ada\": 36, \"Alan\": 41}    # dict\nunique = {1, 2, 2, 3}             # set -> {1, 2, 3}\n```\n\n**Lists** support append, insert and removal:\n\n```python\nmarks.append(60)\nmarks.insert(0, 99)\nmarks.remove(70)          # raises ValueError if absent\nlast = marks.pop()        # removes and returns\n```\n\n**Slicing** takes a sub-sequence, start inclusive, end exclusive:\n\n```python\nvalues = [10, 20, 30, 40, 50]\nvalues[1:3]     # [20, 30]\nvalues[:2]      # [10, 20]\nvalues[-1]      # 50\nvalues[::-1]    # reversed copy\n```\n\nSlicing never modifies the original. Use `values[1:3] = [x]` to change it.\n\n**Dict** lookups are by key:\n\n```python\nages[\"Ada\"]                 # KeyError if missing\nages.get(\"Grace\", 0)        # 0 if missing — safer\nfor name, age in ages.items():\n    print(name, age)\n```\n\n**Comprehensions** build a collection in one expression and are the idiomatic\nway to transform:\n\n```python\ndoubled = [x * 2 for x in marks]\nevens = [x for x in range(10) if x % 2 == 0]\nsquares = {x: x * x for x in range(4)}\n```\n\n**Do not mutate while iterating.** Python raises `RuntimeError` for some cases\nand silently misbehaves for others:\n\n```python\n# BAD\nfor value in marks:\n    marks.remove(value)\n\n# GOOD - iterate over a copy\nfor value in marks[:]:\n    marks.remove(value)\n```",
+        "example": "```python\n# collections.py\nmarks = [70, 85, 92, 60, 78]\n\nprint(\"list      :\", marks)\nprint(\"reversed  :\", marks[::-1])\nprint(\"slice     :\", marks[1:3])\nprint(\"comprehen. :\", [m for m in marks if m >= 78])\n\nmarks.append(88)\nmarks.sort()\nprint(\"sorted    :\", marks)\n\nlow, high = min(marks), max(marks)\nprint(\"min/max   :\", low, high, \"| mean:\", sum(marks) / len(marks))\n\ngrades = {\"A\": 0, \"B\": 0, \"C\": 0}\nfor mark in marks:\n    if mark >= 80:\n        grades[\"A\"] += 1\n    elif mark >= 70:\n        grades[\"B\"] += 1\n    else:\n        grades[\"C\"] += 1\nprint(\"grades    :\", grades)\n\nages = {\"Ada\": 36, \"Alan\": 41}\nages[\"Grace\"] = 45\nprint(\"by key    :\", ages[\"Grace\"], \"| missing:\", ages.get(\"Nobody\", 0))\nprint(\"keys      :\", sorted(ages))\nprint(\"items     :\", list(ages.items())[:2])\n\n# a set removes duplicates\nprint(\"set       :\", sorted({1, 2, 2, 3, 3, 3}))\n\n# a tuple is fixed\npoint = (3, 4)\nprint(\"tuple     :\", point, \"| unpacked:\", point[0], point[1])\n```",
+        "knowledge_checks": "Q: When should you choose a tuple instead of a list?\nA: When the value is a fixed record or should not change — tuples are immutable and can be used as dict keys.\nQ: What does `values[1:3]` return for `[10, 20, 30, 40, 50]`?\nA: `[20, 30]`. The start is inclusive and the end is exclusive.\nQ: Why is mutating a list inside a `for` loop over it a problem?\nA: The loop's position is based on the original sequence, so removing elements makes it skip or overrun. Iterate over a copy such as `values[:]`.\nQ: What does a dict comprehension look like?\nA: `{key: value for item in items}` — it builds a dict in one expression.",
+        "exercise": "Build a list of five marks entered by the user, rejecting non-numeric input.\nPrint the marks in order and reversed, the highest and lowest, and a dict\ncounting how many marks fall into each of three bands.\n\n```python starter\nmarks = []\n\n# Read 5 marks with int(input(...)); on ValueError print a message and stop.\n# Print the marks, marks[::-1], max and min.\n# Build a dict of band -> count for >=80, >=70 and below.\n```",
+        "common_mistakes": "- **Using `.pop(i)` where you meant `remove(value)`.** `pop` takes an index.\n- **Expecting slicing to modify the list.** It returns a new list.\n- **`KeyError` from a missing dict key.** Use `.get(key, default)`.\n- **Mutating a list while iterating over it.**\n- **Assuming `dict` ordering is alphabetical.** It preserves insertion order; use `sorted()` for sorted output.",
+        "recap": "- `list` is mutable, `tuple` is not, `dict` is keyed, `set` is unique.\n- Slicing is `start:end` with end excluded, and it copies.\n- `dict[key]` raises if absent; `dict.get(key, default)` does not.\n- Comprehensions are the idiomatic way to transform.\n- Never mutate a collection while iterating over it."
+      },
+      "example_code": "# collections.py\nmarks = [70, 85, 92, 60, 78]\n\nprint(\"list      :\", marks)\nprint(\"reversed  :\", marks[::-1])\nprint(\"slice     :\", marks[1:3])\nprint(\"comprehen. :\", [m for m in marks if m >= 78])\n\nmarks.append(88)\nmarks.sort()\nprint(\"sorted    :\", marks)\n\nlow, high = min(marks), max(marks)\nprint(\"min/max   :\", low, high, \"| mean:\", sum(marks) / len(marks))\n\ngrades = {\"A\": 0, \"B\": 0, \"C\": 0}\nfor mark in marks:\n    if mark >= 80:\n        grades[\"A\"] += 1\n    elif mark >= 70:\n        grades[\"B\"] += 1\n    else:\n        grades[\"C\"] += 1\nprint(\"grades    :\", grades)\n\nages = {\"Ada\": 36, \"Alan\": 41}\nages[\"Grace\"] = 45\nprint(\"by key    :\", ages[\"Grace\"], \"| missing:\", ages.get(\"Nobody\", 0))\nprint(\"keys      :\", sorted(ages))\nprint(\"items     :\", list(ages.items())[:2])\n\n# a set removes duplicates\nprint(\"set       :\", sorted({1, 2, 2, 3, 3, 3}))\n\n# a tuple is fixed\npoint = (3, 4)\nprint(\"tuple     :\", point, \"| unpacked:\", point[0], point[1])",
+      "starter_code": "marks = []\n\n# Read 5 marks with int(input(...)); on ValueError print a message and stop.\n# Print the marks, marks[::-1], max and min.\n# Build a dict of band -> count for >=80, >=70 and below.",
+      "checks": [
+        {
+          "question": "When should you choose a tuple instead of a list?",
+          "answer": "When the value is a fixed record or should not change — tuples are immutable and can be used as dict keys."
+        },
+        {
+          "question": "What does `values[1:3]` return for `[10, 20, 30, 40, 50]`?",
+          "answer": "`[20, 30]`. The start is inclusive and the end is exclusive."
+        },
+        {
+          "question": "Why is mutating a list inside a `for` loop over it a problem?",
+          "answer": "The loop's position is based on the original sequence, so removing elements makes it skip or overrun. Iterate over a copy such as `values[:]`."
+        },
+        {
+          "question": "What does a dict comprehension look like?",
+          "answer": "`{key: value for item in items}` — it builds a dict in one expression."
+        }
+      ]
+    },
+    {
+      "id": "05-exceptions",
+      "title": "Exceptions and Errors",
+      "order": 5,
+      "sections": {
+        "objectives": "- Catch exceptions with `try` / `except`.\n- Read the traceback and find the real failing line.\n- Raise your own exceptions with meaningful messages.\n- Choose between raising and returning an error value.",
+        "explanation": "When something goes wrong, Python *raises* an exception, which unwinds the\nstack until something catches it:\n\n```python\ntry:\n    value = int(\"not a number\")\nexcept ValueError as error:\n    print(\"bad input:\", error)\n```\n\n`error` is the exception instance. `str(error)` gives its message.\n\n**Catch specific exceptions, not everything.** `except:` with no type also\ncatches `KeyboardInterrupt` and `SystemExit`, which you must never swallow:\n\n```python\n# BAD - hides real problems\ntry:\n    risky()\nexcept:\n    pass\n\n# GOOD\ntry:\n    risky()\nexcept ValueError as error:\n    print(\"handled:\", error)\n```\n\nCommon types you will meet:\n\n| Exception | Cause |\n|---|---|\n| `ValueError` | Right type, wrong value (`int(\"abc\")`) |\n| `TypeError` | Wrong type (`\"a\" + 1`) |\n| `IndexError` | List index out of range |\n| `KeyError` | Dict key missing |\n| `ZeroDivisionError` | Division by zero |\n| `FileNotFoundError` | File does not exist |\n\n**`else`, `finally` and `raise ... from`:**\n\n```python\ntry:\n    value = int(text)\nexcept ValueError as error:\n    print(\"rejected\")\nelse:\n    print(\"accepted\", value)      # only if no exception\nfinally:\n    print(\"always runs\")\n```\n\n`finally` runs on every path, including an exception you did not catch. Use it\nfor cleanup.\n\n**Raising your own exception** with a message that says what to do:\n\n```python\ndef withdraw(balance, amount):\n    if amount <= 0:\n        raise ValueError(\"amount must be positive\")\n    if amount > balance:\n        raise ValueError(f\"cannot withdraw {amount} from a balance of {balance}\")\n    return balance - amount\n```\n\n`raise ... from error` preserves the cause, which makes tracebacks readable:\n\n```python\ntry:\n    int(text)\nexcept ValueError as error:\n    raise ValueError(f\"expected a whole number, got {text!r}\") from error\n```\n\n**Read the traceback bottom-up.** The last line names the exception; the line\nabove it is where it was raised; lines above that are the call chain.",
+        "example": "```python\n# exceptions.py\ndef safe_int(text):\n    \"\"\"Return an int, or None. Choosing to return rather than raise.\"\"\"\n    try:\n        return int(text.strip())\n    except (ValueError, AttributeError):\n        return None\n\n\ndef total(values):\n    if not values:\n        raise ValueError(\"total needs at least one value\")\n    return sum(values)\n\n\ndef parse_all(texts):\n    numbers = []\n    for text in texts:\n        try:\n            numbers.append(int(text))\n        except ValueError as error:\n            print(f\"skipping {text!r}: {error}\")\n    return numbers\n\n\nprint(\"safe_int('42')  :\", safe_int(\"42\"))\nprint(\"safe_int('abc') :\", safe_int(\"abc\"))\n\ntry:\n    total([])\nexcept ValueError as error:\n    print(\"refused:\", error)\n\nprint(\"parse_all       :\", parse_all([\"1\", \"two\", \"3\", \"nope\", \"5\"]))\n\n# finally always runs\nhandle = None\ntry:\n    handle = open(\"example.txt\", \"w\")\n    raise RuntimeError(\"something went wrong mid-write\")\nexcept RuntimeError as error:\n    print(\"caught:\", error)\nfinally:\n    if handle is not None:\n        handle.close()\n        print(\"closed in finally\")\n\n# re-raising with a clearer message\ntry:\n    int(\"twelve\")\nexcept ValueError as error:\n    try:\n        raise TypeError(f\"expected a whole number, got {'twelve'!r}\") from error\n    except TypeError as clearer:\n        print(\"clearer:\", clearer)\n```",
+        "knowledge_checks": "Q: Why is bare `except:` a bad idea?\nA: It catches everything including `KeyboardInterrupt` and `SystemExit`, so the program becomes impossible to stop and real errors are hidden.\nQ: When does `finally` run?\nA: On every path: normal completion, a caught exception, and an exception that propagates out.\nQ: What does `raise ... from error` do?\nA: Chains the new exception to the original so the traceback shows what actually caused it.\nQ: How do you read a Python traceback?\nA: Bottom-up. The final line names the exception and message; the line above it is where it was raised; further lines are the call chain.",
+        "exercise": "Write `safe_divide(a, b)` that returns the result or raises a clear\n`ValueError`. Then read a line with `input()`, convert it with `int()`, and\nreport any failure without crashing. Finally write `average(values)` that\nraises `ValueError` for an empty list.\n\n```python starter\ndef safe_divide(a, b):\n    # Raise ValueError(\"division by zero\") when b == 0, else return a / b\n\n\ndef read_number(prompt):\n    # input(), then int(). Catch ValueError and return None.\n\n\ndef average(values):\n    # Raise ValueError for an empty list, else return the mean.\n```",
+        "common_mistakes": "- **Bare `except:`.** Catches `KeyboardInterrupt` too.\n- **Catching and printing but not explaining.** Include the value that was wrong.\n- **Using `pass` in an except block.** That silently discards the error.\n- **Assuming the traceback's first line is the cause.** It is the last line.\n- **Raising inside a `finally`.** It masks the original exception.",
+        "recap": "- `try` / `except` / `else` / `finally`.\n- Catch specific exception types.\n- `raise ValueError(\"clear message\")` for your own errors.\n- Read tracebacks bottom-up.\n- `finally` always runs; use it for cleanup."
+      },
+      "example_code": "# exceptions.py\ndef safe_int(text):\n    \"\"\"Return an int, or None. Choosing to return rather than raise.\"\"\"\n    try:\n        return int(text.strip())\n    except (ValueError, AttributeError):\n        return None\n\n\ndef total(values):\n    if not values:\n        raise ValueError(\"total needs at least one value\")\n    return sum(values)\n\n\ndef parse_all(texts):\n    numbers = []\n    for text in texts:\n        try:\n            numbers.append(int(text))\n        except ValueError as error:\n            print(f\"skipping {text!r}: {error}\")\n    return numbers\n\n\nprint(\"safe_int('42')  :\", safe_int(\"42\"))\nprint(\"safe_int('abc') :\", safe_int(\"abc\"))\n\ntry:\n    total([])\nexcept ValueError as error:\n    print(\"refused:\", error)\n\nprint(\"parse_all       :\", parse_all([\"1\", \"two\", \"3\", \"nope\", \"5\"]))\n\n# finally always runs\nhandle = None\ntry:\n    handle = open(\"example.txt\", \"w\")\n    raise RuntimeError(\"something went wrong mid-write\")\nexcept RuntimeError as error:\n    print(\"caught:\", error)\nfinally:\n    if handle is not None:\n        handle.close()\n        print(\"closed in finally\")\n\n# re-raising with a clearer message\ntry:\n    int(\"twelve\")\nexcept ValueError as error:\n    try:\n        raise TypeError(f\"expected a whole number, got {'twelve'!r}\") from error\n    except TypeError as clearer:\n        print(\"clearer:\", clearer)",
+      "starter_code": "def safe_divide(a, b):\n    # Raise ValueError(\"division by zero\") when b == 0, else return a / b\n\n\ndef read_number(prompt):\n    # input(), then int(). Catch ValueError and return None.\n\n\ndef average(values):\n    # Raise ValueError for an empty list, else return the mean.",
+      "checks": [
+        {
+          "question": "Why is bare `except:` a bad idea?",
+          "answer": "It catches everything including `KeyboardInterrupt` and `SystemExit`, so the program becomes impossible to stop and real errors are hidden."
+        },
+        {
+          "question": "When does `finally` run?",
+          "answer": "On every path: normal completion, a caught exception, and an exception that propagates out."
+        },
+        {
+          "question": "What does `raise ... from error` do?",
+          "answer": "Chains the new exception to the original so the traceback shows what actually caused it."
+        },
+        {
+          "question": "How do you read a Python traceback?",
+          "answer": "Bottom-up. The final line names the exception and message; the line above it is where it was raised; further lines are the call chain."
+        }
+      ]
+    },
+    {
+      "id": "06-modules",
+      "title": "Modules and Imports",
+      "order": 6,
+      "sections": {
+        "objectives": "- Split code across modules.\n- Use `import`, `from ... import ...` and aliases.\n- Explain `if __name__ == \"__main__\":`.\n- Avoid circular imports.",
+        "explanation": "A **module** is just a `.py` file. A **package** is a directory of modules with\nan `__init__.py`. Splitting code keeps each file focused and makes it testable\nin isolation.\n\n```python\n# geometry.py\nimport math\n\ndef area(radius):\n    return math.pi * radius * radius\n\ndef circumference(radius):\n    return 2 * math.pi * radius\n```\n\nImport it:\n\n```python\n# main.py\nimport geometry                     # use geometry.area(...)\nfrom geometry import area            # use area(...)\nimport geometry as geo               # use geo.area(...)\nfrom math import pi, sqrt           # bring in specific names\n```\n\n**Standard library modules worth knowing:**\n\n| Module | Contents |\n|---|---|\n| `math` | `pi`, `sqrt`, `floor` |\n| `os` / `pathlib` | Filesystem and paths |\n| `json` | Read and write JSON |\n| `datetime` | Dates and times |\n| `random` | Pseudo-random numbers |\n| `sys` | Interpreter details |\n| `statistics` | `mean`, `median`, `stdev` |\n\n**`if __name__ == \"__main__\":`** guards the code that should run only when the\nfile is executed directly, not when it is imported:\n\n```python\ndef main():\n    print(\"running\")\n\nif __name__ == \"__main__\":\n    main()\n```\n\nWithout the guard, importing your module for testing would run its demo code.\n\n**Circular imports** (A imports B, B imports A) fail at import time. Break the\ncycle by moving shared definitions into a third module that both depend on, or\nby importing inside the function that needs it:\n\n```python\ndef load():\n    import json          # deferred import avoids the cycle\n    ...\n```\n\n**`__all__`** controls what `from module import *` exposes. Prefer explicit\nimports so readers can see where each name comes from.",
+        "example": "```python\n# stats_tool.py - a module with no side effects\nimport statistics\n\n\ndef summarise(values):\n    if not values:\n        raise ValueError(\"need at least one value\")\n    return {\n        \"count\": len(values),\n        \"mean\": statistics.mean(values),\n        \"median\": statistics.median(values),\n        \"stdev\": statistics.stdev(values) if len(values) > 1 else 0.0,\n    }\n\n\ndef best_index(values):\n    \"\"\"Index of the largest value; the first one if tied.\"\"\"\n    if not values:\n        raise ValueError(\"need at least one value\")\n    return max(range(len(values)), key=lambda i: values[i])\n```\n\n```python\n# run_stats.py - imports the module\nfrom stats_tool import summarise, best_index\n\nmarks = [70, 85, 92, 60, 78]\n\nreport = summarise(marks)\nfor key, value in report.items():\n    print(f\"{key:8}: {value:.2f}\")\n\nprint(\"best index:\", best_index(marks))\nprint(\"top value :\", marks[best_index(marks)])\n\n\n# Only runs when executed directly, so importing run_stats is side-effect free.\nif __name__ == \"__main__\":\n    print(\"done\")\n```\n\nRun it:\n\n```bash\npython3 run_stats.py\n```",
+        "knowledge_checks": "Q: Why guard demo code with `if __name__ == \"__main__\":`?\nA: So the code runs only when the file is executed, not when it is imported by another module or a test.\nQ: What is the difference between `import geometry` and `from geometry import area`?\nA: The first binds the module name and needs `geometry.area(...)`; the second binds `area` directly.\nQ: What causes a circular import error?\nA: Two modules importing each other at module level. Break the cycle by extracting shared code into a third module or deferring the import into a function.",
+        "exercise": "Split a small calculator into two files. `calc.py` holds `add`, `subtract`,\n`multiply` and `divide` where `divide` raises `ValueError` for a zero divisor.\n`run_calc.py` imports them, reads two numbers, and prints all four results,\nreporting the divide failure if one occurs. Guard the demo with\n`if __name__ == \"__main__\":`.\n\n```python starter\n# calc.py\n\ndef divide(a, b):\n    # Raise ValueError when b == 0, else return a / b\n```\n\n```python starter\n# run_calc.py\n# Import the four functions, read two numbers, print each result.\n# Handle the ZeroDivision-style failure from divide without crashing.\n# Put the demo under if __name__ == \"__main__\":\n```",
+        "common_mistakes": "- **Running demo code at import time.** Guard it.\n- **Using `import *`.** It hides where names come from.\n- **Circular imports.** Extract shared code or import inside the function.\n- **Expecting a relative import from the command line.** Modules run as `__main__` when executed directly; use absolute imports between your own files.\n- **Creating files in the directory you run from.** Use `pathlib`.",
+        "recap": "- A module is a `.py` file; a package is a directory with `__init__.py`.\n- `import x`, `from x import y`, and `as` aliases all work.\n- Guard entry points with `if __name__ == \"__main__\":`.\n- Break import cycles by extracting shared definitions.\n- Prefer explicit imports over `import *`."
+      },
+      "example_code": "# stats_tool.py - a module with no side effects\nimport statistics\n\n\ndef summarise(values):\n    if not values:\n        raise ValueError(\"need at least one value\")\n    return {\n        \"count\": len(values),\n        \"mean\": statistics.mean(values),\n        \"median\": statistics.median(values),\n        \"stdev\": statistics.stdev(values) if len(values) > 1 else 0.0,\n    }\n\n\ndef best_index(values):\n    \"\"\"Index of the largest value; the first one if tied.\"\"\"\n    if not values:\n        raise ValueError(\"need at least one value\")\n    return max(range(len(values)), key=lambda i: values[i])",
+      "starter_code": "# calc.py\n\ndef divide(a, b):\n    # Raise ValueError when b == 0, else return a / b",
+      "checks": [
+        {
+          "question": "Why guard demo code with `if __name__ == \"__main__\":`?",
+          "answer": "So the code runs only when the file is executed, not when it is imported by another module or a test."
+        },
+        {
+          "question": "What is the difference between `import geometry` and `from geometry import area`?",
+          "answer": "The first binds the module name and needs `geometry.area(...)`; the second binds `area` directly."
+        },
+        {
+          "question": "What causes a circular import error?",
+          "answer": "Two modules importing each other at module level. Break the cycle by extracting shared code into a third module or deferring the import into a function."
+        }
+      ]
+    },
+    {
+      "id": "07-files",
+      "title": "Files",
+      "order": 7,
+      "sections": {
+        "objectives": "- Read and write text files with `open()`.\n- Use `with` so files always close.\n- Choose between text and binary mode.\n- Parse simple delimited data safely.",
+        "explanation": "`open(path, mode)` returns a file object. The common modes:\n\n| Mode | Meaning |\n|---|---|\n| `\"r\"` | Read (default) |\n| `\"w\"` | Write, truncating the file |\n| `\"a\"` | Append |\n| `\"x\"` | Write, failing if the file exists |\n| `\"b\"` | Binary, e.g. `\"rb\"` |\n\nAlways use a `with` block. It closes the file even if an exception is raised\npart-way through:\n\n```python\nwith open(\"notes.txt\", \"r\", encoding=\"utf-8\") as file:\n    for line in file:\n        print(line.rstrip())\n```\n\nOmitting `encoding=\"utf-8\"` makes the default platform encoding, which is a\nfrequent source of trouble when sharing files.\n\n**Check that reading worked.** Opening a missing file raises `FileNotFoundError`,\nso handle it rather than letting the program die:\n\n```python\ntry:\n    with open(\"data.txt\", encoding=\"utf-8\") as file:\n        content = file.read()\nexcept FileNotFoundError:\n    content = \"\"\n```\n\n**Writing and appending:**\n\n```python\nwith open(\"log.txt\", \"w\", encoding=\"utf-8\") as file:\n    file.write(\"first\\n\")\n    file.write(\"second\\n\")\n\nwith open(\"log.txt\", \"a\", encoding=\"utf-8\") as file:\n    file.write(\"third\\n\")\n```\n\n**Whole-file versus line-by-line.** `read()` loads everything into memory;\n`readlines()` returns a list; iterating reads lazily and is better for large\nfiles.\n\n```python\ntext   = file.read()             # whole file as one string\nlines  = file.readlines()        # whole file as a list\nfirst  = file.readline()         # one line\n```\n\n**`pathlib` is the modern way to handle paths**, because it composes instead of\nconcatenating strings:\n\n```python\nfrom pathlib import Path\n\npath = Path(\"data\") / \"marks.txt\"\npath.parent.mkdir(parents=True, exist_ok=True)\npath.write_text(\"1 2 3\\n\", encoding=\"utf-8\")\nprint(path.exists(), path.suffix, path.name)\n```\n\n**Parsing delimited text** with `str.split()` and `str.strip()`:\n\n```python\nname, mark = line.split(\",\")\nmark = int(mark.strip())\n```\n\nUse `csv` for real comma-separated data, because quoted fields contain commas.",
+        "example": "```python\n# files.py\nfrom pathlib import Path\n\nRECORDS = Path(\"records.txt\")\n\n\ndef write_records(rows):\n    with RECORDS.open(\"w\", encoding=\"utf-8\") as file:\n        for name, mark in rows:\n            file.write(f\"{name},{mark}\\n\")\n\n\ndef append_record(name, mark):\n    with RECORDS.open(\"a\", encoding=\"utf-8\") as file:\n        file.write(f\"{name},{mark}\\n\")\n\n\ndef read_records():\n    \"\"\"Return parsed records, reporting a problem instead of crashing.\"\"\"\n    if not RECORDS.exists():\n        return [], \"no file yet\"\n    rows = []\n    with RECORDS.open(\"r\", encoding=\"utf-8\") as file:\n        for number, line in enumerate(file, start=1):\n            line = line.strip()\n            if not line:\n                continue\n            if \",\" not in line:\n                return rows, f\"malformed record on line {number}\"\n            name, _, mark = line.partition(\",\")\n            try:\n                rows.append((name.strip(), int(mark.strip())))\n            except ValueError:\n                return rows, f\"line {number} has a non-numeric mark\"\n    return rows, \"\"\n\n\nwrite_records([(\"Ada\", 93), (\"Alan\", 81)])\nappend_record(\"Grace\", 74)\n\nrows, problem = read_records()\nprint(\"rows   :\", rows)\nprint(\"problem:\", problem or \"none\")\n\nif rows:\n    total = sum(mark for _, mark in rows)\n    print(\"average:\", total / len(rows))\n\nprint(\"exists :\", RECORDS.exists(), \"| suffix:\", RECORDS.suffix)\n```",
+        "knowledge_checks": "Q: Why is `with open(...)` preferred over calling `open()` directly?\nA: It closes the file on every path, including when an exception is raised inside the block.\nQ: What does mode `\"w\"` do to an existing file?\nA: Truncates it — the previous contents are lost. Use `\"a\"` to append.\nQ: Why pass `encoding=\"utf-8\"`?\nA: Without it Python uses the platform default, which differs between systems and causes confusing decoding errors.\nQ: What does `Path(\"data\") / \"marks.txt\"` do?\nA: Joins the two path components using the correct separator for the platform, without manual string concatenation.",
+        "exercise": "Write `journal()` that appends one line of user input to `journal.txt` using\nappend mode, so earlier entries survive. Then write `count_entries()` that\nreads the file back and returns how many non-blank lines it contains. Report a\nmissing file clearly rather than crashing.\n\n```python starter\nfrom pathlib import Path\n\nJOURNAL = Path(\"journal.txt\")\n\n\ndef append_entry(text):\n    # Append text plus a newline to JOURNAL, checking for write failure.\n\n\ndef count_entries():\n    # Return (count, problem). Missing file -> (0, \"no journal yet\").\n```",
+        "common_mistakes": "- **Using `\"w\"` when you meant `\"a\"`,** silently destroying earlier data.\n- **Forgetting `encoding=\"utf-8\"`,** causing platform-dependent decoding errors.\n- **Calling `open()` without `with`,** leaving the file open on an exception path.\n- **Splitting on `\",\"` when fields may contain commas.** Use the `csv` module.\n- **Ignoring the return of `file.write`.** It returns the character count.",
+        "recap": "- `open(path, mode)`; always use `with`.\n- `\"r\"`, `\"w\"` (truncates), `\"a\"`, `\"x\"`; add `b` for binary.\n- Pass `encoding=\"utf-8\"` explicitly.\n- Check for `FileNotFoundError` instead of crashing.\n- `pathlib` composes paths and creates directories cleanly."
+      },
+      "example_code": "# files.py\nfrom pathlib import Path\n\nRECORDS = Path(\"records.txt\")\n\n\ndef write_records(rows):\n    with RECORDS.open(\"w\", encoding=\"utf-8\") as file:\n        for name, mark in rows:\n            file.write(f\"{name},{mark}\\n\")\n\n\ndef append_record(name, mark):\n    with RECORDS.open(\"a\", encoding=\"utf-8\") as file:\n        file.write(f\"{name},{mark}\\n\")\n\n\ndef read_records():\n    \"\"\"Return parsed records, reporting a problem instead of crashing.\"\"\"\n    if not RECORDS.exists():\n        return [], \"no file yet\"\n    rows = []\n    with RECORDS.open(\"r\", encoding=\"utf-8\") as file:\n        for number, line in enumerate(file, start=1):\n            line = line.strip()\n            if not line:\n                continue\n            if \",\" not in line:\n                return rows, f\"malformed record on line {number}\"\n            name, _, mark = line.partition(\",\")\n            try:\n                rows.append((name.strip(), int(mark.strip())))\n            except ValueError:\n                return rows, f\"line {number} has a non-numeric mark\"\n    return rows, \"\"\n\n\nwrite_records([(\"Ada\", 93), (\"Alan\", 81)])\nappend_record(\"Grace\", 74)\n\nrows, problem = read_records()\nprint(\"rows   :\", rows)\nprint(\"problem:\", problem or \"none\")\n\nif rows:\n    total = sum(mark for _, mark in rows)\n    print(\"average:\", total / len(rows))\n\nprint(\"exists :\", RECORDS.exists(), \"| suffix:\", RECORDS.suffix)",
+      "starter_code": "from pathlib import Path\n\nJOURNAL = Path(\"journal.txt\")\n\n\ndef append_entry(text):\n    # Append text plus a newline to JOURNAL, checking for write failure.\n\n\ndef count_entries():\n    # Return (count, problem). Missing file -> (0, \"no journal yet\").",
+      "checks": [
+        {
+          "question": "Why is `with open(...)` preferred over calling `open()` directly?",
+          "answer": "It closes the file on every path, including when an exception is raised inside the block."
+        },
+        {
+          "question": "What does mode `\"w\"` do to an existing file?",
+          "answer": "Truncates it — the previous contents are lost. Use `\"a\"` to append."
+        },
+        {
+          "question": "Why pass `encoding=\"utf-8\"`?",
+          "answer": "Without it Python uses the platform default, which differs between systems and causes confusing decoding errors."
+        },
+        {
+          "question": "What does `Path(\"data\") / \"marks.txt\"` do?",
+          "answer": "Joins the two path components using the correct separator for the platform, without manual string concatenation."
+        }
+      ]
+    },
+    {
+      "id": "08-classes",
+      "title": "Classes and Objects",
+      "order": 8,
+      "sections": {
+        "objectives": "- Define a class with methods, `__init__` and attributes.\n- Understand instance versus class attributes.\n- Use `__repr__`, `__str__` and `__eq__`.\n- Follow encapsulation with properties.",
+        "explanation": "A class is a template; an object is an instance of it.\n\n```python\nclass Rectangle:\n    def __init__(self, width, height):\n        self.width = width\n        self.height = height\n\n    def area(self):\n        return self.width * self.height\n```\n\n`__init__` runs when an object is created. `self` is the object the method was\ncalled on; Python passes it automatically.\n\n**Instance versus class attributes.** An attribute assigned inside `__init__` is\nper-object. One assigned in the class body is shared by every instance:\n\n```python\nclass Counter:\n    limit = 100              # class attribute: one copy for all\n\n    def __init__(self):\n        self.count = 0       # instance attribute: one per object\n```\n\nSharing mutable class attributes between instances is a classic bug: appending to\na list defined on the class appends to *everyone's* list.\n\n**Dunder methods** give your type Python behaviour:\n\n```python\nclass Point:\n    def __init__(self, x, y):\n        self.x, self.y = x, y\n\n    def __repr__(self):\n        return f\"Point({self.x}, {self.y})\"     # for developers\n\n    def __str__(self):\n        return f\"({self.x}, {self.y})\"          # for people\n\n    def __eq__(self, other):\n        return (self.x, self.y) == (other.x, other.y)\n```\n\nWithout `__repr__`, printing an object shows something like\n`<__main__.Point object at 0x7f...>`, which tells you nothing.\n\n**Properties** let you validate while still using attribute syntax:\n\n```python\nclass Temperature:\n    def __init__(self, celsius):\n        self.celsius = celsius          # goes through the setter\n\n    @property\n    def celsius(self):\n        return self._celsius\n\n    @celsius.setter\n    def celsius(self, value):\n        if value < -273.15:\n            raise ValueError(\"below absolute zero\")\n        self._celsius = value\n\n    @property\n    def fahrenheit(self):\n        return self._celsius * 9 / 5 + 32\n```\n\n`fahrenheit` is computed, so it cannot drift out of sync with `celsius`.\n\n**Inheritance** is available but composition is often clearer:\n\n```python\nclass Square(Rectangle):\n    def __init__(self, side):\n        super().__init__(side, side)\n```\n\n`super()` calls the parent's version. Prefer composition when the\n\"is-a\" relationship is not genuine — inheritance locks in a coupling.",
+        "example": "```python\n# classes.py\nclass Rectangle:\n    def __init__(self, width, height):\n        if width <= 0 or height <= 0:\n            raise ValueError(\"width and height must be positive\")\n        self.width = width\n        self.height = height\n\n    def area(self):\n        return self.width * self.height\n\n    def scaled(self, factor):\n        \"\"\"Return a new rectangle rather than mutating this one.\"\"\"\n        return Rectangle(self.width * factor, self.height * factor)\n\n    def __repr__(self):\n        return f\"Rectangle({self.width}, {self.height})\"\n\n    def __eq__(self, other):\n        return (\n            isinstance(other, Rectangle)\n            and self.width == other.width\n            and self.height == other.height\n        )\n\n\nclass Square(Rectangle):\n    def __init__(self, side):\n        super().__init__(side, side)\n\n    def __repr__(self):\n        return f\"Square({self.width})\"\n\n\nclass Counter:\n    instances = 0                    # class attribute\n\n    def __init__(self):\n        self.count = 0               # instance attribute\n        Counter.instances += 1\n\n\nrect = Rectangle(3, 4)\nprint(rect)                          # uses __repr__ -> Rectangle(3, 4)\nprint(\"area:\", rect.area())          # 12\nprint(\"scaled:\", rect.scaled(2))     # a new object, rect unchanged\nprint(\"equal:\", rect == Rectangle(3, 4))\n\nsquare = Square(5)\nprint(square, \"| area:\", square.area())\n\nprint(\"instances:\", Counter.instances)\na, b = Counter(), Counter()\nprint(\"instances after two:\", Counter.instances, \"| a.count:\", a.count)\n\ntry:\n    Rectangle(0, 5)\nexcept ValueError as error:\n    print(\"rejected:\", error)\n```",
+        "knowledge_checks": "Q: What is `self`?\nA: The object the method was called on. Python passes it automatically; you never pass it when calling a method.\nQ: What is the difference between a class attribute and an instance attribute?\nA: A class attribute lives once on the class and is shared; an instance attribute is created per object in `__init__`.\nQ: Why write `__repr__`?\nA: Without it, printing an object shows an opaque address. `__repr__` gives a developer-facing form and `__str__` a human-facing one.\nQ: Why is a mutable class attribute dangerous?\nA: Every instance shares the same object, so mutating it in one place changes it for all of them.",
+        "exercise": "Create a class `BankAccount` that validates a positive opening balance, offers\n`deposit` and `withdraw` returning `True` or `False` rather than raising, keeps\na `history` list of transaction strings, and defines `__repr__`.\n\n```python starter\nclass BankAccount:\n    def __init__(self, opening):\n        # Raise ValueError if opening <= 0\n        # self.balance = opening; self.history = []\n\n    def deposit(self, amount):\n        # Reject non-positive amounts. Append to history. Return True/False.\n\n    def withdraw(self, amount):\n        # Reject non-positive amounts and overdrafts. Return True/False.\n\n    def __repr__(self):\n        # Something like BankAccount(balance=100.0, transactions=1)\n```",
+        "common_mistakes": "- **Forgetting `self`** when assigning an attribute, which creates a local instead.\n- **Mutable class attributes** shared across instances.\n- **No `__repr__`,** so debugging output is an address.\n- **Comparing objects with `==` without `__eq__`,** which falls back to identity.\n- **Overriding `__init__` without calling `super().__init__()`** in a subclass.",
+        "recap": "- `__init__` runs at construction; `self` is the instance.\n- Class attributes are shared; instance attributes are per object.\n- Implement `__repr__`, `__str__` and `__eq__` for useful behaviour.\n- `@property` validates while keeping attribute syntax.\n- Prefer composition unless the \"is-a\" relationship is genuine."
+      },
+      "example_code": "# classes.py\nclass Rectangle:\n    def __init__(self, width, height):\n        if width <= 0 or height <= 0:\n            raise ValueError(\"width and height must be positive\")\n        self.width = width\n        self.height = height\n\n    def area(self):\n        return self.width * self.height\n\n    def scaled(self, factor):\n        \"\"\"Return a new rectangle rather than mutating this one.\"\"\"\n        return Rectangle(self.width * factor, self.height * factor)\n\n    def __repr__(self):\n        return f\"Rectangle({self.width}, {self.height})\"\n\n    def __eq__(self, other):\n        return (\n            isinstance(other, Rectangle)\n            and self.width == other.width\n            and self.height == other.height\n        )\n\n\nclass Square(Rectangle):\n    def __init__(self, side):\n        super().__init__(side, side)\n\n    def __repr__(self):\n        return f\"Square({self.width})\"\n\n\nclass Counter:\n    instances = 0                    # class attribute\n\n    def __init__(self):\n        self.count = 0               # instance attribute\n        Counter.instances += 1\n\n\nrect = Rectangle(3, 4)\nprint(rect)                          # uses __repr__ -> Rectangle(3, 4)\nprint(\"area:\", rect.area())          # 12\nprint(\"scaled:\", rect.scaled(2))     # a new object, rect unchanged\nprint(\"equal:\", rect == Rectangle(3, 4))\n\nsquare = Square(5)\nprint(square, \"| area:\", square.area())\n\nprint(\"instances:\", Counter.instances)\na, b = Counter(), Counter()\nprint(\"instances after two:\", Counter.instances, \"| a.count:\", a.count)\n\ntry:\n    Rectangle(0, 5)\nexcept ValueError as error:\n    print(\"rejected:\", error)",
+      "starter_code": "class BankAccount:\n    def __init__(self, opening):\n        # Raise ValueError if opening <= 0\n        # self.balance = opening; self.history = []\n\n    def deposit(self, amount):\n        # Reject non-positive amounts. Append to history. Return True/False.\n\n    def withdraw(self, amount):\n        # Reject non-positive amounts and overdrafts. Return True/False.\n\n    def __repr__(self):\n        # Something like BankAccount(balance=100.0, transactions=1)",
+      "checks": [
+        {
+          "question": "What is `self`?",
+          "answer": "The object the method was called on. Python passes it automatically; you never pass it when calling a method."
+        },
+        {
+          "question": "What is the difference between a class attribute and an instance attribute?",
+          "answer": "A class attribute lives once on the class and is shared; an instance attribute is created per object in `__init__`."
+        },
+        {
+          "question": "Why write `__repr__`?",
+          "answer": "Without it, printing an object shows an opaque address. `__repr__` gives a developer-facing form and `__str__` a human-facing one."
+        },
+        {
+          "question": "Why is a mutable class attribute dangerous?",
+          "answer": "Every instance shares the same object, so mutating it in one place changes it for all of them."
+        }
+      ]
+    },
+    {
+      "id": "09-testing",
+      "title": "Testing",
+      "order": 9,
+      "sections": {
+        "objectives": "- Write tests with `pytest`.\n- Cover normal cases, boundaries and invalid input.\n- Test what should happen *and* what should be rejected.\n- Keep tests independent of each other.",
+        "explanation": "A test states an expected outcome and fails loudly when reality disagrees.\n`pytest` runs plain functions whose names start with `test_`:\n\n```python\n# test_calc.py\nimport pytest\nfrom calc import add, divide\n\ndef test_add_returns_the_sum():\n    assert add(2, 3) == 5\n\ndef test_divide_rejects_zero():\n    with pytest.raises(ValueError):\n        divide(1, 0)\n```\n\n`assert` is the whole assertion language you need. `pytest.raises` asserts that\nsomething is *supposed* to fail — an important half of testing.\n\n**What to cover.** Three kinds of case, and the second is the one people skip:\n\n1. **Normal** — the ordinary successful path.\n2. **Boundary** — zero, one, empty, very large, exactly on a threshold.\n3. **Invalid** — the wrong type, a negative where positive is required.\n\n```python\n@pytest.mark.parametrize(\"a,b,expected\", [\n    (0, 0, 0),          # boundary\n    (-3, 4, 1),         # negative\n    (2.5, 0.5, 3.0),    # floats\n])\ndef test_divide(a, b, expected):\n    assert divide(a, b) == expected\n```\n\n`parametrize` runs one test body over many inputs, so each case shows up\nseparately in the report.\n\n**Keep tests independent.** A test must pass on its own, regardless of the order\ntests run in. Use fixtures for setup instead of relying on earlier tests.\n\n**Testing the code under test.** Import the real function rather than copying its\nlogic into the test. A test that reimplements the logic only proves the two\ncopies agree.\n\nRun them:\n\n```bash\npython3 -m pytest -q\npython3 -m pytest test_calc.py::test_add_returns_the_sum -v\n```",
+        "example": "```python\n# test_stats_tool.py\nimport pytest\n\nfrom stats_tool import summarise, best_index\n\n\ndef test_mean_of_known_values():\n    report = summarise([2, 4, 6])\n    assert report[\"count\"] == 3\n    assert report[\"mean\"] == pytest.approx(4.0)\n\n\ndef test_single_value_has_zero_stdev():\n    # Boundary: stdev is undefined for one sample, so we report 0.0.\n    assert summarise([5])[\"stdev\"] == 0.0\n\n\ndef test_empty_list_is_rejected():\n    with pytest.raises(ValueError):\n        summarise([])\n\n\ndef test_best_index_finds_the_maximum():\n    assert best_index([3, 9, 4]) == 1\n\n\ndef test_best_index_returns_first_of_a_tie():\n    assert best_index([5, 5, 1]) == 0\n\n\ndef test_best_index_rejects_empty():\n    with pytest.raises(ValueError):\n        best_index([])\n\n\n@pytest.mark.parametrize(\"values,expected\", [\n    ([1], 1),               # single element\n    ([0, 0, 0], 0),         # all equal\n    ([-5, -1, -9], 1),      # all negative\n])\ndef test_best_index_edge_cases(values, expected):\n    assert best_index(values) == expected\n```\n\nExpected output:\n\n```text\n........                                                          [100%]\n8 passed\n```",
+        "knowledge_checks": "Q: Why test that something *fails* as well as that it succeeds?\nA: Because rejecting invalid input is part of the behaviour. Without those tests, a validator could be silently removed and the suite would stay green.\nQ: What is the boundary between normal and boundary cases?\nA: Boundary inputs sit on an edge of the valid range: zero, one, empty, the largest accepted value, or exactly on a threshold.\nQ: Why must tests be independent?\nA: Order dependence means a failure in one test causes unrelated failures, which wastes debugging time and hides real problems.\nQ: Why is `pytest.approx` used for the mean?\nA: Floating point arithmetic is approximate, so `==` on computed values is unreliable.",
+        "exercise": "Write tests for `divide(a, b)`: a normal division, division by a decimal, zero\nnumerator, division by a negative number, and the two invalid cases (zero\ndivisor, and a string argument) using `pytest.raises`.\n\n```python starter\nimport pytest\n\n\n# test_divide.py\ndef test_normal_division():\n    # assert divide(7, 2) == 3.5\n\n\ndef test_zero_dividend():\n    # assert divide(0, 5) == 0.0\n\n\ndef test_zero_divisor_is_rejected():\n    # with pytest.raises(...): divide(1, 0)\n\n\ndef test_non_numeric_argument_is_rejected():\n    # with pytest.raises(TypeError): divide(\"a\", 1)\n```",
+        "common_mistakes": "- **Only testing the happy path.** Invalid input is where bugs hide.\n- **Copying the implementation into the test.** Test the real code.\n- **Comparing floats with `==`.** Use `pytest.approx`.\n- **Tests depending on order or on shared mutable state.**\n- **Asserting on a whole object,** which breaks on any unrelated field change. Assert on the field you care about.",
+        "recap": "- Plain functions named `test_*`, with `assert`.\n- `pytest.raises` for behaviour that must be rejected.\n- Cover normal, boundary and invalid cases.\n- `@pytest.mark.parametrize` runs one body over many inputs.\n- Tests must be independent and must test the real code."
+      },
+      "example_code": "# test_stats_tool.py\nimport pytest\n\nfrom stats_tool import summarise, best_index\n\n\ndef test_mean_of_known_values():\n    report = summarise([2, 4, 6])\n    assert report[\"count\"] == 3\n    assert report[\"mean\"] == pytest.approx(4.0)\n\n\ndef test_single_value_has_zero_stdev():\n    # Boundary: stdev is undefined for one sample, so we report 0.0.\n    assert summarise([5])[\"stdev\"] == 0.0\n\n\ndef test_empty_list_is_rejected():\n    with pytest.raises(ValueError):\n        summarise([])\n\n\ndef test_best_index_finds_the_maximum():\n    assert best_index([3, 9, 4]) == 1\n\n\ndef test_best_index_returns_first_of_a_tie():\n    assert best_index([5, 5, 1]) == 0\n\n\ndef test_best_index_rejects_empty():\n    with pytest.raises(ValueError):\n        best_index([])\n\n\n@pytest.mark.parametrize(\"values,expected\", [\n    ([1], 1),               # single element\n    ([0, 0, 0], 0),         # all equal\n    ([-5, -1, -9], 1),      # all negative\n])\ndef test_best_index_edge_cases(values, expected):\n    assert best_index(values) == expected",
+      "starter_code": "import pytest\n\n\n# test_divide.py\ndef test_normal_division():\n    # assert divide(7, 2) == 3.5\n\n\ndef test_zero_dividend():\n    # assert divide(0, 5) == 0.0\n\n\ndef test_zero_divisor_is_rejected():\n    # with pytest.raises(...): divide(1, 0)\n\n\ndef test_non_numeric_argument_is_rejected():\n    # with pytest.raises(TypeError): divide(\"a\", 1)",
+      "checks": [
+        {
+          "question": "Why test that something *fails* as well as that it succeeds?",
+          "answer": "Because rejecting invalid input is part of the behaviour. Without those tests, a validator could be silently removed and the suite would stay green."
+        },
+        {
+          "question": "What is the boundary between normal and boundary cases?",
+          "answer": "Boundary inputs sit on an edge of the valid range: zero, one, empty, the largest accepted value, or exactly on a threshold."
+        },
+        {
+          "question": "Why must tests be independent?",
+          "answer": "Order dependence means a failure in one test causes unrelated failures, which wastes debugging time and hides real problems."
+        },
+        {
+          "question": "Why is `pytest.approx` used for the mean?",
+          "answer": "Floating point arithmetic is approximate, so `==` on computed values is unreliable."
+        }
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "py-variables",
+      "title": "Variables and Types",
+      "lesson_id": "01-variables-and-types",
+      "summary": "Names bound to values; int, float, str and bool.",
+      "prerequisites": [],
+      "error_categories": [
+        "type_error",
+        "name_error"
+      ]
+    },
+    {
+      "id": "py-flow",
+      "title": "Conditions and Loops",
+      "lesson_id": "02-conditions-and-loops",
+      "summary": "if/elif/else, for, while and range().",
+      "prerequisites": [
+        "py-variables"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "infinite_loop",
+        "logic_error"
+      ]
+    },
+    {
+      "id": "py-functions",
+      "title": "Functions",
+      "lesson_id": "03-functions",
+      "summary": "def, return, defaults and pass-by-object.",
+      "prerequisites": [
+        "py-flow"
+      ],
+      "error_categories": [
+        "missing_return",
+        "mutable_default",
+        "none_return"
+      ]
+    },
+    {
+      "id": "py-collections",
+      "title": "Collections",
+      "lesson_id": "04-collections",
+      "summary": "list, tuple, dict, set, slicing and comprehensions.",
+      "prerequisites": [
+        "py-flow"
+      ],
+      "error_categories": [
+        "key_error",
+        "index_error",
+        "mutating_while_iterating"
+      ]
+    },
+    {
+      "id": "py-exceptions",
+      "title": "Exceptions",
+      "lesson_id": "05-exceptions",
+      "summary": "try/except/else/finally, raising and tracebacks.",
+      "prerequisites": [
+        "py-functions"
+      ],
+      "error_categories": [
+        "unhandled_exception",
+        "wrong_exception_type",
+        "bare_except"
+      ]
+    },
+    {
+      "id": "py-modules",
+      "title": "Modules",
+      "lesson_id": "06-modules",
+      "summary": "Imports, the __main__ guard and circular imports.",
+      "prerequisites": [
+        "py-functions"
+      ],
+      "error_categories": [
+        "import_error",
+        "circular_import",
+        "missing_main_guard"
+      ]
+    },
+    {
+      "id": "py-files",
+      "title": "Files",
+      "lesson_id": "07-files",
+      "summary": "open, modes, context managers and pathlib.",
+      "prerequisites": [
+        "py-modules",
+        "py-exceptions"
+      ],
+      "error_categories": [
+        "file_not_checked",
+        "wrong_mode",
+        "missing_close"
+      ]
+    },
+    {
+      "id": "py-classes",
+      "title": "Classes",
+      "lesson_id": "08-classes",
+      "summary": "__init__, dunder methods, properties and encapsulation.",
+      "prerequisites": [
+        "py-functions",
+        "py-collections"
+      ],
+      "error_categories": [
+        "shared_class_attribute",
+        "missing_repr",
+        "missing_super"
+      ]
+    },
+    {
+      "id": "py-testing",
+      "title": "Testing",
+      "lesson_id": "09-testing",
+      "summary": "pytest, assertions, raises and parametrize.",
+      "prerequisites": [
+        "py-functions",
+        "py-exceptions"
+      ],
+      "error_categories": [
+        "missing_boundary_test",
+        "float_equality",
+        "order_dependent_tests"
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "py-types-division",
+      "concept_id": "py-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "predict-output",
+      "title": "True versus floor division",
+      "prompt": "Predict both lines exactly. Python has no integer division trap the way C does.",
+      "code": "a = 7\nb = 2\nprint(a / b)\nprint(a // b)\n",
+      "starter_code": "",
+      "expected_stdout": "3.5\n3\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "division"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-types-fix-avg",
+      "concept_id": "py-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Mean of an empty list",
+      "prompt": "This crashes with ZeroDivisionError. Make it print 0.0 for an empty list and still print 2.5 for [1, 4].",
+      "code": "def mean(values):\n    return sum(values) / len(values)\n\nprint(mean([1, 4]))\nprint(mean([]))\n",
+      "starter_code": "def mean(values):\n    if not values:\n        return 0.0\n    return sum(values) / len(values)\n\nprint(mean([1, 4]))\nprint(mean([]))\n",
+      "expected_stdout": "2.5\n0.0\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "division",
+        "boundary"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-flow-offbyone",
+      "concept_id": "py-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "One number too many",
+      "prompt": "It prints 6 instead of 5. Fix the range.",
+      "code": "for i in range(1, 6):\n    print(i, end=' ')\nprint()\n",
+      "starter_code": "for i in range(1, 5):\n    print(i, end=' ')\nprint()\n",
+      "expected_stdout": "1 2 3 4 5 \n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "off-by-one"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-flow-explain-elseif",
+      "concept_id": "py-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "explain-code",
+      "title": "Why elif",
+      "prompt": "Explain what this prints for score=85, and explain why writing 'else if' instead of 'elif' is a habit from another language rather than an improvement.",
+      "code": "score = 85\nif score >= 90:\n    grade = 'A'\nelif score >= 80:\n    grade = 'B'\nelse:\n    grade = 'F'\nprint(grade)\n",
+      "starter_code": "",
+      "expected_stdout": "",
+      "stdin": "",
+      "rubric": [
+        "states it prints B",
+        "explains only the first true branch runs",
+        "mentions elif is the Python spelling"
+      ],
+      "novel": false,
+      "tags": [],
+      "graded_by": "interpretive"
+    },
+    {
+      "id": "py-functions-mutable-default",
+      "concept_id": "py-functions",
+      "lesson_id": "03-functions",
+      "type": "find-a-bug",
+      "title": "The default that accumulates",
+      "prompt": "Calling collect twice gives ['a', 'b'] instead of ['a'] then ['b']. Fix it so each call starts empty.",
+      "code": "def collect(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nprint(collect('a'))\nprint(collect('b'))\n",
+      "starter_code": "def collect(item, bucket=None):\n    if bucket is None:\n        bucket = []\n    bucket.append(item)\n    return bucket\n\nprint(collect('a'))\nprint(collect('b'))\n",
+      "expected_stdout": "['a']\n['b']\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "mutable-default"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-collections-sort",
+      "concept_id": "py-collections",
+      "lesson_id": "04-collections",
+      "type": "find-a-bug",
+      "title": "String sort",
+      "prompt": "It prints [10, 100, 9]. Make it print the numbers in ascending order without mutating the original list.",
+      "code": "values = [10, 9, 100]\nprint(sorted(values))\n",
+      "starter_code": "values = [10, 9, 100]\nprint(sorted(values, key=lambda v: v))\n",
+      "expected_stdout": "[9, 10, 100]\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "sorting",
+        "coercion"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-collections-get",
+      "concept_id": "py-collections",
+      "lesson_id": "04-collections",
+      "type": "find-a-bug",
+      "title": "KeyError",
+      "prompt": "For a missing name this crashes. Make it print 'unknown' instead, without hiding a genuinely wrong value.",
+      "code": "person = {'name': 'Ada'}\nprint(person['nickname'])\n",
+      "starter_code": "person = {'name': 'Ada'}\nprint(person.get('nickname', 'unknown'))\n",
+      "expected_stdout": "unknown\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "dict",
+        "key_error"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-exceptions-bare-except",
+      "concept_id": "py-exceptions",
+      "lesson_id": "05-exceptions",
+      "type": "find-a-bug",
+      "title": "The silent failure",
+      "prompt": "Nothing is printed and no error surfaces. Make it report the invalid input instead of swallowing it.",
+      "code": "def to_int(text):\n    try:\n        return int(text)\n    except:\n        pass\n    return None\n\nprint(to_int('nope'))\n",
+      "starter_code": "def to_int(text):\n    try:\n        return int(text)\n    except ValueError as error:\n        print('rejected:', error)\n    return None\n\nprint(to_int('nope'))\n",
+      "expected_stdout": "rejected: invalid literal for int() with base 10: 'nope'\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "bare-except"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-classes-class-attribute",
+      "concept_id": "py-classes",
+      "lesson_id": "08-classes",
+      "type": "find-a-bug",
+      "title": "State shared between objects",
+      "prompt": "Two counters share one total. Make each object keep its own count, so this prints 1 and then 1.",
+      "code": "class Counter:\n    total = 0\n\n    def __init__(self):\n        self.count = 0\n\n    def bump(self):\n        Counter.total += 1\n        self.count += 1\n        return self.count\n\nprint(Counter().bump())\nprint(Counter().bump())\n",
+      "starter_code": "class Counter:\n    def __init__(self):\n        self.total = 0\n        self.count = 0\n\n    def bump(self):\n        self.total += 1\n        self.count += 1\n        return self.count\n\nprint(Counter().bump())\nprint(Counter().bump())\n",
+      "expected_stdout": "1\n1\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "class-attribute"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-testing-boundary",
+      "concept_id": "py-testing",
+      "lesson_id": "09-testing",
+      "type": "write-a-function",
+      "title": "A function worth testing",
+      "prompt": "Write clamp(value, low, high) returning value limited to that range. It must print 5, 0 and 10 for clamp(5,0,10), clamp(-3,0,10) and clamp(99,0,10).",
+      "code": "def clamp(value, low, high):\n    # return value limited to [low, high]\n\nprint(clamp(5, 0, 10))\nprint(clamp(-3, 0, 10))\nprint(clamp(99, 0, 10))\n",
+      "starter_code": "",
+      "expected_stdout": "5\n0\n10\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "boundaries"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-files-missing",
+      "concept_id": "py-files",
+      "lesson_id": "07-files",
+      "type": "find-a-bug",
+      "title": "The unreadable journal",
+      "prompt": "For a missing file this crashes with FileNotFoundError. Make it print 'no journal yet' instead.",
+      "code": "from pathlib import Path\n\nJOURNAL = Path('journal.txt')\n\ndef read():\n    with JOURNAL.open('r', encoding='utf-8') as handle:\n        return handle.read()\n\nprint(read())\n",
+      "starter_code": "from pathlib import Path\n\nJOURNAL = Path('journal.txt')\n\ndef read():\n    try:\n        with JOURNAL.open('r', encoding='utf-8') as handle:\n            return handle.read()\n    except FileNotFoundError:\n        return 'no journal yet'\n\nprint(read())\n",
+      "expected_stdout": "no journal yet\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "file-not-checked"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "py-modules-main-guard",
+      "concept_id": "py-modules",
+      "lesson_id": "06-modules",
+      "type": "find-a-bug",
+      "title": "Demo code running on import",
+      "prompt": "Importing this module should not print anything. Guard the demo so that importing it is side-effect free.",
+      "code": "def main():\n    print('running')\n\nmain()\n",
+      "starter_code": "def main():\n    print('running')\n\nif __name__ == '__main__':\n    main()\n\nprint('imported cleanly')\n",
+      "expected_stdout": "imported cleanly\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "main-guard"
+      ],
+      "graded_by": "deterministic"
+    }
+  ],
+  "projects": [],
+  "comparisons": [
+    {
+      "id": "division",
+      "concept": "Integer versus true division",
+      "languages": [
+        "c",
+        "python"
+      ],
+      "same": "The `/` operator divides two values.",
+      "different": [
+        "In C, `7 / 2` with two ints is `3`: the fractional part is discarded.",
+        "In Python, `7 / 2` is always `3.5`, because `/` is true division.",
+        "Python's `//` is the integer answer, so `7 // 2` is `3`.",
+        "This is the single most common bug when moving between them: a C program that works becomes silently wrong in Python."
+      ],
+      "snippets": [
+        "int a = 7, b = 2;\nprintf(\"%d\\n\", a / b);      /* 3 */\nprintf(\"%.1f\\n\", (double)a / b); /* 3.5 - cast first */",
+        "a, b = 7, 2\nprint(a / b)        # 3.5 - always true division\nprint(a // b)       # 3    - floor division"
+      ],
+      "question": "You port a C function that averaged two integers to Python. What changes, and what test would catch the mistake?"
+    },
+    {
+      "id": "loops",
+      "concept": "Counting versus iterating",
+      "languages": [
+        "cpp",
+        "python"
+      ],
+      "same": "Both run a body repeatedly and both must advance toward their exit.",
+      "different": [
+        "A C++ `for` counts: it manages an index, a bound and an update.",
+        "A Python `for` iterates over an object, so the index is not yours to manage and cannot go out of step.",
+        "`range(5)` excludes 5, like `i < 5` — but a Python `for` over a container has no bound at all.",
+        "C++ `continue` in a `for` still runs the update expression. Python's `continue` has no update to run, which is why C-style loops written in Python can spin forever."
+      ],
+      "snippets": [
+        "for (int i = 0; i < 5; ++i) { /* 0..4 */ }",
+        "for i in range(5):\n    pass                  # 0..4\nfor item in items:           # no index at all\n    pass"
+      ],
+      "question": "A C++ loop body uses `continue` and your Python port freezes. Why, and how do you write the intent directly in Python?"
+    },
+    {
+      "id": "functions",
+      "concept": "Parameter passing",
+      "languages": [
+        "cpp",
+        "python"
+      ],
+      "same": "Both pass arguments into a function.",
+      "different": [
+        "C++ makes the choice explicit: by value copies, by reference or pointer aliases.",
+        "Python has one rule. Primitives arrive as copies, so rebinding does not affect the caller; objects arrive as the same object, so mutating one is visible outside.",
+        "Python therefore has no syntax to choose a mode, and no way to pass a large object by value cheaply."
+      ],
+      "snippets": [
+        "void set(int &x)  { x = 99; }   /* caller sees 99 */\nvoid copy(int x)  { x = 99; }   /* caller unchanged */",
+        "def set(n):  n = 99          # caller unchanged\ndef mutate(lst): lst.append(99)  # caller sees it"
+      ],
+      "question": "Why does appending to a list inside a Python function change the caller's list, while assigning to a number does not?"
+    }
+  ]
+}

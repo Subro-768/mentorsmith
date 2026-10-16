@@ -1,17 +1,35 @@
 # PROJECT_STATE.md
 
 ## Current state
-- Current phase: **Phase 2 complete** (aihandoff_2.md). Phase 3 not started.
+- Current phase: **Phases 1, 2 and 4 complete. Phase 3 complete** (order was
+  1 → 2 → **4** → 3; see "Why Phase 4 came before Phase 3" below).
+- Phase 5: **not started**.
 - Last updated: 2026-10-16
-- Branch / repository status: `master`, two commits. No remote configured.
+- Branch / repository status: `master`, four commits, clean tree. No remote.
 - App launch status: **Launches on Fedora 44**, six pages, verified by
   constructing the window offscreen (`python3 main.py --check`) and by rendering
   every screen.
+- Android status: **APK builds and runs its unit tests.** No device or emulator
+  test has been run — see "Android: what was and was not verified".
 
-## Baseline recorded before Phase 2
-- Phase 1 tests at the start of Phase 2: **140 passed**.
-- Schema version at that point: **1**.
-- Those 140 tests still pass after Phase 2 (now 299 total).
+## Why Phase 4 came before Phase 3
+Phase 4 adds a *language* dimension to concepts, progress and exercises. Phase 3
+requires Android to sync "progress per language". Building Android first would
+have meant writing a schema and sync contract with no language dimension, then
+rewriting both. Doing 4 first meant the Android Room schema, the sync contract
+and the mastery rules were all written once, correctly. Linux-first also
+de-risked it: if the Android toolchain had failed on JDK 25 / AGP, Phases 2 and
+4 would already be banked. **This was a deliberate reordering, not an oversight.**
+
+## Baselines recorded
+| Point | Python tests | Schema |
+|---|---|---|
+| Start of Phase 2 | 140 | 1 |
+| Start of Phase 4 | 299 | 2 |
+| Start of Phase 3 | 362 | 3 |
+| After Phase 3 | **385** | 3 |
+
+All earlier tests still pass unchanged. Android adds **41** JVM unit tests.
 
 ## Project purpose
 Linux-first AI programming tutor with an Android learning companion. The goal
@@ -25,21 +43,30 @@ matching repositories. Rejected alternatives: `bitloom`, `codeloom` and
 `corefoundry` were all already taken on PyPI.
 
 ## Actual architecture
-A layered PyQt6 desktop app. Implemented, not planned:
+A layered PyQt6 desktop app plus a Kotlin/Compose companion. Implemented, not
+planned:
 
 - **`core/db.py`** — the only module that opens a SQLite connection. Holds an
   ordered `MIGRATIONS` dict applied through `PRAGMA user_version`, so an old
   database upgrades on next launch by the same path that creates a new one.
 - **`core/curriculum.py`** — parses lesson Markdown with a small front-matter
   and section parser. No third-party Markdown dependency.
-- **`lessons/`** — 16 Markdown files, one per topic. Content is never embedded
-  in UI code.
-- **`compiler/toolchain.py`** — detects `g++`/`clang++`/`c++`, compiles with
-  `argparse`-style argument vectors (never a shell), deletes any stale binary
-  before compiling, and runs with POSIX resource limits. Optionally wraps
-  execution in `bwrap`. Compiles and runs on a `QThread` so the GUI never
-  blocks; `start_new_session=True` plus a process group makes **Stop** kill the
-  whole tree.
+- **`core/curriculum_registry.py`** — one entry point per language. Hides the
+  fact that C++'s data predates the per-language layout, so callers only ever
+  ask for a language id.
+- **`lessons/<language>/`** — 42 Markdown files across four languages. Content
+  is never embedded in UI code.
+- **`execution/`** — introduced in Phase 4. `base.py` holds what is genuinely
+  shared (tool detection, the process runner, POSIX resource limits, stoppable
+  process groups); `compiled.py` and `interpreted.py` hold the two shapes of
+  build-then-run; `cpp.py`, `c.py`, `python.py`, `javascript.py` supply only the
+  command lines and diagnostics that must differ.
+- **`compiler/toolchain.py`** — kept as a **compatibility shim** over
+  `execution/cpp.py` so Phase 1–3 imports, saved settings and tests are
+  unchanged. Deprecated; new code should use `execution`.
+- **`core/comparisons.py`** — curated cross-language comparisons. Deliberately
+  about *differences*: a comparison that only said "these are the same" would
+  teach the wrong thing.
 - **`providers/`** — a small `LLMProvider` interface plus one
   `/chat/completions` adapter using only the standard library. Typed errors for
   auth, rate limiting, timeout, network and malformed responses.
@@ -48,7 +75,13 @@ A layered PyQt6 desktop app. Implemented, not planned:
   directly unit-testable.
 - **`ui/`** — dark theme, line-numbered code editor with a `QSyntaxHighlighter`
   C++ highlighter, lesson view, dashboard, progress view, settings dialog and
-  main window.
+  main window. A language selector sits in the toolbar; switching rebuilds the
+  track's widgets and re-creates the execution adapter.
+- **`android/`** — Compose + Room. `domain/` is pure Kotlin with no Android
+  types so it unit-tests on the JVM; `data/` holds Room and the sync client;
+  `ui/` holds screens and one shared ViewModel.
+- **`sync_server/`** — optional FastAPI + SQLite backend implementing
+  `docs/sync-contract.md`.
 
 Design rationale is in `docs/architecture.md`.
 
@@ -59,8 +92,12 @@ Design rationale is in `docs/architecture.md`.
 | `mentorsmith/config.py` | Paths and non-secret settings only | Done, verified |
 | `mentorsmith/core/db.py` | SQLite persistence + migrations | Done, 23 tests |
 | `mentorsmith/core/curriculum.py` | Lesson Markdown loading | Done, 19 tests |
-| `mentorsmith/lessons/*.md` | 16 C++ lessons | Done, all 16 verified complete |
-| `mentorsmith/compiler/toolchain.py` | Detect / compile / run / contain | Done, 19 tests |
+| `mentorsmith/lessons/cpp/*.md` | 16 C++ lessons | Done, all 16 verified complete |
+| `mentorsmith/lessons/{python,c,javascript}/*.md` | 26 lessons across 3 new tracks | Done, all verified complete |
+| `mentorsmith/core/curriculum_registry.py` | Per-language entry point | Done, tested |
+| `mentorsmith/core/comparisons.py` | Cross-language differences | Done, 7 comparisons |
+| `mentorsmith/execution/` | Per-language adapters + shared runner | Done, 61 tests |
+| `mentorsmith/compiler/toolchain.py` | Compatibility shim over `execution/cpp.py` | Done, 19 tests still pass |
 | `mentorsmith/providers/base.py` | Provider interface + typed errors | Done, 28 tests |
 | `mentorsmith/providers/openai_compat.py` | `/chat/completions` adapter | Done, 28 tests |
 | `mentorsmith/services/tutor.py` | Levels, prompts, parsing | Done, 29 tests |
@@ -75,8 +112,12 @@ Design rationale is in `docs/architecture.md`.
 | `mentorsmith/services/practice.py` | One exercise end to end, no Qt | Done, 23 tests |
 | `mentorsmith/services/insights.py` | Dashboard assembly + justifications | Done, tested |
 | `README.md` | Setup, AI config, security, tests, how recommendations work | Done |
-| `docs/architecture.md` | Architecture and design rationale | Done |
-| Android companion | Kotlin learning companion | **Not started** |
+| `docs/architecture.md` | Architecture and design rationale | Needs a Phase 3/4 update |
+| `docs/adding-a-language.md` | Procedure for a fifth language | Done |
+| `docs/sync-contract.md` | Wire format, conflict rules, privacy | Done |
+| `tools/export_curriculum.py` | Publishes curriculum for Android | Done, `--check` mode works |
+| `sync_server/` | Optional sync backend | Done, 23 tests |
+| `android/` | Kotlin/Compose/Room companion | Builds; **never run on a device** |
 
 ## Implemented features
 Verified by the test suite and by rendering the UI:
@@ -84,6 +125,8 @@ Verified by the test suite and by rendering the UI:
 - [x] App launches on Linux (window constructed and rendered; `--check` passes)
 - [x] 16 C++ lessons load, each with all seven required sections, example code,
       starter code and at least three answered knowledge checks
+- [x] Language selector in the toolbar; switching reloads lessons, concepts,
+      exercises and the execution adapter, and scopes progress per language
 - [x] Lesson navigation with correct previous/next boundaries
 - [x] Code editor with C++ syntax highlighting and line numbers
 - [x] Compile and run with `g++`; stdout and stderr shown separately
@@ -127,9 +170,51 @@ Verified by the test suite and by rendering the UI:
 - [x] Model output validated before use; prompt injection proven inert
 - [x] Phase 1 still works (its 140 tests are unchanged and still pass)
 
-**Not implemented:** no Android companion, no exercise authoring UI, no
-spaced-repetition scheduler (a fixed staleness threshold is used instead), and
-project milestones are tracked but not auto-graded.
+**Not implemented:** no exercise authoring UI, no spaced-repetition scheduler (a
+fixed staleness threshold is used instead), and project milestones are tracked
+but not auto-graded.
+
+### Phase 4 (aihandoff_4.md) — Python, C and JavaScript
+
+- [x] Shared learning model; language-specific tooling. No differences abstracted
+      away that actually matter.
+- [x] Execution adapters for all four languages, verified by *running* each one
+- [x] C++ curriculum preserved intact: still 16 lessons, 18 concepts, 53 exercises
+- [x] Python 9 lessons / 9 concepts / 12 exercises
+- [x] C 9 lessons / 9 concepts / 11 exercises
+- [x] JavaScript 8 lessons / 8 concepts / 11 exercises
+- [x] **42 lessons, 44 concepts, 87 exercises** total
+- [x] Schema v3 adds `language`; the same lesson id in two languages is two
+      achievements, and v1/v2 data survives (tested against a hand-built v2 db)
+- [x] **Mastery never transfers between languages** — a C++ pointer label says
+      nothing about C pointers
+- [x] Cross-language comparisons, focused on where the semantics genuinely differ
+- [x] `docs/adding-a-language.md` documents the whole procedure
+
+### Phase 3 (aihandoff_3.md) — Android companion
+
+- [x] Kotlin + Compose app, builds to a 17.5 MB debug APK
+- [x] Room schema mirroring the desktop, `language` in every key
+- [x] Bundled curriculum for all four languages (exported, not copied by hand)
+- [x] Documents/offline-first: a row is `synced` only after server confirmation
+- [x] Sync queue with `local / pending / synced / conflict / failed`
+- [x] Sync contract documented in `docs/sync-contract.md`
+- [x] Optional FastAPI sync backend implementing it, with conflict rules
+- [x] **No credentials in the app** — enforced by a test that reflects over
+      `SyncClient`'s fields
+- [x] 41 JVM unit tests covering parsing, validation, mastery parity, sync
+      error handling and output comparison
+
+**Not implemented, and deliberately so:**
+- **Tutor chat on Android is disabled.** An APK is not a secret store; a key
+  compiled into it is a published key. Chat needs the backend first. The app
+  says this plainly rather than showing a broken chat box.
+- **Android never executes code.** That stays on Linux.
+- The sync backend has **no authentication**, because Phase 3 required asking
+  before adding it and a local single-user server does not need it. The
+  consequence — anyone who can reach the port can read and write progress — is
+  stated in the contract document rather than buried.
+- No offline model for tutor chat (there is no model on the device at all).
 
 ## Commands
 ### Run Linux app
@@ -149,18 +234,47 @@ python3 -m pip install pytest
 python3 -m pytest tests/ -q
 ```
 
-### Build Android app
-Not applicable — Android has not been started.
+### Build and test the Android app
+```bash
+python3 tools/export_curriculum.py      # refresh bundled assets
+cd android
+./gradlew :app:assembleDebug            # -> app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:testDebugUnitTest        # 41 tests
+```
+
+Requires **JDK 17–21**. AGP 8.7.3 refuses to run on JDK 25 (it fails with the
+bare version number as the error message, which is not helpful). Temurin 21 was
+downloaded to `~/jdk/jdk-21.0.12.1+1` for this machine; set
+`JAVA_HOME` to any JDK 17–21. `ANDROID_HOME` must point at an SDK with
+platform 35.
+
+### Run the optional sync backend
+```bash
+python3 -m pip install fastapi uvicorn
+uvicorn sync_server.app:app --host 127.0.0.1 --port 8000
+```
+Bind to localhost. It has no authentication; see `docs/sync-contract.md`.
+
+### Verify the exported curriculum is current
+```bash
+python3 tools/export_curriculum.py --check    # non-zero if assets are stale
+```
 
 ## Tests
-Command run and actual result after Phase 2:
+Command run and actual result after Phase 3:
 
 ```
 $ python3 -m pytest tests/ -q
-........................................................................ [ 72%]
-........................................................................ [ 96%]
-...........                                                              [100%]
-299 passed in 8.52s
+385 passed in 21.81s
+
+$ cd android && ./gradlew :app:testDebugUnitTest --console=plain
+BUILD SUCCESSFUL
+  CurriculumParserTest       8 tests, 0 failed
+  SyncClientTest            13 tests, 0 failed
+  MasteryTest               11 tests, 0 failed
+  BundledCurriculumTest      5 tests, 0 failed
+  OutputNormalisationTest    4 tests, 0 failed
+  TOTAL: 41 tests, 0 failed
 ```
 
 Per file, all passing:
@@ -178,11 +292,45 @@ Per file, all passing:
 | `tests/test_phase2_core.py` | 54 | grading, adaptive selection, debugging, projects, revision |
 | `tests/test_phase2_data.py` | 24 | v1-to-v2 migration safety, evidence aggregation, model-output validation |
 | `tests/test_practice.py` | 23 | end-to-end practice with a real compiler, hint tracking, regressions |
+| `tests/test_phase4_languages.py` | 61 | adapters per language, real execution, isolation, comparisons, curriculum |
+| `tests/test_sync_server.py` | 23 | HTTP endpoint, idempotency, monotonic completion, milestone conflicts |
+
+Android (`android/app/src/test/`):
+
+| File | Tests | Covers |
+|---|---|---|
+| `CurriculumParserTest` | 8 | format version refusal, dangling references, missing fields |
+| `BundledCurriculumTest` | 5 | the four **shipped** assets parse, every lesson complete, no uncovered concepts |
+| `MasteryTest` | 11 | parity with the desktop rules, repeated-error downgrade, clamping |
+| `SyncClientTest` | 13 | offline handling, retryable vs not, newer-client refusal, conflict surfacing, no-credential invariant |
+| `OutputNormalisationTest` | 4 | trailing whitespace, missing final newline, CRLF |
 
 Tests never touch the real database or a real provider: the database is
 in-memory or in `tmp_path`, and the AI provider is always mocked. No test costs
 money or requires network access. Compiler-dependent tests skip themselves if
 no compiler is present.
+
+## Android: what was and was not verified
+
+Stated plainly because the distinction matters:
+
+**Verified by actually running the commands:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL, `app-debug.apk`, 17.5 MB
+- The APK contains `assets/curriculum/{cpp,python,c,javascript}.json` (checked
+  with `unzip -l`)
+- The manifest requests only `INTERNET` and `ACCESS_NETWORK_STATE`
+- `./gradlew :app:testDebugUnitTest` → 41 tests, 0 failures
+
+**Not verified — no claim is made about any of this:**
+- **No emulator or physical device test.** `/dev/kvm` exists and the SDK has
+  platform 35, but there are **no AVDs, no system images and no `sdkmanager` or
+  `avdmanager` installed**, so no system image could be downloaded or booted.
+- The app has therefore never been seen running. Screens are untested on a real
+  display, and no Compose UI test exists.
+
+To do it: install `cmdline-tools`, `sdkmanager "system-images;android-35;google_apis;x86_64"`,
+create an AVD, then
+`./gradlew :app:installDebug` with an emulator running.
 
 ## How recommendations work
 
@@ -208,20 +356,29 @@ every label must ship with evidence strings.
 
 ## Data and migrations
 - Database: `~/.local/share/mentorsmith/progress.db` (SQLite 3.51.2).
-- Work directory for compiled code: `~/.local/share/mentorsmith/workdir/`.
+- Work directory for compiled code: `~/.local/share/mentorsmith/workdir/<language>/`.
 - Both honour `XDG_DATA_HOME`.
-- Schema version **2**. Version 1 is the Phase 1 schema; version 2 is
-  **strictly additive** — nine `ALTER TABLE ... ADD COLUMN` statements with
-  defaults, plus five new tables. Nothing is dropped or rewritten.
+- Schema version **3**.
+  - v1 → Phase 1.
+  - v2 → Phase 2, **strictly additive**: nine `ALTER TABLE ... ADD COLUMN`
+    statements with defaults, plus five new tables.
+  - v3 → Phase 4, adds `language` to `lesson_progress` and `exercise_attempts`.
+    This one **rebuilds a table**, because `lesson_progress` was keyed by
+    `lesson_id` alone and ids can now repeat across languages. SQLite cannot add
+    a column to a primary key, so the table is created, copied, dropped and
+    renamed. Every existing row is preserved with `language='cpp'`, which is
+    correct because C++ was the only track at the time.
 - Tables: `lesson_progress`, `exercise_attempts` (now carrying Phase 2
-  evidence columns), `activity`, `app_settings`, `concept_progress`,
+  evidence columns and a language), `activity`, `app_settings`, `concept_progress`,
   `projects`, `project_milestones`, `project_activity`, `reviews`.
-- **Upgrade safety is tested, not assumed.** `tests/test_phase2_data.py`
-  builds a genuine schema-v1 database by hand, fills it with Phase 1 rows, opens
-  it with the current code, and asserts every Phase 1 row survives with its
-  values intact.
-- **Backup:** stop the app and copy `progress.db`. No sync, no automatic backup.
+- **Upgrade safety is tested, not assumed.** `tests/test_phase2_data.py` builds
+  a genuine schema-v1 database by hand, fills it with Phase 1 rows, opens it
+  with the current code, and asserts every Phase 1 row survives. The v2→v3
+  rebuild is verified the same way.
+- **Backup:** stop the app and copy `progress.db`. No automatic backup.
 - API keys are never stored here. Only non-secret settings are persisted.
+- The Android app has its own Room database. It does **not** read the desktop's
+  file; the only thing shared between the two is the exported JSON curriculum.
 
 ## AI provider configuration
 - Base URL and model name are entered in Settings and stored in
@@ -254,17 +411,28 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
 - The learner's own exercises are not automatically unit-tested; examples are
   verified when the learner compiles them.
 - There is no lesson-content editor in the UI; lessons are edited as Markdown.
-- Progress is per-machine.
+- Progress is per-machine on the desktop. Android can sync via the optional local
+  backend, but the desktop app does not sync.
+- The Android app has never been run on a device or emulator (see above).
+- Android exercises with code are graded by comparing the learner's *predicted*
+  output, not by compiling. On Linux they are compiled and run for real.
+- The sync backend stores progress in plaintext SQLite with no authentication.
+- Exercise coverage is uneven: C++ has 53 exercises, the other tracks 11–12.
+- `docs/adding-a-language.md` is a procedure, not an automated codegen path.
 
 ## Next steps
-1. Manually verify the Phase 1 acceptance checklist in the running app,
-   especially the three assistance levels against a real configured provider.
-2. Obtain an API key, configure a provider in Settings, and exercise the tutor
-   at all three levels. This is the largest untested surface.
-3. Test the sandbox on a course material that needs real headers, to learn
-   whether the read-only view is too restrictive for practical work.
-4. Review lesson content for technical accuracy.
-5. Only then begin Phase 2 (`aihandoff_2.md`) after approval.
+1. **Run the Android app on an emulator.** It builds and its logic is tested, but
+   it has never been seen running. Install `cmdline-tools` first — that is the
+   blocker, not the code.
+2. Obtain an API key, configure a provider in Settings, and exercise the tutor at
+   all three levels. This is still the largest untested surface, and now also
+   gates Android tutor chat.
+3. Add a `/v1/tutor` proxy to `sync_server` so Android chat can work without ever
+   shipping a key. This is the natural next endpoint and is deliberately absent.
+4. Review lesson content for technical accuracy. 42 lessons have been written and
+   machine-checked for structure, but nobody has read them end to end.
+5. Then Phase 5 (`aihandoff_5.md`): git integration, project workspaces, AI code
+   review, test generation, security audit and portfolio docs.
 
 ## Decisions not to silently reverse
 - **Lesson completion is not evidence.** Phase 2 says completing a lesson must
@@ -301,13 +469,40 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
 - **Concept data is validated on load.** A broken prerequisite graph, an unknown
   concept reference, a cycle or a milestone with no acceptance criteria fails at
   startup rather than producing impossible recommendations.
+- **Mastery does not transfer between languages.** Phase 4 requires it, and it is
+  the correct call: being strong at C++ pointers says nothing about C pointers.
+  A label is scoped by `(concept, language)` everywhere.
+- **Android never executes code.** Phase 3 says keep complex execution on Linux.
+  Predict-output on Android is a *prediction* plus a self-check, and the UI says
+  the code did not run.
+- **The Android app holds no credentials.** An APK is a downloadable artefact, so
+  a key inside it is a published key. Enforced by a test that reflects over
+  `SyncClient`'s fields looking for anything key/token/auth-shaped.
+- **`synced` means the server said so.** Nothing is marked synced optimistically.
+- **Sync preserves history over overwriting newer data.** Completion is
+  monotonic; attempts and reviews are append-only and deduplicated by
+  `client_id`; milestones merge by `updated_at` and a conflict is *reported*
+  rather than silently resolved in favour of either side.
+- **The sync backend has no authentication, on purpose**, because the phase
+  required asking first. It must not be exposed to a network that matters. This
+  is written in `docs/sync-contract.md`, not left implicit.
+- **Python and desktop share only a JSON file format.** `tools/export_curriculum.py`
+  is the only bridge. No Python code is imported from Kotlin and vice versa.
+- **`RLIMIT_AS` is per language where the runtime demands it.** V8 reserves a
+  large virtual address space before running any user code, so Node gets 4 GiB
+  of address space and a real `--max-old-space-size` cap instead. Measured on
+  this machine: 1 GiB kills Node, 2 GiB works.
+- **`RLIMIT_NPROC` is still not set**, for the reason in "Known bugs".
 
 ## Notes for the next Space Bunny session
 Read this file, `README.md`, `docs/architecture.md`, the relevant source and
 the tests before editing.
 
-Re-run `python3 -m pytest tests/ -q` (expect **299 passed**) and
-`python3 main.py --check` before changing anything.
+Re-run `python3 -m pytest tests/ -q` (expect **385 passed**),
+`python3 main.py --check`, and `python3 tools/export_curriculum.py --check`
+(expect exit 0) before changing anything. If you touch Android:
+`cd android && ./gradlew :app:testDebugUnitTest` (expect **41 tests**) with
+`JAVA_HOME` set to a JDK 17–21.
 
 The largest untested area is still the **live AI provider path** — everything up
 to the HTTP boundary is mocked, and nothing has been sent to a real vendor. The
