@@ -26,30 +26,37 @@ def _self_check() -> int:
     os_environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
     from mentorsmith.app import create_application
-    from mentorsmith.compiler.toolchain import Toolchain
-    from mentorsmith.core.curriculum import load_lessons
+    from mentorsmith.core.curriculum_registry import summaries, total_counts
+    from mentorsmith.execution import detect_all
     from mentorsmith.ui.main_window import MainWindow
 
     app = create_application([])
     window = MainWindow()
 
-    toolchain = Toolchain()
-    info = toolchain.detect()
-    active, sandbox_note = toolchain.sandbox_status()
-
-    lessons = load_lessons()
+    counts = total_counts()
     print(f"MentorSmith {__import__('mentorsmith').__version__}")
-    print(f"  lessons loaded : {len(lessons)}")
-    print(f"  pages built    : {window.stack.count()}")
-    print(f"  compiler       : {info.name or 'NONE FOUND'} ({info.version or 'unknown'})")
-    print(f"  sandbox        : {'ACTIVE' if active else 'INACTIVE'}")
-    print(f"                   {sandbox_note}")
-    print(f"  database       : {window.database.path}")
+    print(f"  languages       : {counts['languages']}")
+    print(f"  pages built     : {window.stack.count()}")
+    print(f"  database        : {window.database.path}")
+    print()
+    print("  curriculum:")
+    for entry in summaries():
+        print(
+            f"    {entry['label']:11} {entry['lessons']:2} lessons, "
+            f"{entry['concepts']:2} concepts, {entry['exercises']:2} exercises"
+        )
+    print()
+    print("  toolchains:")
+    for language, info in detect_all().items():
+        print(f"    {info.describe()}")
+    print()
+    sandbox_note = window.lesson_view.status_label.text()
+    print(f"  C++ containment: {sandbox_note}")
 
     window.close()
     del window
     del app
-    print("Self-check completed: the window was constructed and closed cleanly.")
+    print("\nSelf-check completed: the window was constructed and closed cleanly.")
     return 0
 
 

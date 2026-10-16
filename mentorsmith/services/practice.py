@@ -116,6 +116,8 @@ class PracticeSession:
     lesson_id: str = ""
     #: Extra evidence recorded on the next attempt.
     is_review: bool = False
+    #: Language track this attempt belongs to. Progress never crosses tracks.
+    language: str = "cpp"
     session: DebugSession = field(default_factory=DebugSession)
 
     def __post_init__(self) -> None:
@@ -141,7 +143,7 @@ class PracticeSession:
         compile_result, run_result = self.toolchain.run(
             source,
             stdin_data=stdin or self.exercise.stdin,
-            filename="practice.cpp",
+            filename=self._source_filename(),
         )
 
         grade = grade_deterministic(
@@ -281,6 +283,11 @@ class PracticeSession:
         """Exercise type, marked when this is a deliberate review."""
         return self.exercise.review_variant_id() if self.is_review else self.exercise.type
 
+    def _source_filename(self) -> str:
+        """Source filename using this language's extension."""
+        extension = getattr(self.toolchain, "extension", ".cpp")
+        return f"practice{extension}"
+
     def _record(
         self,
         *,
@@ -311,6 +318,7 @@ class PracticeSession:
             grade=grade.detail,
             novelty=self.exercise.novel,
             graded_by=graded_by,
+            language=self.language,
         )
 
     def state(self) -> dict:
@@ -318,6 +326,7 @@ class PracticeSession:
         return {
             "exercise_id": self.exercise.id,
             "concept_id": self.exercise.concept_id,
+            "language": self.language,
             "type": self.exercise.type,
             "graded_deterministically": self.exercise.is_deterministic,
             "allows_hints": self.can_hint(),

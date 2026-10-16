@@ -117,11 +117,11 @@ class DashboardReport:
         }
 
 
-def _attempt_history(database: Database, concept_ids: list[str]) -> list[dict]:
-    """All attempts for the given concepts, oldest first."""
+def _attempt_history(database: Database, concept_ids: list[str], language: str) -> list[dict]:
+    """All attempts for the given concepts in one language, oldest first."""
     history: list[dict] = []
     for concept_id in concept_ids:
-        attempts = database.attempts_for_concept(concept_id)
+        attempts = database.attempts_for_concept(concept_id, language)
         history.extend(reversed(attempts))     # newest first -> reverse
     history.sort(key=lambda row: int(row.get("id", 0)))
     return history
@@ -132,15 +132,21 @@ def build_report(
     model: ConceptModel,
     bank: ExerciseBank,
     *,
+    language: str = "cpp",
     review_limit: int = 5,
     recommendation_limit: int = 3,
 ) -> DashboardReport:
-    """Build the full dashboard report from stored evidence."""
+    """Build the full dashboard report from stored evidence for one language.
+
+    ``language`` scopes every query. Progress is never carried between tracks:
+    being strong at C++ pointers says nothing about C pointers, so Phase 4
+    requires a diagnostic exercise rather than transferring a label.
+    """
     concept_ids = list(model.concepts)
-    evidence = database.concept_evidence(concept_ids)
+    evidence = database.concept_evidence(concept_ids, language)
     assessments = assess_many(evidence)
 
-    history = _attempt_history(database, concept_ids)
+    history = _attempt_history(database, concept_ids, language)
     last_attempt_at = {
         str(row["concept_id"]): str(row["created_at"])
         for row in history
@@ -182,7 +188,7 @@ def build_report(
     attempted_by_concept: dict[str, set[str]] = {}
     types_by_concept: dict[str, set[str]] = {}
     for concept_id in concept_ids:
-        attempts = database.attempts_for_concept(concept_id)
+        attempts = database.attempts_for_concept(concept_id, language)
         attempted_by_concept[concept_id] = {
             str(a["exercise_id"]) for a in attempts if a.get("exercise_id")
         }

@@ -1,0 +1,137 @@
+{
+  "language": "python",
+  "concepts": [
+    { "id": "py-variables", "title": "Variables and Types", "lesson_id": "01-variables-and-types",
+      "summary": "Names bound to values; int, float, str and bool.", "prerequisites": [],
+      "error_categories": ["type_error", "name_error"] },
+    { "id": "py-flow", "title": "Conditions and Loops", "lesson_id": "02-conditions-and-loops",
+      "summary": "if/elif/else, for, while and range().", "prerequisites": ["py-variables"],
+      "error_categories": ["off_by_one", "infinite_loop", "logic_error"] },
+    { "id": "py-functions", "title": "Functions", "lesson_id": "03-functions",
+      "summary": "def, return, defaults and pass-by-object.", "prerequisites": ["py-flow"],
+      "error_categories": ["missing_return", "mutable_default", "none_return"] },
+    { "id": "py-collections", "title": "Collections", "lesson_id": "04-collections",
+      "summary": "list, tuple, dict, set, slicing and comprehensions.", "prerequisites": ["py-flow"],
+      "error_categories": ["key_error", "index_error", "mutating_while_iterating"] },
+    { "id": "py-exceptions", "title": "Exceptions", "lesson_id": "05-exceptions",
+      "summary": "try/except/else/finally, raising and tracebacks.", "prerequisites": ["py-functions"],
+      "error_categories": ["unhandled_exception", "wrong_exception_type", "bare_except"] },
+    { "id": "py-modules", "title": "Modules", "lesson_id": "06-modules",
+      "summary": "Imports, the __main__ guard and circular imports.", "prerequisites": ["py-functions"],
+      "error_categories": ["import_error", "circular_import", "missing_main_guard"] },
+    { "id": "py-files", "title": "Files", "lesson_id": "07-files",
+      "summary": "open, modes, context managers and pathlib.", "prerequisites": ["py-modules", "py-exceptions"],
+      "error_categories": ["file_not_checked", "wrong_mode", "missing_close"] },
+    { "id": "py-classes", "title": "Classes", "lesson_id": "08-classes",
+      "summary": "__init__, dunder methods, properties and encapsulation.", "prerequisites": ["py-functions", "py-collections"],
+      "error_categories": ["shared_class_attribute", "missing_repr", "missing_super"] },
+    { "id": "py-testing", "title": "Testing", "lesson_id": "09-testing",
+      "summary": "pytest, assertions, raises and parametrize.", "prerequisites": ["py-functions", "py-exceptions"],
+      "error_categories": ["missing_boundary_test", "float_equality", "order_dependent_tests"] }
+  ],
+  "exercises": [
+    {
+      "id": "py-types-division", "concept_id": "py-variables", "lesson_id": "01-variables-and-types",
+      "type": "predict-output", "title": "True versus floor division",
+      "prompt": "Predict both lines exactly. Python has no integer division trap the way C does.",
+      "code": "a = 7\nb = 2\nprint(a / b)\nprint(a // b)\n",
+      "expected_stdout": "3.5\n3\n", "novel": true, "tags": ["division"]
+    },
+    {
+      "id": "py-types-fix-avg", "concept_id": "py-variables", "lesson_id": "01-variables-and-types",
+      "type": "find-a-bug", "title": "Mean of an empty list",
+      "prompt": "This crashes with ZeroDivisionError. Make it print 0.0 for an empty list and still print 2.5 for [1, 4].",
+      "code": "def mean(values):\n    return sum(values) / len(values)\n\nprint(mean([1, 4]))\nprint(mean([]))\n",
+      "expected_stdout": "2.5\n0.0\n",
+      "starter_code": "def mean(values):\n    if not values:\n        return 0.0\n    return sum(values) / len(values)\n\nprint(mean([1, 4]))\nprint(mean([]))\n",
+      "tags": ["division", "boundary"]
+    },
+    {
+      "id": "py-flow-offbyone", "concept_id": "py-flow", "lesson_id": "02-conditions-and-loops",
+      "type": "find-a-bug", "title": "One number too many",
+      "prompt": "It prints 6 instead of 5. Fix the range.",
+      "code": "for i in range(1, 6):\n    print(i, end=' ')\nprint()\n",
+      "expected_stdout": "1 2 3 4 5 \n",
+      "starter_code": "for i in range(1, 5):\n    print(i, end=' ')\nprint()\n",
+      "tags": ["off-by-one"]
+    },
+    {
+      "id": "py-flow-explain-elseif", "concept_id": "py-flow", "lesson_id": "02-conditions-and-loops",
+      "type": "explain-code", "title": "Why elif",
+      "prompt": "Explain what this prints for score=85, and explain why writing 'else if' instead of 'elif' is a habit from another language rather than an improvement.",
+      "code": "score = 85\nif score >= 90:\n    grade = 'A'\nelif score >= 80:\n    grade = 'B'\nelse:\n    grade = 'F'\nprint(grade)\n",
+      "rubric": ["states it prints B", "explains only the first true branch runs", "mentions elif is the Python spelling"]
+    },
+    {
+      "id": "py-functions-mutable-default", "concept_id": "py-functions", "lesson_id": "03-functions",
+      "type": "find-a-bug", "title": "The default that accumulates",
+      "prompt": "Calling collect twice gives ['a', 'b'] instead of ['a'] then ['b']. Fix it so each call starts empty.",
+      "code": "def collect(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nprint(collect('a'))\nprint(collect('b'))\n",
+      "expected_stdout": "['a']\n['b']\n",
+      "starter_code": "def collect(item, bucket=None):\n    if bucket is None:\n        bucket = []\n    bucket.append(item)\n    return bucket\n\nprint(collect('a'))\nprint(collect('b'))\n",
+      "tags": ["mutable-default"]
+    },
+    {
+      "id": "py-collections-sort", "concept_id": "py-collections", "lesson_id": "04-collections",
+      "type": "find-a-bug", "title": "String sort",
+      "prompt": "It prints [10, 100, 9]. Make it print the numbers in ascending order without mutating the original list.",
+      "code": "values = [10, 9, 100]\nprint(sorted(values))\n",
+      "expected_stdout": "[9, 10, 100]\n",
+      "starter_code": "values = [10, 9, 100]\nprint(sorted(values, key=lambda v: v))\n",
+      "tags": ["sorting", "coercion"]
+    },
+    {
+      "id": "py-collections-get", "concept_id": "py-collections", "lesson_id": "04-collections",
+      "type": "find-a-bug", "title": "KeyError",
+      "prompt": "For a missing name this crashes. Make it print 'unknown' instead, without hiding a genuinely wrong value.",
+      "code": "person = {'name': 'Ada'}\nprint(person['nickname'])\n",
+      "expected_stdout": "unknown\n",
+      "starter_code": "person = {'name': 'Ada'}\nprint(person.get('nickname', 'unknown'))\n",
+      "tags": ["dict", "key_error"]
+    },
+    {
+      "id": "py-exceptions-bare-except", "concept_id": "py-exceptions", "lesson_id": "05-exceptions",
+      "type": "find-a-bug", "title": "The silent failure",
+      "prompt": "Nothing is printed and no error surfaces. Make it report the invalid input instead of swallowing it.",
+      "code": "def to_int(text):\n    try:\n        return int(text)\n    except:\n        pass\n    return None\n\nprint(to_int('nope'))\n",
+      "expected_stdout": "rejected: invalid literal for int() with base 10: 'nope'\n",
+      "starter_code": "def to_int(text):\n    try:\n        return int(text)\n    except ValueError as error:\n        print('rejected:', error)\n    return None\n\nprint(to_int('nope'))\n",
+      "tags": ["bare-except"]
+    },
+    {
+      "id": "py-classes-class-attribute", "concept_id": "py-classes", "lesson_id": "08-classes",
+      "type": "find-a-bug", "title": "State shared between objects",
+      "prompt": "Two counters share one total. Make each object keep its own count, so this prints 1 and then 1.",
+      "code": "class Counter:\n    total = 0\n\n    def __init__(self):\n        self.count = 0\n\n    def bump(self):\n        Counter.total += 1\n        self.count += 1\n        return self.count\n\nprint(Counter().bump())\nprint(Counter().bump())\n",
+      "expected_stdout": "1\n1\n",
+      "starter_code": "class Counter:\n    def __init__(self):\n        self.total = 0\n        self.count = 0\n\n    def bump(self):\n        self.total += 1\n        self.count += 1\n        return self.count\n\nprint(Counter().bump())\nprint(Counter().bump())\n",
+      "novel": true, "tags": ["class-attribute"]
+    },
+    {
+      "id": "py-testing-boundary", "concept_id": "py-testing", "lesson_id": "09-testing",
+      "type": "write-a-function", "title": "A function worth testing",
+      "prompt": "Write clamp(value, low, high) returning value limited to that range. It must print 5, 0 and 10 for clamp(5,0,10), clamp(-3,0,10) and clamp(99,0,10).",
+      "code": "def clamp(value, low, high):\n    # return value limited to [low, high]\n\nprint(clamp(5, 0, 10))\nprint(clamp(-3, 0, 10))\nprint(clamp(99, 0, 10))\n",
+      "expected_stdout": "5\n0\n10\n",
+      "tags": ["boundaries"]
+    },
+    {
+      "id": "py-files-missing", "concept_id": "py-files", "lesson_id": "07-files",
+      "type": "find-a-bug", "title": "The unreadable journal",
+      "prompt": "For a missing file this crashes with FileNotFoundError. Make it print 'no journal yet' instead.",
+      "code": "from pathlib import Path\n\nJOURNAL = Path('journal.txt')\n\ndef read():\n    with JOURNAL.open('r', encoding='utf-8') as handle:\n        return handle.read()\n\nprint(read())\n",
+      "expected_stdout": "no journal yet\n",
+      "starter_code": "from pathlib import Path\n\nJOURNAL = Path('journal.txt')\n\ndef read():\n    try:\n        with JOURNAL.open('r', encoding='utf-8') as handle:\n            return handle.read()\n    except FileNotFoundError:\n        return 'no journal yet'\n\nprint(read())\n",
+      "tags": ["file-not-checked"]
+    },
+    {
+      "id": "py-modules-main-guard", "concept_id": "py-modules", "lesson_id": "06-modules",
+      "type": "find-a-bug", "title": "Demo code running on import",
+      "prompt": "Importing this module should not print anything. Guard the demo so that importing it is side-effect free.",
+      "code": "def main():\n    print('running')\n\nmain()\n",
+      "expected_stdout": "imported cleanly\n",
+      "starter_code": "def main():\n    print('running')\n\nif __name__ == '__main__':\n    main()\n\nprint('imported cleanly')\n",
+      "tags": ["main-guard"]
+    }
+  ]
+}

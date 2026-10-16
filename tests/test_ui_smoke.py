@@ -86,7 +86,30 @@ def test_dashboard_starts_with_nothing_complete(window) -> None:
 
 
 def test_toolchain_is_attached_to_the_lesson_view(window) -> None:
-    assert isinstance(window.lesson_view.toolchain, Toolchain)
+    """Phase 4 replaced the C++-only Toolchain with per-language adapters."""
+    from mentorsmith.execution.base import LanguageAdapter
+
+    assert isinstance(window.lesson_view.toolchain, LanguageAdapter)
+    assert window.lesson_view.toolchain.language_id == window.language
+
+
+def test_language_switch_reloads_the_track(window) -> None:
+    """Switching language must change lessons and scope progress."""
+    assert window.language == "cpp"
+    cpp_ids = {lesson.id for lesson in window.lessons}
+
+    window.switch_language("python")
+    assert window.language == "python"
+    python_ids = {lesson.id for lesson in window.lessons}
+    assert python_ids != cpp_ids
+    assert window.toolchain.language_id == "python"
+
+
+def test_progress_is_tracked_per_language(window) -> None:
+    """A C++ completion must not appear as a Python completion."""
+    window.database.mark_lesson_complete("01-program-structure", "cpp")
+    assert window.database.is_lesson_complete("01-program-structure", "cpp")
+    assert not window.database.is_lesson_complete("01-program-structure", "python")
 
 
 # ----------------------------------------------------------------------

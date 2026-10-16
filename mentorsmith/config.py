@@ -18,6 +18,15 @@ PACKAGE_ROOT = Path(__file__).resolve().parent
 LESSONS_DIR = PACKAGE_ROOT / "lessons"
 
 
+def lessons_dir(language: str = "cpp") -> Path:
+    """Lessons for one language, e.g. ``lessons/cpp``.
+
+    Kept per language from Phase 4 onwards. The C++ lessons were moved here
+    unchanged when the other language tracks were added.
+    """
+    return LESSONS_DIR / language
+
+
 def data_dir() -> Path:
     """Return the per-user data directory, creating it if needed.
 

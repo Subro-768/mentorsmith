@@ -5,9 +5,11 @@ from __future__ import annotations
 from PyQt6.QtCore import QThread, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QKeySequence
 from PyQt6.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QStackedWidget,
     QStatusBar,
@@ -15,12 +17,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ..compiler.toolchain import Toolchain
-from ..config import load_settings
-from ..core.concepts import load_model
-from ..core.curriculum import Lesson, adjacent_lesson, lesson_index, load_lessons
+from ..config import load_settings, work_dir as default_work_dir
+from ..core import curriculum_registry
+from ..core.curriculum import Lesson, adjacent_lesson, lesson_index
+from ..execution import adapter as execution_adapter
 from ..core.db import Database
-from ..core.exercises import load_bank
 from ..providers.base import CompletionRequest, ProviderError
 from ..providers.openai_compat import build_provider, network_allowed
 from ..services.insights import build_report
@@ -73,17 +74,19 @@ class MainWindow(QMainWindow):
         self.database = database or Database(_db_path())
         self.database.connect()
 
-        self.lessons: list[Lesson] = load_lessons()
-        self.lesson_ids = {lesson.id for lesson in self.lessons}
-        self.model = load_model(valid_lesson_ids=self.lesson_ids)
-        self.bank = load_bank(
-            known_concepts=set(self.model.concepts), valid_lesson_ids=self.lesson_ids
-        )
+        self.lessons: list[Lesson] = []
+        self.language = "cpp"
+
+        # Every language that could be loaded. One broken track must not stop
+        # the app, so failures are collected rather than raised.
+        self.tracks = curriculum_registry.load_all()
+        self.track_errors: dict[str, str] = {}
 
         self.current_lesson_id: str | None = None
         self._tutor_worker: TutorWorker | None = None
         self._pending_rubric_exercise: str | None = None
 
+        self._apply_track("cpp")
         self._build_toolchain()
         self._build_ui()
         self._wire()
@@ -93,10 +96,69 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # Construction
     # ------------------------------------------------------------------
-    def _build_toolchain(self) -> None:
-        self.toolchain = Toolchain(
-            sandbox=bool(self.settings.get("sandbox_enabled", False))
+    def _apply_track(self, language: str) -> None:
+        """Point the window at one language's curriculum."""
+        track = self.tracks.get(language)
+        if track is None:
+            reason = self.track_errors.get(language, "not available")
+            self.statusBar().showMessage(f"Language '{language}' unavailable: {reason}")
+            return
+        self.language = language
+        self.lessons = track.lessons
+        self.lesson_ids = {lesson.id for lesson in track.lessons}
+        self.model = track.model
+        self.bank = track.bank
+        self.current_lesson_id = None
+
+    def switch_language(self, language: str) -> None:
+        """Reload everything for a different language track."""
+        if language == self.language and self.current_lesson_id is not None:
+            return
+        track = self.tracks.get(language)
+        if track is None:
+            reason = self.track_errors.get(language, "its curriculum failed to load")
+            QMessageBox.warning(
+                self,
+                "Language unavailable",
+                f"The '{language}' track could not be loaded:\n\n{reason}",
+            )
+            return
+
+        if self._tutor_worker is not None and self._tutor_worker.isRunning():
+            self._tutor_worker.wait(2000)
+
+        self._apply_track(language)
+        self._build_toolchain()
+
+        # Rebuild the widgets that hold per-language data.
+        self.practice_view.database = self.database
+        self.practice_view.bank = self.bank
+        self.practice_view.toolchain = self.toolchain
+        self.practice_view.session = None
+        self.practice_view._current_exercise_id = None
+        self.projects_view.database = self.database
+        self.projects_view.model = self.model
+
+        self.lesson_view.toolchain = self.toolchain
+        self.lesson_view.refresh_sandbox_status()
+
+        self.refresh_all()
+        self.show_page(PAGE_DASHBOARD)
+        self.statusBar().showMessage(
+            f"Switched to {track.label}: {len(track.lessons)} lessons, "
+            f"{len(track.concept_ids)} concepts, {len(track.exercise_ids)} exercises"
         )
+
+    def _build_toolchain(self) -> None:
+        """Create the execution adapter for the current language."""
+        adapter = execution_adapter(
+            self.language,
+            default_work_dir() / self.language,
+            sandbox=bool(self.settings.get("sandbox_enabled", False)),
+        )
+        adapter.compile_timeout = 30
+        adapter.run_timeout = 5
+        self.toolchain = adapter
 
     def _build_ui(self) -> None:
         self.setStyleSheet(theme.STYLESHEET)
@@ -132,6 +194,24 @@ class MainWindow(QMainWindow):
             nav_layout.addWidget(button)
             self.nav_buttons[index] = button
         nav_layout.addStretch(1)
+
+        nav_layout.addWidget(QLabel("Language:"))
+        self.language_combo = QComboBox()
+        for language in curriculum_registry.LANGUAGE_IDS:
+            track = self.tracks.get(language)
+            label = curriculum_registry.display_name(language)
+            if track is None:
+                label += " (unavailable)"
+            self.language_combo.addItem(label, language)
+        self.language_combo.setToolTip(
+            "Switching language reloads the lessons, concepts and exercises. "
+            "Progress is tracked separately per language."
+        )
+        nav_layout.addWidget(self.language_combo)
+
+        self.tool_label = QLabel()
+        self.tool_label.setObjectName("muted")
+        nav_layout.addWidget(self.tool_label)
 
         self.provider_label = QLabel()
         self.provider_label.setObjectName("muted")
@@ -177,6 +257,7 @@ class MainWindow(QMainWindow):
 
     def _wire(self) -> None:
         self.settings_button.clicked.connect(self.open_settings)
+        self.language_combo.currentIndexChanged.connect(self._on_language_changed)
         self.dashboard.lesson_selected.connect(self.open_lesson)
         self.lesson_view.navigate_requested.connect(self._navigate)
         self.lesson_view.attempt_recorded.connect(self._record_attempt)
@@ -197,6 +278,11 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # Navigation
     # ------------------------------------------------------------------
+    def _on_language_changed(self, _index: int) -> None:
+        language = self.language_combo.currentData()
+        if language and language != self.language:
+            self.switch_language(language)
+
     def show_page(self, index: int) -> None:
         self.stack.setCurrentIndex(index)
         for page, button in self.nav_buttons.items():
@@ -226,7 +312,7 @@ class MainWindow(QMainWindow):
     def complete_button_state(self) -> None:
         if not self.current_lesson_id:
             return
-        done = self.database.is_lesson_complete(self.current_lesson_id)
+        done = self.database.is_lesson_complete(self.current_lesson_id, self.language)
         self.lesson_view.complete_button.setText(
             "Completed ✓" if done else "Mark complete"
         )
@@ -260,6 +346,7 @@ class MainWindow(QMainWindow):
             compiled_ok=compiled,
             ran_ok=ran,
             result=summary,
+            language=self.language,
         )
         self.database.record_activity("exercise_attempt", lesson_id, summary)
         self.refresh_insights()
@@ -273,7 +360,7 @@ class MainWindow(QMainWindow):
         self.refresh_insights()
 
     def _mark_complete(self, lesson_id: str) -> None:
-        self.database.mark_lesson_complete(lesson_id)
+        self.database.mark_lesson_complete(lesson_id, self.language)
         self.database.record_activity("lesson_complete", lesson_id, "marked complete")
         self.refresh_insights()
         self.complete_button_state()
@@ -283,34 +370,50 @@ class MainWindow(QMainWindow):
         if not self.progress_view.confirm_reset():
             return
         for lesson in self.lessons:
-            self.database.unmark_lesson_complete(lesson.id)
+            self.database.unmark_lesson_complete(lesson.id, self.language)
         self.database.clear_activity()
         self.refresh_all()
-        self.statusBar().showMessage("All lesson progress cleared")
+        self.statusBar().showMessage(
+            f"Lesson progress cleared for {curriculum_registry.display_name(self.language)}"
+        )
 
     # ------------------------------------------------------------------
     # Refresh
     # ------------------------------------------------------------------
     def refresh_progress_views(self) -> None:
-        completed = set(self.database.completed_lessons())
+        completed = set(self.database.completed_lessons(self.language))
         stats = self.database.lesson_stats([l.id for l in self.lessons])
         self.dashboard.set_lessons(self.lessons)
         self.dashboard.refresh(completed, stats)
         self.dashboard.set_activity(self.database.recent_activity(12))
         self.progress_view.set_lessons(self.lessons)
-        self.progress_view.refresh(self.database, self.database.completed_lessons())
+        self.progress_view.refresh(self.database, self.database.completed_lessons(self.language))
 
     def refresh_insights(self) -> None:
-        """Rebuild the Phase 2 dashboard from stored evidence."""
-        report = build_report(self.database, self.model, self.bank)
+        """Rebuild the Phase 2 dashboard from stored evidence for this language."""
+        report = build_report(self.database, self.model, self.bank, language=self.language)
         self.insights.set_report(report)
         self.practice_view.set_recommendations(report.recommendations)
         self.projects_view.refresh(report.assessments)
+
+    def _refresh_tool_status(self) -> None:
+        """Show what is installed for the current language."""
+        try:
+            info = self.toolchain.detect()
+            if info.available:
+                self.tool_label.setText(f"{info.tool_name}")
+                self.tool_label.setToolTip(info.version)
+            else:
+                self.tool_label.setText("tool missing")
+                self.tool_label.setToolTip(info.install_hint)
+        except Exception:  # pragma: no cover - defensive
+            self.tool_label.setText("")
 
     def refresh_all(self) -> None:
         self.refresh_progress_views()
         self.refresh_insights()
         self._refresh_provider_status()
+        self._refresh_tool_status()
 
     # ------------------------------------------------------------------
     # AI provider

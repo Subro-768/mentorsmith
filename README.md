@@ -1,40 +1,64 @@
 # MentorSmith
 
-A Linux-first desktop tutor for learning C++ fundamentals, built with Python and
-PyQt6.
+A Linux-first desktop tutor for learning programming fundamentals, built with
+Python and PyQt6.
 
 MentorSmith compiles and runs **your own code** and shows you the real compiler
 and runtime output, then pairs each lesson with an AI tutor that supports three
 levels of help. On top of that it tracks *evidence* of understanding rather than
 what you clicked, and adapts what it gives you next.
 
+**Four tracks: C++, Python, C and JavaScript.** 42 lessons, 44 concepts,
+87 exercises.
+
 ---
 
 ## What it does
 
+### Four language tracks
+
+| Track | Lessons | Toolchain |
+|---|---|---|
+| C++ | 16 | `g++` or `clang++` |
+| Python | 9 | `python3` |
+| C | 9 | `gcc` or `clang` |
+| JavaScript | 8 | `node` |
+
+Switch language from the toolbar. Lessons, concepts, exercises, adaptive
+recommendations and progress are all **scoped per language**: being strong at
+C++ pointers says nothing about C pointers, so a label is never carried across
+tracks.
+
+A **Compare languages** tab shows the same idea in two languages side by side,
+focused on where they genuinely differ — `7 / 2` is `3` in C and `3.5` in
+Python, and reading one track after another quietly teaches the wrong thing.
+
 ### Curriculum and lessons
 
-- **16 beginner C++ lessons**, from program structure to exceptions. Each has
-  objectives, an explanation, a worked example, knowledge checks, an exercise
-  with starter code, common mistakes, and a recap. The content lives in
-  Markdown under `mentorsmith/lessons/`, not inside the UI code.
+- Each lesson has objectives, an explanation, a worked example, knowledge
+  checks, an exercise with starter code, common mistakes, and a recap. Content
+  lives in Markdown under `mentorsmith/lessons/<language>/`, not in UI code.
 
 ### Real compile and run
 
-- Compiles and runs with `g++` or `clang++`, showing the exact command, the
-  compiler's own diagnostics, stdout and stderr separately, the exit code and
-  the wall-clock time. Failures are displayed honestly and are never dressed up
-  as success.
-- A **code editor** with C++ syntax highlighting and a line-number gutter.
+- Compiles or interprets with the right tool per language, showing the exact
+  command, the compiler's own diagnostics, stdout and stderr separately, the
+  exit code and the wall-clock time. Failures are displayed honestly and are
+  never dressed up as success.
+- A **code editor** with syntax highlighting and a line-number gutter.
+- Language-specific differences are preserved rather than abstracted away:
+  Python runs in isolated mode, JavaScript has its heap capped, C is forced into
+  C mode with `-x c`, and only compiled languages can be sandboxed.
 
 ### Adaptive practice
 
-- **18 concepts** with an explicit prerequisite graph, held as structured data
-  in `mentorsmith/data/concepts.json`.
-- **53 exercises across 8 types**: predict-output, find-a-bug, complete-code,
+- **44 concepts** with an explicit prerequisite graph, held as structured data
+  and validated on load (unknown references and prerequisite cycles fail at
+  startup).
+- **87 exercises across 8 types**: predict-output, find-a-bug, complete-code,
   write-a-function, explain-code, modify-code, solve-without-AI, and
-  compare-implementations.
-- **Deterministic grading where possible.** Code exercises are compiled and run,
+  compare-implementations. Every concept has at least one.
+- **Deterministic grading where possible.** Code exercises are compiled or run,
   and the real output is compared against the expected output, with a diff when
   they differ. Free-form explanations are graded by the tutor against a rubric
   and are always labelled *interpretive* — an opinion, not a proof.
@@ -69,23 +93,23 @@ evidence** either.
 - Fedora Linux (other Linux distributions should work)
 - Python 3.11 or newer
 - PyQt6
-- A C++ compiler — `gcc` or `clang`
+- A compiler or interpreter for each track you want to use
 
-Check what you have:
+| Track | Needs | Install if missing |
+|---|---|---|
+| C++ | `g++` or `clang++` | `sudo dnf install gcc` |
+| C | `gcc` or `clang` | `sudo dnf install gcc` |
+| Python | `python3` | `sudo dnf install python3` |
+| JavaScript | `node` | `sudo dnf install nodejs` |
+
+Check what is present:
 
 ```bash
-python3 --version
-g++ --version
+python3 main.py --check
 ```
 
-## Install
-
-```bash
-sudo dnf install python3-pip gcc bubblewrap
-python3 -m pip install --user PyQt6
-```
-
-`bubblewrap` is optional but recommended; see [Running your code](#running-your-code-sandbox-and-limits).
+MentorSmith never installs software for you. If a tool is missing it says so
+and gives the exact command, and the rest of the app keeps working.
 
 Run it straight from the checkout — no install step or packaging is required:
 
@@ -162,23 +186,26 @@ Your code is untrusted input, so it is contained rather than trusted. Two
 layers apply:
 
 **Always on — resource limits.** CPU time, address space, file size and core
-dumps are capped for the child process only.
+dumps are capped for the child process only. Limits are per language where the
+runtime needs it: Node's V8 reserves a large *virtual* address space before
+running any user code, so its limit is raised and the real heap is bounded with
+`--max-old-space-size` instead.
 
-**Optional — bubblewrap sandbox.** Enable it in Settings. It then runs your
-program in a private mount namespace with no network and a read-only view of
-the system, so your program cannot read or write your home directory.
+**Optional — bubblewrap sandbox.** Compiled languages only. Enable it in
+Settings and the binary runs in a private mount namespace with no network and a
+read-only view of the system, so your program cannot read or write your home
+directory. Interpreted languages have no binary to isolate, and the app says so
+rather than implying otherwise.
 
 **This is defence in depth, not a real sandbox.** `bwrap` relies on unprivileged
 user namespaces, and those give far less protection than a VM or a properly
 configured container. Do not treat it as isolation you can safely run genuinely
-hostile code in. With the sandbox off (the default), your program runs as your
-own user with your own file access. The status bar always states which mode is
-actually in force — the app never claims protection it does not have.
+hostile code in. The status bar always states which mode is actually in force.
 
-Your code is compiled and run in a dedicated directory:
+Your code runs in a dedicated directory per language:
 
 ```
-~/.local/share/mentorsmith/workdir/
+~/.local/share/mentorsmith/workdir/<language>/
 ```
 
 Compiled binaries and objects never touch the source tree.
@@ -207,12 +234,14 @@ mentorsmith/
   app.py                    QApplication bootstrap
   config.py                 Paths and non-secret settings
   data/
-    concepts.json           Concept graph + project catalogue
-    exercises.json          Adaptive exercise bank
-  lessons/                  The 16 lessons, as Markdown
+    concepts.json           C++ concept graph + project catalogue
+    exercises.json          C++ exercise bank
+    curriculum/<lang>.json  Concept graph + exercises for the other tracks
+  lessons/<language>/       One Markdown file per lesson
   core/
     db.py                   SQLite persistence, schema migrations
     curriculum.py           Lesson loading and the file format
+    curriculum_registry.py  One entry point per language
     concepts.py             Concept model + prerequisite graph
     exercises.py            Exercise bank, grading, model-output prompts
     mastery.py              Evidence -> label, always with reasons
@@ -220,8 +249,10 @@ mentorsmith/
     debugging.py            Diagnose, hint, retry, escalate
     projects.py             Project proposals and milestones
     revision.py             Review recommendations and regressions
-  compiler/
-    toolchain.py            Detect, compile, run, contain
+    comparisons.py          Cross-language differences
+  execution/                Per-language adapters + shared process runner
+    base.py                 Adapter interface, resource limits, sandbox
+    cpp.py c.py python.py javascript.py
   providers/
     base.py                 Provider interface and typed errors
     openai_compat.py        /chat/completions client, stdlib only
@@ -231,7 +262,7 @@ mentorsmith/
     insights.py             Dashboard assembly and justifications
   ui/                       Qt widgets (theme, editor, panels, window)
 tests/                      pytest suite
-docs/                       Architecture notes
+docs/                       Architecture notes, how to add a language
 ```
 
 Only PyQt6 is required at runtime; HTTP uses the Python standard library, so
@@ -275,16 +306,20 @@ transferred.
 - Linux desktop only. The Android companion is not built yet.
 - The in-app Markdown renderer covers the subset the lessons use, not the
   whole specification.
-- The exercise bank ships 53 exercises. Coverage is thin for `constructors`,
-  `files`, `strings` and `structures` (2 each).
+- Exercise coverage is uneven. C++ has 53 exercises; the other tracks have
+  11–12 each, which is enough to be useful but not to be a full course.
+- There is no project generator for Python, C or JavaScript. Projects are
+  generated for C++ only; the other tracks get exercises and lessons.
 - Mastery labels are a summary of recorded counts. They are explainable but
   they are not a psychometric measurement.
 - Review recommendations use a fixed staleness threshold, not a proven spaced
   repetition schedule.
-- There is no built-in test suite for the learner's own C++; exercises are
-  graded by the compiler when you press **Run & check**.
-- The editor has no autocomplete.
+- There is no built-in test suite for the learner's own code; exercises are
+  graded by actually compiling and running it.
+- The editor has no autocomplete and highlights C++ only.
 - Progress is per-machine and not synchronised anywhere.
+- The bubblewrap sandbox covers compiled languages only, and unprivileged user
+  namespaces give far less protection than a real isolation boundary.
 
 ## Licence
 

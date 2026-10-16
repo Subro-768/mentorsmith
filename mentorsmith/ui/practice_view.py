@@ -274,6 +274,7 @@ class PracticeView(QWidget):
             toolchain=self.toolchain,
             exercise=exercise,
             is_review=is_review,
+            language=getattr(self.toolchain, "language_id", "cpp"),
         )
         self._current_exercise_id = exercise.id
         self.title_label.setText(exercise.title)

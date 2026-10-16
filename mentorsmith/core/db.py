@@ -169,6 +169,47 @@ MIGRATIONS: dict[int, list[str]] = {
             ON reviews (status, concept_id)
         """,
     ],
+    3: [
+        # --- Phase 4: multiple language tracks -------------------------
+        # Concept and lesson ids may now repeat across languages, so every
+        # progress row is scoped by language.
+        """
+        ALTER TABLE exercise_attempts ADD COLUMN language TEXT NOT NULL DEFAULT 'cpp'
+        """,
+        """
+        ALTER TABLE lesson_progress ADD COLUMN language TEXT NOT NULL DEFAULT 'cpp'
+        """,
+        # lesson_progress is keyed by lesson_id alone, which would collide
+        # once two languages can both have "05-conditions". SQLite cannot add
+        # a column to a primary key, so the table is rebuilt: copy, drop,
+        # rename. Every existing row is preserved with language='cpp'.
+        """
+        CREATE TABLE lesson_progress_v3 (
+            lesson_id     TEXT NOT NULL,
+            language      TEXT NOT NULL DEFAULT 'cpp',
+            completed_at  TEXT NOT NULL,
+            PRIMARY KEY (lesson_id, language)
+        )
+        """,
+        """
+        INSERT INTO lesson_progress_v3 (lesson_id, language, completed_at)
+            SELECT lesson_id, language, completed_at FROM lesson_progress
+        """,
+        """
+        DROP TABLE lesson_progress
+        """,
+        """
+        ALTER TABLE lesson_progress_v3 RENAME TO lesson_progress
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_attempts_language_concept
+            ON exercise_attempts (language, concept_id)
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_attempts_language_lesson
+            ON exercise_attempts (language, lesson_id)
+        """,
+    ],
 }
 
 LATEST_SCHEMA_VERSION = max(MIGRATIONS)
@@ -259,45 +300,54 @@ class Database:
     # ------------------------------------------------------------------
     # Lesson progress
     # ------------------------------------------------------------------
-    def mark_lesson_complete(self, lesson_id: str) -> str:
+    def mark_lesson_complete(self, lesson_id: str, language: str = "cpp") -> str:
         """Record a lesson as completed and return the stored timestamp.
 
         Re-completing a lesson keeps the original timestamp so progress history
-        is not falsified by clicking twice.
+        is not falsified by clicking twice. Completion is per language: the
+        same lesson id in Python and in C are different achievements.
         """
         conn = self.connect()
         existing = conn.execute(
-            "SELECT completed_at FROM lesson_progress WHERE lesson_id = ?",
-            (lesson_id,),
+            "SELECT completed_at FROM lesson_progress "
+            "WHERE lesson_id = ? AND language = ?",
+            (lesson_id, language),
         ).fetchone()
         if existing is not None:
             return str(existing["completed_at"])
         stamp = _utcnow()
         conn.execute(
-            "INSERT INTO lesson_progress (lesson_id, completed_at) VALUES (?, ?)",
-            (lesson_id, stamp),
+            "INSERT INTO lesson_progress (lesson_id, language, completed_at) "
+            "VALUES (?, ?, ?)",
+            (lesson_id, language, stamp),
         )
         conn.commit()
         return stamp
 
-    def unmark_lesson_complete(self, lesson_id: str) -> None:
+    def unmark_lesson_complete(self, lesson_id: str, language: str = "cpp") -> None:
         """Remove a completion mark (used by the 'reset progress' action)."""
         conn = self.connect()
-        conn.execute("DELETE FROM lesson_progress WHERE lesson_id = ?", (lesson_id,))
+        conn.execute(
+            "DELETE FROM lesson_progress WHERE lesson_id = ? AND language = ?",
+            (lesson_id, language),
+        )
         conn.commit()
 
-    def is_lesson_complete(self, lesson_id: str) -> bool:
+    def is_lesson_complete(self, lesson_id: str, language: str = "cpp") -> bool:
         conn = self.connect()
         row = conn.execute(
-            "SELECT 1 FROM lesson_progress WHERE lesson_id = ?", (lesson_id,)
+            "SELECT 1 FROM lesson_progress WHERE lesson_id = ? AND language = ?",
+            (lesson_id, language),
         ).fetchone()
         return row is not None
 
-    def completed_lessons(self) -> list[str]:
-        """All completed lesson ids, in completion order."""
+    def completed_lessons(self, language: str = "cpp") -> list[str]:
+        """All completed lesson ids for a language, in completion order."""
         conn = self.connect()
         rows = conn.execute(
-            "SELECT lesson_id FROM lesson_progress ORDER BY completed_at, lesson_id"
+            "SELECT lesson_id FROM lesson_progress WHERE language = ? "
+            "ORDER BY completed_at, lesson_id",
+            (language,),
         ).fetchall()
         return [str(r["lesson_id"]) for r in rows]
 
@@ -322,6 +372,7 @@ class Database:
         grade: str = "",
         novelty: bool = False,
         graded_by: str = "deterministic",
+        language: str = "cpp",
     ) -> int:
         """Store one attempt at an exercise and return its row id.
 
@@ -348,8 +399,8 @@ class Database:
             INSERT INTO exercise_attempts
                 (lesson_id, exercise_id, source, compiled_ok, ran_ok, result,
                  exercise_type, concept_id, correct, hints_used, independent,
-                 error_category, grade, novelty, graded_by, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 error_category, grade, novelty, graded_by, language, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 lesson_id,
@@ -367,6 +418,7 @@ class Database:
                 grade,
                 int(bool(novelty)),
                 graded_by,
+                language,
                 _utcnow(),
             ),
         )
@@ -457,16 +509,19 @@ class Database:
     # ------------------------------------------------------------------
     # Phase 2: adaptive learning evidence
     # ------------------------------------------------------------------
-    def attempts_for_concept(self, concept_id: str) -> list[dict]:
-        """Every graded attempt for a concept, newest first."""
+    def attempts_for_concept(self, concept_id: str, language: str = "cpp") -> list[dict]:
+        """Every graded attempt for a concept in one language, newest first."""
         conn = self.connect()
         rows = conn.execute(
-            "SELECT * FROM exercise_attempts WHERE concept_id = ? ORDER BY id DESC",
-            (concept_id,),
+            "SELECT * FROM exercise_attempts "
+            "WHERE concept_id = ? AND language = ? ORDER BY id DESC",
+            (concept_id, language),
         ).fetchall()
         return [dict(r) for r in rows]
 
-    def concept_evidence(self, concept_ids: Sequence[str]) -> dict[str, dict]:
+    def concept_evidence(
+        self, concept_ids: Sequence[str], language: str = "cpp"
+    ) -> dict[str, dict]:
         """Aggregate raw evidence per concept in a single pass.
 
         Returns counts only. Interpretation lives in
@@ -495,9 +550,9 @@ class Database:
 
         placeholders = ",".join("?" for _ in ids)
         rows = self.connect().execute(
-            f"SELECT * FROM exercise_attempts WHERE concept_id IN ({placeholders}) "
-            "ORDER BY id ASC",
-            tuple(ids),
+            f"SELECT * FROM exercise_attempts "
+            f"WHERE concept_id IN ({placeholders}) AND language = ? ORDER BY id ASC",
+            (*ids, language),
         ).fetchall()
 
         # Track the earliest attempt per concept to spot first-try success.

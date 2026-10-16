@@ -44,7 +44,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..config import LESSONS_DIR
+from ..config import LESSONS_DIR, lessons_dir
 
 FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
@@ -85,6 +85,14 @@ class Lesson:
     starter_code: str = ""
     checks: list[tuple[str, str]] = field(default_factory=list)
     source_path: Path | None = None
+    #: Language this lesson belongs to. Defaults to ``cpp`` so Phase 1 and 2
+    #: call sites that never knew about languages keep working.
+    language: str = "cpp"
+
+    @property
+    def key(self) -> str:
+        """Globally unique identity: a lesson id can repeat across languages."""
+        return f"{self.language}:{self.id}"
 
     def section(self, name: str) -> str:
         """Raw Markdown body of a section, or an empty string."""
@@ -190,7 +198,7 @@ def _extract_checks(section: str) -> list[tuple[str, str]]:
     return checks
 
 
-def parse_lesson(path: Path) -> Lesson:
+def parse_lesson(path: Path, language: str = "cpp") -> Lesson:
     """Read and parse one lesson Markdown file."""
     text = path.read_text(encoding="utf-8")
     meta, body = _parse_front_matter(text)
@@ -213,18 +221,38 @@ def parse_lesson(path: Path) -> Lesson:
         starter_code=_extract_fenced_code(exercise, "cpp"),
         checks=_extract_checks(sections.get("knowledge_checks", "")),
         source_path=path,
+        language=language,
     )
 
 
-def load_lessons(directory: Path | None = None) -> list[Lesson]:
-    """Load every ``*.md`` lesson, sorted by declared order then title."""
-    root = Path(directory) if directory is not None else LESSONS_DIR
+def load_lessons(
+    directory: Path | None = None,
+    language: str = "cpp",
+    code_fence: str = "cpp",
+) -> list[Lesson]:
+    """Load every ``*.md`` lesson for a language, sorted by order then title.
+
+    ``code_fence`` is the language tag used inside the Markdown for code
+    blocks. C++ lessons use ``cpp``; Python and JavaScript lessons use their
+    own tags so the renderer can highlight appropriately.
+    """
+    root = Path(directory) if directory is not None else lessons_dir(language)
     if not root.exists():
         raise CurriculumError(f"Lessons directory not found: {root}")
     lessons: list[Lesson] = []
     for path in sorted(root.glob("*.md")):
         try:
-            lessons.append(parse_lesson(path))
+            lesson = parse_lesson(path, language=language)
+            # Re-extract using this language's fence tag when it differs.
+            if code_fence != "cpp":
+                exercise = lesson.sections.get("exercise", "")
+                lesson.example_code = _extract_fenced_code(
+                    lesson.sections.get("example", ""), code_fence
+                ) or lesson.example_code
+                lesson.starter_code = (
+                    _extract_fenced_code(exercise, code_fence) or lesson.starter_code
+                )
+            lessons.append(lesson)
         except OSError as exc:
             raise CurriculumError(f"Could not read lesson {path}: {exc}") from exc
     if not lessons:

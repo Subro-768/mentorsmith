@@ -21,14 +21,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ..compiler.toolchain import CompilerNotFoundError, CommandResult, Toolchain
+from ..compiler.toolchain import CommandResult, Toolchain, ToolMissingError
+from ..core import comparisons
 from ..core.curriculum import Lesson
 from . import theme
 from .chat_panel import ChatPanel
 from .code_editor import CodeEditor, MarkdownView, markdown_to_html
 
-#: Filename written into the work directory; one at a time keeps it obvious
-#: which file is being compiled.
+#: Default source filename. The actual filename now comes from the execution
+#: adapter's extension, so Python writes ``main.py`` and JavaScript ``main.mjs``.
 SOURCE_FILENAME = "main.cpp"
 
 
@@ -48,15 +49,20 @@ class CompileWorker(QThread):
             compile_result, run_result = self.toolchain.run(
                 self.source,
                 stdin_data=self.stdin_data,
-                filename=SOURCE_FILENAME,
+                filename=self._filename(),
             )
-        except CompilerNotFoundError as exc:
+        except ToolMissingError as exc:
             compile_result = CommandResult(ok=False, error=str(exc))
             run_result = None
         except Exception as exc:  # pragma: no cover - defensive
             compile_result = CommandResult(ok=False, error=f"Unexpected failure: {exc}")
             run_result = None
         self.completed.emit(compile_result, run_result)
+
+    def _filename(self) -> str:
+        """Source filename using the adapter's extension for this language."""
+        extension = getattr(self.toolchain, "extension", ".cpp")
+        return f"main{extension}"
 
 
 class LessonView(QWidget):
@@ -136,6 +142,12 @@ class LessonView(QWidget):
         checks_layout.addStretch(1)
         self.material_tabs.addTab(checks_page, "Knowledge checks")
         self._build_checks_content(checks_page)
+
+        self.comparisons_view = MarkdownView()
+        self.comparisons_view.setPlaceholderText(
+            "Cross-language comparisons appear here once another language is added."
+        )
+        self.material_tabs.addTab(self.comparisons_view, "Compare languages")
 
         self.splitter.addWidget(self.material_tabs)
 
@@ -226,6 +238,60 @@ class LessonView(QWidget):
     # ------------------------------------------------------------------
     # Loading a lesson
     # ------------------------------------------------------------------
+    def _populate_comparisons(self) -> None:
+        """Show comparisons between this language and the others.
+
+        A comparison is only useful next to the lesson it relates to, and it is
+        deliberately about *differences*: the point is to stop a learner
+        carrying one language's semantics into another.
+        """
+        language = getattr(self.toolchain, "language_id", "cpp")
+        items = comparisons.for_language(language)
+        if not items:
+            self.comparisons_view.setHtml(
+                "<p>No comparisons involving this language yet.</p>"
+            )
+            return
+
+        blocks = [
+            "<h2>Same idea, different language</h2>",
+            "<p>These pairs look equivalent and are not. Read the differences "
+            "before moving between tracks.</p>",
+        ]
+        for item in items:
+            other = item.languages[1] if item.languages[0] == language else item.languages[0]
+            other_label = {
+                "cpp": "C++", "c": "C", "python": "Python", "javascript": "JavaScript",
+            }.get(other, other)
+            first_snippet, second_snippet = (
+                item.snippets if item.languages[0] == language else item.snippets[::-1]
+            )
+            mine, theirs = (
+                (first_snippet, second_snippet)
+                if item.languages[0] == language
+                else (second_snippet, first_snippet)
+            )
+            mine_label = {
+                "cpp": "C++", "c": "C", "python": "Python", "javascript": "JavaScript",
+            }.get(language, language)
+
+            blocks.append(f"<h3>{_escape(item.concept)} — {_escape(mine_label)} vs {_escape(other_label)}</h3>")
+            blocks.append(f"<p><b>Shared:</b> {_escape(item.same)}</p>")
+            blocks.append("<p><b>Where they differ:</b></p><ul>")
+            for difference in item.different:
+                blocks.append(f"<li>{_escape(difference)}</li>")
+            blocks.append("</ul>")
+            blocks.append(
+                f"<h4>{_escape(mine_label)}</h4><pre>{_escape(mine)}</pre>"
+            )
+            blocks.append(
+                f"<h4>{_escape(other_label)}</h4><pre>{_escape(theirs)}</pre>"
+            )
+            blocks.append(
+                f"<p><b>Think about it:</b> {_escape(item.question)}</p>"
+            )
+        self.comparisons_view.setHtml("".join(blocks))
+
     def set_lesson(self, lesson: Lesson, *, has_previous: bool, has_next: bool) -> None:
         """Display ``lesson`` and reset the working area."""
         self.lesson = lesson
@@ -262,6 +328,7 @@ class LessonView(QWidget):
         self.chat_panel.clear_transcript()
         self.chat_panel.set_level("guided")
         self._populate_checks(lesson)
+        self._populate_comparisons()
 
     def _populate_checks(self, lesson: Lesson) -> None:
         """Rebuild the knowledge-check widgets for a lesson."""
@@ -315,14 +382,47 @@ class LessonView(QWidget):
     # Compiling and running
     # ------------------------------------------------------------------
     def refresh_sandbox_status(self) -> None:
-        active, text = self.toolchain.sandbox_status()
-        info = self.toolchain.detect()
-        compiler = info.name or "none found"
-        self.status_label.setObjectName("success" if active else "warning")
-        self.status_label.setText(f"Compiler: {compiler} ({info.version or 'version unknown'})"
-                                  f"  •  {text}")
+        """Describe the tool and containment actually in force.
+
+        Works for every language adapter, not just C++. Interpreted languages
+        have no compiler and no binary to sandbox, and the wording must say so
+        rather than implying a sandbox that does not exist.
+        """
+        try:
+            info = self.toolchain.detect()
+            tool_name = getattr(info, "tool_name", None) or getattr(info, "name", None)
+            version = info.version or "version unknown"
+            available = info.available
+            install = getattr(info, "install_hint", "")
+        except Exception:  # pragma: no cover - defensive
+            tool_name, version, available, install = None, "", False, ""
+
+        if not available:
+            self.status_label.setObjectName("error")
+            self.status_label.setText(
+                f"{self._language_name()} tool NOT FOUND."
+                + (f" Install it with: {install}" if install else "")
+                + " Lessons still work; only Compile & Run is unavailable."
+            )
+        elif getattr(self.toolchain, "kind", "") == "interpreted":
+            self.status_label.setObjectName("warning")
+            self.status_label.setText(
+                f"{self._language_name()}: {tool_name} ({version}). "
+                "No compilation step. Resource limits apply (CPU, memory, "
+                "file size) and the program is stopped on timeout, but there "
+                "is no binary to sandbox and no filesystem isolation."
+            )
+        else:
+            active, text = self.toolchain.sandbox_status()
+            self.status_label.setObjectName("success" if active else "warning")
+            self.status_label.setText(
+                f"Compiler: {tool_name} ({version})  •  {text}"
+            )
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
+
+    def _language_name(self) -> str:
+        return getattr(self.toolchain, "display_name", None) or "Language"
 
     def on_run_clicked(self) -> None:
         """Compile and run the current editor contents."""
@@ -528,5 +628,4 @@ def _escape(text: str) -> str:
 __all__ = [
     "LessonView",
     "CompileWorker",
-    "SOURCE_FILENAME",
 ]
