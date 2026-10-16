@@ -21,6 +21,7 @@ A subprocess timeout alone is not a sandbox, and nothing here claims otherwise.
 from __future__ import annotations
 
 import os
+import selectors
 import shutil
 import signal
 import subprocess
@@ -81,8 +82,12 @@ class ProcessResult:
         return ""
 
 
-#: Never buffer more than this from a runaway program.
+#: Never buffer more than this from a runaway program. Applied *while reading*,
+#: so a program printing without limit cannot exhaust memory.
 MAX_OUTPUT_CHARS = 200_000
+
+#: Granularity of a single read from the child's pipe.
+READ_CHUNK_CHARS = 64 * 1024
 
 
 def as_text(value: "str | bytes | None") -> str:
@@ -144,44 +149,156 @@ class RunSpec:
 
 
 class ProcessHandle:
-    """A running process the UI can poll and stop."""
+    """A running process the UI can poll and stop.
+
+    Output is read with a **hard cap applied while reading**, not afterwards.
+    This matters more than it looks: a program printing in a tight loop can emit
+    gigabytes within the time it is allowed to run, and reading all of it into
+    memory first is how the tutor exhausts the machine's RAM and gets itself
+    OOM-killed. That is not hypothetical — it happened during development.
+    Discarded output is counted so the result can say how much was dropped
+    rather than silently losing it.
+    """
 
     def __init__(self, process: subprocess.Popen, argv: list[str]) -> None:
         self.process = process
         self.command = argv
         self.started_at = time.monotonic()
+        self._drained = False
+        self._stdout = ""
+        self._stderr = ""
+        self._dropped = 0
 
+    # -- bounded reading ------------------------------------------------
+    def _drain(self, deadline: float | None) -> bool:
+        """Read what is available, keeping at most the cap. ``True`` if timed out.
+
+        Non-blocking throughout, so this cannot hang on a program that has
+        exited while a grandchild still holds the pipe open.
+        """
+        if self._drained:
+            return False
+
+        streams: dict[str, dict] = {}
+        selector = selectors.DefaultSelector()
+        try:
+            for name, stream in (("stdout", self.process.stdout),
+                                 ("stderr", self.process.stderr)):
+                if stream is None or stream.closed:
+                    continue
+                os.set_blocking(stream.fileno(), False)
+                streams[name] = {"chunks": [], "kept": 0}
+                selector.register(stream, selectors.EVENT_READ, name)
+
+            open_streams = set(streams)
+            timed_out = False
+
+            while open_streams:
+                if deadline is None:
+                    wait_for = 0.05
+                else:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        timed_out = True
+                        break
+                    wait_for = min(remaining, 0.25)
+
+                for key, _ in selector.select(timeout=wait_for):
+                    name = key.data
+                    try:
+                        chunk = key.fileobj.read(READ_CHUNK_CHARS)
+                    except (BlockingIOError, InterruptedError):
+                        continue
+                    except (ValueError, OSError):
+                        open_streams.discard(name)
+                        continue
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        open_streams.discard(name)
+                        continue
+
+                    bucket = streams[name]
+                    room = MAX_OUTPUT_CHARS - bucket["kept"]
+                    if room > 0:
+                        kept = chunk[:room]
+                        bucket["chunks"].append(kept)
+                        bucket["kept"] += len(kept)
+                        if len(kept) < len(chunk):
+                            self._dropped += len(chunk) - len(kept)
+                    else:
+                        # Past the cap: count it, keep none of it.
+                        self._dropped += len(chunk)
+
+            for name, bucket in streams.items():
+                joined = "".join(bucket["chunks"])
+                if name == "stdout":
+                    self._stdout = joined
+                else:
+                    self._stderr = joined
+            self._drained = True
+            return timed_out
+        finally:
+            selector.close()
+
+    def _finish_drain(self, grace: float = 1.0) -> None:
+        """Pick up anything still buffered, then close the pipes."""
+        self._drain(deadline=time.monotonic() + grace)
+        for stream in (self.process.stdout, self.process.stderr):
+            if stream is not None and not stream.closed:
+                try:
+                    stream.close()
+                except OSError:
+                    pass
+
+    # -- public ---------------------------------------------------------
     def poll(self) -> ProcessResult | None:
         """Result once the process has exited, else ``None``."""
         code = self.process.poll()
         if code is None:
             return None
-        stdout, stderr = self.process.communicate()
-        return ProcessResult(
-            ok=code == 0,
-            command=list(self.command),
-            stdout=truncate(as_text(stdout)),
-            stderr=truncate(as_text(stderr)),
-            exit_code=code,
-            duration_s=time.monotonic() - self.started_at,
-        )
+        self._finish_drain()
+        return self._result(timed_out=False, code=code, timeout=None)
 
     def wait(self, timeout: float) -> ProcessResult:
-        """Block until the process finishes or ``timeout`` elapses."""
-        try:
-            stdout, stderr = self.process.communicate(timeout=timeout)
-            timed_out = False
-        except subprocess.TimeoutExpired:
+        """Block until the process finishes or ``timeout`` elapses.
+
+        The cap is applied as output is read, so a chatty program cannot exhaust
+        memory before the timeout ever has a chance to fire.
+        """
+        timed_out = self._drain(time.monotonic() + timeout)
+
+        if timed_out:
             self.stop()
-            try:
-                stdout, stderr = self.process.communicate(timeout=5)
-            except subprocess.TimeoutExpired:  # pragma: no cover - defensive
-                stdout, stderr = "", ""
-            timed_out = True
+            # Give the killed process a moment to release its pipes.
+            self._drain(time.monotonic() + 1.0)
+        self._finish_drain()
 
         code = self.process.returncode
+        if code is None:
+            try:
+                code = self.process.wait(timeout=1.0)
+            except subprocess.TimeoutExpired:  # pragma: no cover - defensive
+                code = -1
+
+        return self._result(timed_out=timed_out, code=code, timeout=timeout)
+
+    def _result(self, *, timed_out: bool, code: int | None, timeout: float | None) -> ProcessResult:
+        stdout = self._stdout
+        stderr = self._stderr
+
+        if self._dropped:
+            # Prepended, not appended: `truncate()` clips at MAX_OUTPUT_CHARS, so
+            # a trailing notice would be cut away exactly when it matters most.
+            note = (
+                f"[{self._dropped} characters of output were discarded after the "
+                f"first {MAX_OUTPUT_CHARS}; the program produced more output than "
+                "is stored]\n\n"
+            )
+            stdout = note + stdout
+
         duration = time.monotonic() - self.started_at
-        if timed_out:
+
+        if timed_out and timeout is not None:
             return ProcessResult(
                 ok=False,
                 command=list(self.command),
