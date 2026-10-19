@@ -1,137 +1,454 @@
 {
   "language": "python",
   "concepts": [
-    { "id": "py-variables", "title": "Variables and Types", "lesson_id": "01-variables-and-types",
-      "summary": "Names bound to values; int, float, str and bool.", "prerequisites": [],
-      "error_categories": ["type_error", "name_error"] },
-    { "id": "py-flow", "title": "Conditions and Loops", "lesson_id": "02-conditions-and-loops",
-      "summary": "if/elif/else, for, while and range().", "prerequisites": ["py-variables"],
-      "error_categories": ["off_by_one", "infinite_loop", "logic_error"] },
-    { "id": "py-functions", "title": "Functions", "lesson_id": "03-functions",
-      "summary": "def, return, defaults and pass-by-object.", "prerequisites": ["py-flow"],
-      "error_categories": ["missing_return", "mutable_default", "none_return"] },
-    { "id": "py-collections", "title": "Collections", "lesson_id": "04-collections",
-      "summary": "list, tuple, dict, set, slicing and comprehensions.", "prerequisites": ["py-flow"],
-      "error_categories": ["key_error", "index_error", "mutating_while_iterating"] },
-    { "id": "py-exceptions", "title": "Exceptions", "lesson_id": "05-exceptions",
-      "summary": "try/except/else/finally, raising and tracebacks.", "prerequisites": ["py-functions"],
-      "error_categories": ["unhandled_exception", "wrong_exception_type", "bare_except"] },
-    { "id": "py-modules", "title": "Modules", "lesson_id": "06-modules",
-      "summary": "Imports, the __main__ guard and circular imports.", "prerequisites": ["py-functions"],
-      "error_categories": ["import_error", "circular_import", "missing_main_guard"] },
-    { "id": "py-files", "title": "Files", "lesson_id": "07-files",
-      "summary": "open, modes, context managers and pathlib.", "prerequisites": ["py-modules", "py-exceptions"],
-      "error_categories": ["file_not_checked", "wrong_mode", "missing_close"] },
-    { "id": "py-classes", "title": "Classes", "lesson_id": "08-classes",
-      "summary": "__init__, dunder methods, properties and encapsulation.", "prerequisites": ["py-functions", "py-collections"],
-      "error_categories": ["shared_class_attribute", "missing_repr", "missing_super"] },
-    { "id": "py-testing", "title": "Testing", "lesson_id": "09-testing",
-      "summary": "pytest, assertions, raises and parametrize.", "prerequisites": ["py-functions", "py-exceptions"],
-      "error_categories": ["missing_boundary_test", "float_equality", "order_dependent_tests"] }
+    {
+      "id": "py-variables",
+      "title": "Variables and Types",
+      "lesson_id": "01-variables-and-types",
+      "summary": "Names bound to values; int, float, str and bool.",
+      "prerequisites": [],
+      "error_categories": [
+        "type_error",
+        "name_error"
+      ]
+    },
+    {
+      "id": "py-flow",
+      "title": "Conditions and Loops",
+      "lesson_id": "02-conditions-and-loops",
+      "summary": "if/elif/else, for, while and range().",
+      "prerequisites": [
+        "py-variables"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "infinite_loop",
+        "logic_error"
+      ]
+    },
+    {
+      "id": "py-functions",
+      "title": "Functions",
+      "lesson_id": "03-functions",
+      "summary": "def, return, defaults and pass-by-object.",
+      "prerequisites": [
+        "py-flow"
+      ],
+      "error_categories": [
+        "missing_return",
+        "mutable_default",
+        "none_return"
+      ]
+    },
+    {
+      "id": "py-collections",
+      "title": "Collections",
+      "lesson_id": "04-collections",
+      "summary": "list, tuple, dict, set, slicing and comprehensions.",
+      "prerequisites": [
+        "py-flow"
+      ],
+      "error_categories": [
+        "key_error",
+        "index_error",
+        "mutating_while_iterating"
+      ]
+    },
+    {
+      "id": "py-exceptions",
+      "title": "Exceptions",
+      "lesson_id": "05-exceptions",
+      "summary": "try/except/else/finally, raising and tracebacks.",
+      "prerequisites": [
+        "py-functions"
+      ],
+      "error_categories": [
+        "unhandled_exception",
+        "wrong_exception_type",
+        "bare_except"
+      ]
+    },
+    {
+      "id": "py-modules",
+      "title": "Modules",
+      "lesson_id": "06-modules",
+      "summary": "Imports, the __main__ guard and circular imports.",
+      "prerequisites": [
+        "py-functions"
+      ],
+      "error_categories": [
+        "import_error",
+        "circular_import",
+        "missing_main_guard"
+      ]
+    },
+    {
+      "id": "py-files",
+      "title": "Files",
+      "lesson_id": "07-files",
+      "summary": "open, modes, context managers and pathlib.",
+      "prerequisites": [
+        "py-modules",
+        "py-exceptions"
+      ],
+      "error_categories": [
+        "file_not_checked",
+        "wrong_mode",
+        "missing_close"
+      ]
+    },
+    {
+      "id": "py-classes",
+      "title": "Classes",
+      "lesson_id": "08-classes",
+      "summary": "__init__, dunder methods, properties and encapsulation.",
+      "prerequisites": [
+        "py-functions",
+        "py-collections"
+      ],
+      "error_categories": [
+        "shared_class_attribute",
+        "missing_repr",
+        "missing_super"
+      ]
+    },
+    {
+      "id": "py-testing",
+      "title": "Testing",
+      "lesson_id": "09-testing",
+      "summary": "pytest, assertions, raises and parametrize.",
+      "prerequisites": [
+        "py-functions",
+        "py-exceptions"
+      ],
+      "error_categories": [
+        "missing_boundary_test",
+        "float_equality",
+        "order_dependent_tests"
+      ]
+    }
   ],
   "exercises": [
     {
-      "id": "py-types-division", "concept_id": "py-variables", "lesson_id": "01-variables-and-types",
-      "type": "predict-output", "title": "True versus floor division",
+      "id": "py-types-division",
+      "concept_id": "py-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "predict-output",
+      "title": "True versus floor division",
       "prompt": "Predict both lines exactly. Python has no integer division trap the way C does.",
       "code": "a = 7\nb = 2\nprint(a / b)\nprint(a // b)\n",
-      "expected_stdout": "3.5\n3\n", "novel": true, "tags": ["division"]
+      "expected_stdout": "3.5\n3\n",
+      "novel": true,
+      "tags": [
+        "division"
+      ]
     },
     {
-      "id": "py-types-fix-avg", "concept_id": "py-variables", "lesson_id": "01-variables-and-types",
-      "type": "find-a-bug", "title": "Mean of an empty list",
+      "id": "py-types-fix-avg",
+      "concept_id": "py-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Mean of an empty list",
       "prompt": "This crashes with ZeroDivisionError. Make it print 0.0 for an empty list and still print 2.5 for [1, 4].",
       "code": "def mean(values):\n    return sum(values) / len(values)\n\nprint(mean([1, 4]))\nprint(mean([]))\n",
       "expected_stdout": "2.5\n0.0\n",
       "starter_code": "def mean(values):\n    if not values:\n        return 0.0\n    return sum(values) / len(values)\n\nprint(mean([1, 4]))\nprint(mean([]))\n",
-      "tags": ["division", "boundary"]
+      "tags": [
+        "division",
+        "boundary"
+      ]
     },
     {
-      "id": "py-flow-offbyone", "concept_id": "py-flow", "lesson_id": "02-conditions-and-loops",
-      "type": "find-a-bug", "title": "One number too many",
+      "id": "py-flow-offbyone",
+      "concept_id": "py-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "One number too many",
       "prompt": "It prints 6 instead of 5. Fix the range.",
       "code": "for i in range(1, 6):\n    print(i, end=' ')\nprint()\n",
       "expected_stdout": "1 2 3 4 5 \n",
       "starter_code": "for i in range(1, 5):\n    print(i, end=' ')\nprint()\n",
-      "tags": ["off-by-one"]
+      "tags": [
+        "off-by-one"
+      ]
     },
     {
-      "id": "py-flow-explain-elseif", "concept_id": "py-flow", "lesson_id": "02-conditions-and-loops",
-      "type": "explain-code", "title": "Why elif",
+      "id": "py-flow-explain-elseif",
+      "concept_id": "py-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "explain-code",
+      "title": "Why elif",
       "prompt": "Explain what this prints for score=85, and explain why writing 'else if' instead of 'elif' is a habit from another language rather than an improvement.",
       "code": "score = 85\nif score >= 90:\n    grade = 'A'\nelif score >= 80:\n    grade = 'B'\nelse:\n    grade = 'F'\nprint(grade)\n",
-      "rubric": ["states it prints B", "explains only the first true branch runs", "mentions elif is the Python spelling"]
+      "rubric": [
+        "states it prints B",
+        "explains only the first true branch runs",
+        "mentions elif is the Python spelling"
+      ]
     },
     {
-      "id": "py-functions-mutable-default", "concept_id": "py-functions", "lesson_id": "03-functions",
-      "type": "find-a-bug", "title": "The default that accumulates",
+      "id": "py-functions-mutable-default",
+      "concept_id": "py-functions",
+      "lesson_id": "03-functions",
+      "type": "find-a-bug",
+      "title": "The default that accumulates",
       "prompt": "Calling collect twice gives ['a', 'b'] instead of ['a'] then ['b']. Fix it so each call starts empty.",
       "code": "def collect(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nprint(collect('a'))\nprint(collect('b'))\n",
       "expected_stdout": "['a']\n['b']\n",
       "starter_code": "def collect(item, bucket=None):\n    if bucket is None:\n        bucket = []\n    bucket.append(item)\n    return bucket\n\nprint(collect('a'))\nprint(collect('b'))\n",
-      "tags": ["mutable-default"]
+      "tags": [
+        "mutable-default"
+      ]
     },
     {
-      "id": "py-collections-sort", "concept_id": "py-collections", "lesson_id": "04-collections",
-      "type": "find-a-bug", "title": "String sort",
+      "id": "py-collections-sort",
+      "concept_id": "py-collections",
+      "lesson_id": "04-collections",
+      "type": "find-a-bug",
+      "title": "String sort",
       "prompt": "It prints [10, 100, 9]. Make it print the numbers in ascending order without mutating the original list.",
       "code": "values = [10, 9, 100]\nprint(sorted(values))\n",
       "expected_stdout": "[9, 10, 100]\n",
       "starter_code": "values = [10, 9, 100]\nprint(sorted(values, key=lambda v: v))\n",
-      "tags": ["sorting", "coercion"]
+      "tags": [
+        "sorting",
+        "coercion"
+      ]
     },
     {
-      "id": "py-collections-get", "concept_id": "py-collections", "lesson_id": "04-collections",
-      "type": "find-a-bug", "title": "KeyError",
+      "id": "py-collections-get",
+      "concept_id": "py-collections",
+      "lesson_id": "04-collections",
+      "type": "find-a-bug",
+      "title": "KeyError",
       "prompt": "For a missing name this crashes. Make it print 'unknown' instead, without hiding a genuinely wrong value.",
       "code": "person = {'name': 'Ada'}\nprint(person['nickname'])\n",
       "expected_stdout": "unknown\n",
       "starter_code": "person = {'name': 'Ada'}\nprint(person.get('nickname', 'unknown'))\n",
-      "tags": ["dict", "key_error"]
+      "tags": [
+        "dict",
+        "key_error"
+      ]
     },
     {
-      "id": "py-exceptions-bare-except", "concept_id": "py-exceptions", "lesson_id": "05-exceptions",
-      "type": "find-a-bug", "title": "The silent failure",
+      "id": "py-exceptions-bare-except",
+      "concept_id": "py-exceptions",
+      "lesson_id": "05-exceptions",
+      "type": "find-a-bug",
+      "title": "The silent failure",
       "prompt": "Nothing is printed and no error surfaces. Make it report the invalid input instead of swallowing it.",
       "code": "def to_int(text):\n    try:\n        return int(text)\n    except:\n        pass\n    return None\n\nprint(to_int('nope'))\n",
       "expected_stdout": "rejected: invalid literal for int() with base 10: 'nope'\n",
       "starter_code": "def to_int(text):\n    try:\n        return int(text)\n    except ValueError as error:\n        print('rejected:', error)\n    return None\n\nprint(to_int('nope'))\n",
-      "tags": ["bare-except"]
+      "tags": [
+        "bare-except"
+      ]
     },
     {
-      "id": "py-classes-class-attribute", "concept_id": "py-classes", "lesson_id": "08-classes",
-      "type": "find-a-bug", "title": "State shared between objects",
+      "id": "py-classes-class-attribute",
+      "concept_id": "py-classes",
+      "lesson_id": "08-classes",
+      "type": "find-a-bug",
+      "title": "State shared between objects",
       "prompt": "Two counters share one total. Make each object keep its own count, so this prints 1 and then 1.",
       "code": "class Counter:\n    total = 0\n\n    def __init__(self):\n        self.count = 0\n\n    def bump(self):\n        Counter.total += 1\n        self.count += 1\n        return self.count\n\nprint(Counter().bump())\nprint(Counter().bump())\n",
       "expected_stdout": "1\n1\n",
       "starter_code": "class Counter:\n    def __init__(self):\n        self.total = 0\n        self.count = 0\n\n    def bump(self):\n        self.total += 1\n        self.count += 1\n        return self.count\n\nprint(Counter().bump())\nprint(Counter().bump())\n",
-      "novel": true, "tags": ["class-attribute"]
+      "novel": true,
+      "tags": [
+        "class-attribute"
+      ]
     },
     {
-      "id": "py-testing-boundary", "concept_id": "py-testing", "lesson_id": "09-testing",
-      "type": "write-a-function", "title": "A function worth testing",
+      "id": "py-testing-boundary",
+      "concept_id": "py-testing",
+      "lesson_id": "09-testing",
+      "type": "write-a-function",
+      "title": "A function worth testing",
       "prompt": "Write clamp(value, low, high) returning value limited to that range. It must print 5, 0 and 10 for clamp(5,0,10), clamp(-3,0,10) and clamp(99,0,10).",
       "code": "def clamp(value, low, high):\n    # return value limited to [low, high]\n\nprint(clamp(5, 0, 10))\nprint(clamp(-3, 0, 10))\nprint(clamp(99, 0, 10))\n",
       "expected_stdout": "5\n0\n10\n",
-      "tags": ["boundaries"]
+      "tags": [
+        "boundaries"
+      ]
     },
     {
-      "id": "py-files-missing", "concept_id": "py-files", "lesson_id": "07-files",
-      "type": "find-a-bug", "title": "The unreadable journal",
+      "id": "py-files-missing",
+      "concept_id": "py-files",
+      "lesson_id": "07-files",
+      "type": "find-a-bug",
+      "title": "The unreadable journal",
       "prompt": "For a missing file this crashes with FileNotFoundError. Make it print 'no journal yet' instead.",
       "code": "from pathlib import Path\n\nJOURNAL = Path('journal.txt')\n\ndef read():\n    with JOURNAL.open('r', encoding='utf-8') as handle:\n        return handle.read()\n\nprint(read())\n",
       "expected_stdout": "no journal yet\n",
       "starter_code": "from pathlib import Path\n\nJOURNAL = Path('journal.txt')\n\ndef read():\n    try:\n        with JOURNAL.open('r', encoding='utf-8') as handle:\n            return handle.read()\n    except FileNotFoundError:\n        return 'no journal yet'\n\nprint(read())\n",
-      "tags": ["file-not-checked"]
+      "tags": [
+        "file-not-checked"
+      ]
     },
     {
-      "id": "py-modules-main-guard", "concept_id": "py-modules", "lesson_id": "06-modules",
-      "type": "find-a-bug", "title": "Demo code running on import",
+      "id": "py-modules-main-guard",
+      "concept_id": "py-modules",
+      "lesson_id": "06-modules",
+      "type": "find-a-bug",
+      "title": "Demo code running on import",
       "prompt": "Importing this module should not print anything. Guard the demo so that importing it is side-effect free.",
       "code": "def main():\n    print('running')\n\nmain()\n",
       "expected_stdout": "imported cleanly\n",
       "starter_code": "def main():\n    print('running')\n\nif __name__ == '__main__':\n    main()\n\nprint('imported cleanly')\n",
-      "tags": ["main-guard"]
+      "tags": [
+        "main-guard"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "py-cli-budget-tracker",
+      "title": "CLI Budget & Expense Tracker",
+      "purpose": "Master Python file I/O, CSV parsing, dictionary aggregations, and robust error handling.",
+      "concepts": [
+        "py-variables",
+        "py-flow",
+        "py-functions",
+        "py-collections",
+        "py-files"
+      ],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "Record an expense entry",
+          "requirements": "Prompt user for category, amount (float), and description. Validate non-negative numbers and non-empty strings.",
+          "acceptance_criteria": [
+            "Validates numeric input and handles ValueError cleanly",
+            "Stores records in memory as list of dicts",
+            "Re-prompts gracefully on invalid data"
+          ],
+          "hint": "Wrap float(input()) in a try/except ValueError block."
+        },
+        {
+          "title": "CSV persistence & loading",
+          "requirements": "Persist expenses into expenses.csv with headers, and load previous records on startup using pathlib or csv module.",
+          "acceptance_criteria": [
+            "Correctly writes headers on first run",
+            "Handles missing file without crashing",
+            "Data round-trips without data corruption"
+          ],
+          "hint": "Use Path(\"expenses.csv\").exists() and with open(..., mode=\"a\") as f: context managers."
+        },
+        {
+          "title": "Category aggregation & summary",
+          "requirements": "Provide a summary report showing total spent and breakdown grouped by category.",
+          "acceptance_criteria": [
+            "Computes accurate sum per category",
+            "Formats currencies cleanly to 2 decimal places",
+            "Handles empty logs gracefully"
+          ],
+          "hint": "Use a dict or collections.defaultdict(float) to accumulate sums."
+        }
+      ],
+      "extensions": [
+        "Add monthly spending threshold warnings",
+        "Filter transactions by date range",
+        "Export summary report to JSON format"
+      ]
+    },
+    {
+      "id": "py-task-manager-api",
+      "title": "Task Management REST CLI & SQLite Engine",
+      "purpose": "Build an intermediate multi-tier task manager with SQLite persistence, OOP entities, and input validation.",
+      "concepts": [
+        "py-classes",
+        "py-exceptions",
+        "py-collections",
+        "py-modules"
+      ],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Task domain model & validation",
+          "requirements": "Design a Task class with id, title, priority (LOW, MED, HIGH), and status (PENDING, DONE). Reject empty titles.",
+          "acceptance_criteria": [
+            "Constructor validates title and priority constraints",
+            "Provides to_dict() and from_dict() serialization methods",
+            "Encapsulates status transitions cleanly"
+          ],
+          "hint": "Use an enum for Priority and raise ValueError on invalid state."
+        },
+        {
+          "title": "SQLite repository layer",
+          "requirements": "Create a TaskRepository using sqlite3 context managers to execute schema migration and CRUD operations.",
+          "acceptance_criteria": [
+            "Creates tasks table IF NOT EXISTS on initialize",
+            "Parameterized queries prevent SQL injection",
+            "Functions return Task object instances"
+          ],
+          "hint": "Always pass parameters as a tuple into cursor.execute(query, params)."
+        },
+        {
+          "title": "Interactive CLI interface",
+          "requirements": "Implement add, list, complete, and delete commands with formatted ASCII tabular output.",
+          "acceptance_criteria": [
+            "List command supports filtering by status",
+            "Completing non-existent id produces user-friendly error",
+            "Formatted output aligns columns neatly"
+          ],
+          "hint": "Use string formatting like f\"{t.id:<4} | {t.title:<24} | {t.status}\"."
+        }
+      ],
+      "extensions": [
+        "Add search by title keyword substring",
+        "Support due dates with datetime validation",
+        "Write automated unit tests using pytest"
+      ]
+    },
+    {
+      "id": "py-markdown-parser-engine",
+      "title": "Markdown-to-HTML AST Parser & Static Site Generator",
+      "purpose": "Advance to compiler and AST concepts: tokenize text, construct block ASTs, and render semantic HTML.",
+      "concepts": [
+        "py-classes",
+        "py-functions",
+        "py-files",
+        "py-testing"
+      ],
+      "difficulty": "advanced",
+      "milestones": [
+        {
+          "title": "Block tokenizer & lexer",
+          "requirements": "Scan lines and categorize into BlockType (HEADING, PARAGRAPH, CODE_BLOCK, LIST_ITEM).",
+          "acceptance_criteria": [
+            "Detects headings (# to ######) with correct levels",
+            "Handles multi-line fenced code blocks ``` correctly",
+            "Preserves indentation and skips trailing empty lines"
+          ],
+          "hint": "Process lines with a state machine checking if inside_code_block is True."
+        },
+        {
+          "title": "Inline token parsing",
+          "requirements": "Parse inline formatting for bold (**text**), italic (*text*), backtick code (`code`), and links [text](url).",
+          "acceptance_criteria": [
+            "Replaces markdown syntax with <strong>, <em>, <code>, <a>",
+            "Escapes special HTML characters (&, <, >) to avoid XSS",
+            "Handles nested or adjacent inline tags properly"
+          ],
+          "hint": "Use re.sub with regex capture groups or a character-by-character scanner."
+        },
+        {
+          "title": "Full document rendering pipeline",
+          "requirements": "Combine parsed blocks and inline tokens into complete HTML document wrapped with template layout.",
+          "acceptance_criteria": [
+            "Renders valid, well-formed HTML tags",
+            "Writes output file to disk via CLI argument",
+            "Achieves 100% test coverage on sample markdown files"
+          ],
+          "hint": "Define a Document.render() method that iterates through blocks and wraps with <!DOCTYPE html>."
+        }
+      ],
+      "extensions": [
+        "Support table rendering | col1 | col2 |",
+        "Generate automatic Table of Contents with anchor slugs",
+        "Add syntax highlighting classes to code fences"
+      ]
     }
   ]
 }

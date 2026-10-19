@@ -650,7 +650,156 @@
       "graded_by": "deterministic"
     }
   ],
-  "projects": [],
+  "projects": [
+    {
+      "id": "py-cli-budget-tracker",
+      "title": "CLI Budget & Expense Tracker",
+      "purpose": "Master Python file I/O, CSV parsing, dictionary aggregations, and robust error handling.",
+      "concepts": [
+        "py-variables",
+        "py-flow",
+        "py-functions",
+        "py-collections",
+        "py-files"
+      ],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "Record an expense entry",
+          "requirements": "Prompt user for category, amount (float), and description. Validate non-negative numbers and non-empty strings.",
+          "acceptance_criteria": [
+            "Validates numeric input and handles ValueError cleanly",
+            "Stores records in memory as list of dicts",
+            "Re-prompts gracefully on invalid data"
+          ],
+          "hint": "Wrap float(input()) in a try/except ValueError block."
+        },
+        {
+          "title": "CSV persistence & loading",
+          "requirements": "Persist expenses into expenses.csv with headers, and load previous records on startup using pathlib or csv module.",
+          "acceptance_criteria": [
+            "Correctly writes headers on first run",
+            "Handles missing file without crashing",
+            "Data round-trips without data corruption"
+          ],
+          "hint": "Use Path(\"expenses.csv\").exists() and with open(..., mode=\"a\") as f: context managers."
+        },
+        {
+          "title": "Category aggregation & summary",
+          "requirements": "Provide a summary report showing total spent and breakdown grouped by category.",
+          "acceptance_criteria": [
+            "Computes accurate sum per category",
+            "Formats currencies cleanly to 2 decimal places",
+            "Handles empty logs gracefully"
+          ],
+          "hint": "Use a dict or collections.defaultdict(float) to accumulate sums."
+        }
+      ],
+      "extensions": [
+        "Add monthly spending threshold warnings",
+        "Filter transactions by date range",
+        "Export summary report to JSON format"
+      ]
+    },
+    {
+      "id": "py-task-manager-api",
+      "title": "Task Management REST CLI & SQLite Engine",
+      "purpose": "Build an intermediate multi-tier task manager with SQLite persistence, OOP entities, and input validation.",
+      "concepts": [
+        "py-classes",
+        "py-exceptions",
+        "py-collections",
+        "py-modules"
+      ],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Task domain model & validation",
+          "requirements": "Design a Task class with id, title, priority (LOW, MED, HIGH), and status (PENDING, DONE). Reject empty titles.",
+          "acceptance_criteria": [
+            "Constructor validates title and priority constraints",
+            "Provides to_dict() and from_dict() serialization methods",
+            "Encapsulates status transitions cleanly"
+          ],
+          "hint": "Use an enum for Priority and raise ValueError on invalid state."
+        },
+        {
+          "title": "SQLite repository layer",
+          "requirements": "Create a TaskRepository using sqlite3 context managers to execute schema migration and CRUD operations.",
+          "acceptance_criteria": [
+            "Creates tasks table IF NOT EXISTS on initialize",
+            "Parameterized queries prevent SQL injection",
+            "Functions return Task object instances"
+          ],
+          "hint": "Always pass parameters as a tuple into cursor.execute(query, params)."
+        },
+        {
+          "title": "Interactive CLI interface",
+          "requirements": "Implement add, list, complete, and delete commands with formatted ASCII tabular output.",
+          "acceptance_criteria": [
+            "List command supports filtering by status",
+            "Completing non-existent id produces user-friendly error",
+            "Formatted output aligns columns neatly"
+          ],
+          "hint": "Use string formatting like f\"{t.id:<4} | {t.title:<24} | {t.status}\"."
+        }
+      ],
+      "extensions": [
+        "Add search by title keyword substring",
+        "Support due dates with datetime validation",
+        "Write automated unit tests using pytest"
+      ]
+    },
+    {
+      "id": "py-markdown-parser-engine",
+      "title": "Markdown-to-HTML AST Parser & Static Site Generator",
+      "purpose": "Advance to compiler and AST concepts: tokenize text, construct block ASTs, and render semantic HTML.",
+      "concepts": [
+        "py-classes",
+        "py-functions",
+        "py-files",
+        "py-testing"
+      ],
+      "difficulty": "advanced",
+      "milestones": [
+        {
+          "title": "Block tokenizer & lexer",
+          "requirements": "Scan lines and categorize into BlockType (HEADING, PARAGRAPH, CODE_BLOCK, LIST_ITEM).",
+          "acceptance_criteria": [
+            "Detects headings (# to ######) with correct levels",
+            "Handles multi-line fenced code blocks ``` correctly",
+            "Preserves indentation and skips trailing empty lines"
+          ],
+          "hint": "Process lines with a state machine checking if inside_code_block is True."
+        },
+        {
+          "title": "Inline token parsing",
+          "requirements": "Parse inline formatting for bold (**text**), italic (*text*), backtick code (`code`), and links [text](url).",
+          "acceptance_criteria": [
+            "Replaces markdown syntax with <strong>, <em>, <code>, <a>",
+            "Escapes special HTML characters (&, <, >) to avoid XSS",
+            "Handles nested or adjacent inline tags properly"
+          ],
+          "hint": "Use re.sub with regex capture groups or a character-by-character scanner."
+        },
+        {
+          "title": "Full document rendering pipeline",
+          "requirements": "Combine parsed blocks and inline tokens into complete HTML document wrapped with template layout.",
+          "acceptance_criteria": [
+            "Renders valid, well-formed HTML tags",
+            "Writes output file to disk via CLI argument",
+            "Achieves 100% test coverage on sample markdown files"
+          ],
+          "hint": "Define a Document.render() method that iterates through blocks and wraps with <!DOCTYPE html>."
+        }
+      ],
+      "extensions": [
+        "Support table rendering | col1 | col2 |",
+        "Generate automatic Table of Contents with anchor slugs",
+        "Add syntax highlighting classes to code fences"
+      ]
+    }
+  ],
   "comparisons": [
     {
       "id": "division",

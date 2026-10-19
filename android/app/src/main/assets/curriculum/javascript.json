@@ -598,7 +598,154 @@
       "graded_by": "deterministic"
     }
   ],
-  "projects": [],
+  "projects": [
+    {
+      "id": "js-quiz-event-emitter",
+      "title": "Interactive Quiz & Custom Event Bus",
+      "purpose": "Master JavaScript closures, higher-order functions, custom EventEmitter, and object literals.",
+      "concepts": [
+        "js-variables",
+        "js-flow",
+        "js-functions",
+        "js-collections"
+      ],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "EventEmitter pattern from scratch",
+          "requirements": "Implement an EventEmitter class with on(event, callback), off(event, callback), and emit(event, data).",
+          "acceptance_criteria": [
+            "Multiple listeners can subscribe to the same event",
+            "emit triggers callbacks in registration order with arguments",
+            "off removes the specified callback accurately"
+          ],
+          "hint": "Store listeners as an object mapping event names to arrays of callbacks: this.events[name] = []."
+        },
+        {
+          "title": "Quiz state machine",
+          "requirements": "Build a QuizEngine that holds question models, current question index, score, and emits question:change and quiz:end events.",
+          "acceptance_criteria": [
+            "answer() method validates selected option and updates score",
+            "Advances to next question until all answered",
+            "Emits events to decouple state from UI display"
+          ],
+          "hint": "Check if (currentQuestionIndex >= questions.length) this.emit(\"quiz:end\", this.score)."
+        },
+        {
+          "title": "CLI interaction loop",
+          "requirements": "Wire readline interface or simulated console prompts to quiz events, showing timer and score summary.",
+          "acceptance_criteria": [
+            "Handles invalid option selections gracefully",
+            "Displays formatted percentage and grade upon completion",
+            "Cleanly exits the Node.js event loop on finish"
+          ],
+          "hint": "Use readline.createInterface({ input: process.stdin, output: process.stdout })."
+        }
+      ],
+      "extensions": [
+        "Add countdown timer per question using setTimeout / clearTimeout",
+        "Support multiple question formats (true/false, multi-select)",
+        "Load questions dynamically from JSON file"
+      ]
+    },
+    {
+      "id": "js-async-weather-aggregator",
+      "title": "Asynchronous Concurrent Data Pipeline",
+      "purpose": "Harness asynchronous JavaScript: Promises, async/await, Promise.allSettled, rate-limiting, and error fallback.",
+      "concepts": [
+        "js-functions",
+        "js-async",
+        "js-collections",
+        "js-errors"
+      ],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Async API fetch wrapper with retry",
+          "requirements": "Write fetchWithRetry(url, maxRetries, delayMs) using Promise and exponential backoff.",
+          "acceptance_criteria": [
+            "Retries failed requests up to maxRetries times",
+            "Doubles delay interval between attempts",
+            "Rejects with informative error when attempts exhausted"
+          ],
+          "hint": "Use async/await in a for loop and await new Promise(r => setTimeout(r, delay))."
+        },
+        {
+          "title": "Concurrent multi-source aggregator",
+          "requirements": "Fetch data from multiple simulated weather endpoints concurrently using Promise.allSettled.",
+          "acceptance_criteria": [
+            "Does not fail entire batch if one endpoint returns error",
+            "Filters and extracts fulfilled values safely",
+            "Computes average temperature across successful responses"
+          ],
+          "hint": "Iterate through results filtering by r.status === \"fulfilled\"."
+        },
+        {
+          "title": "Data transformation and caching layer",
+          "requirements": "Implement an in-memory TTL Cache with get(key) and set(key, value, ttlSeconds) to avoid duplicate network calls.",
+          "acceptance_criteria": [
+            "Subsequent calls within TTL serve from memory",
+            "Stale data expires and re-fetches cleanly",
+            "Logs cache HIT vs MISS metrics"
+          ],
+          "hint": "Store Map with object { value, expiry: Date.now() + ttl * 1000 }."
+        }
+      ],
+      "extensions": [
+        "Implement concurrency throttler (limit to N parallel requests)",
+        "Write tests mocking fetch with Jest or Node test runner",
+        "Export aggregated weather report to markdown"
+      ]
+    },
+    {
+      "id": "js-reactive-state-store",
+      "title": "Reactive State Store & Virtual Pub/Sub",
+      "purpose": "Master advanced JS: Proxy-based reactivity, deep property observation, batch updating, and immutable history.",
+      "concepts": [
+        "js-collections",
+        "js-functions",
+        "js-scope"
+      ],
+      "difficulty": "advanced",
+      "milestones": [
+        {
+          "title": "Deep reactive Proxy observer",
+          "requirements": "Create createStore(initialState) that wraps objects in Proxy to intercept get and set traps recursively.",
+          "acceptance_criteria": [
+            "Intercepts mutations at any depth level",
+            "Notifies subscribers with old and new values",
+            "Does not trigger notifications if value didn't change (Object.is check)"
+          ],
+          "hint": "In set trap, reflect update and call notifySubscribers(prop, val, oldVal)."
+        },
+        {
+          "title": "Computed properties & dependency tracking",
+          "requirements": "Implement computed(getter) that automatically tracks accessed store properties and caches computed values.",
+          "acceptance_criteria": [
+            "Re-evaluates only when tracked dependencies change",
+            "Caches result for multiple reads without re-computing",
+            "Supports multiple independent computed derivations"
+          ],
+          "hint": "Set an activeEffect pointer during getter execution to register dependencies."
+        },
+        {
+          "title": "Time-travel state history",
+          "requirements": "Implement undo() and redo() mechanics using immutable state snapshots or patch deltas.",
+          "acceptance_criteria": [
+            "Every mutation pushes state snapshot to past stack",
+            "undo() restores previous state and notifies UI",
+            "redo() replays forward history cleanly"
+          ],
+          "hint": "Use structuredClone() to clone snapshots before applying mutations."
+        }
+      ],
+      "extensions": [
+        "Implement action middleware pattern (logging, crash reporting)",
+        "Batch multiple synchronous mutations into a single microtask notify with queueMicrotask",
+        "Serialize and restore entire state store from localStorage"
+      ]
+    }
+  ],
   "comparisons": [
     {
       "id": "equality",

@@ -1,0 +1,994 @@
+{
+  "format_version": 1,
+  "language": "java",
+  "label": "Java",
+  "generated_by": "tools/export_curriculum.py",
+  "lessons": [
+    {
+      "id": "01-program-structure",
+      "title": "Program Structure",
+      "order": 1,
+      "sections": {
+        "objectives": "- Understand the basic structure of a Java application.\n- Learn the purpose of public class Main and the main method.\n- Output text using System.out.println.",
+        "explanation": "In Java, every line of executable code must be inside a class. By convention and toolchain requirement, if your file is named `Main.java`, it contains `public class Main`.\n\nThe execution starts at the `main` method with the exact signature:\n`public static void main(String[] args)`\n\n- `public`: Accessible from anywhere by the JVM.\n- `static`: Can be invoked without creating an instance of the class.\n- `void`: Does not return any exit code; termination is controlled by exiting or exceptions.\n- `String[] args`: Command-line arguments.\n\nTo print output to standard out, Java provides `System.out.println()`.",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}\n```",
+        "knowledge_checks": "Q: Why must the class be named Main?\nA: In Java, a public class must match the name of the file (Main.java).\nQ: What does void mean in the main method signature?\nA: It means the method does not return a value.\nQ: What method prints text with an automatic newline in Java?\nA: System.out.println().",
+        "exercise": "Write a program that prints \"Welcome to Java\" followed by \"MentorSmith Studio\" on separate lines.\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        // Print Welcome to Java and MentorSmith Studio on separate lines\n    }\n}\n```",
+        "common_mistakes": "- Misspelling `String[] args` or forgetting `static`.\n- Using single quotes for strings (single quotes are only for single char literals).\n- Forgetting the ending semicolon `;`.",
+        "recap": "- Java applications enter through `public static void main(String[] args)`.\n- Code must reside inside a class matching the filename."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        // Print Welcome to Java and MentorSmith Studio on separate lines\n    }\n}",
+      "checks": [
+        {
+          "question": "Why must the class be named Main?",
+          "answer": "In Java, a public class must match the name of the file (Main.java)."
+        },
+        {
+          "question": "What does void mean in the main method signature?",
+          "answer": "It means the method does not return a value."
+        },
+        {
+          "question": "What method prints text with an automatic newline in Java?",
+          "answer": "System.out.println()."
+        }
+      ]
+    },
+    {
+      "id": "02-variables-and-types",
+      "title": "Variables and Types",
+      "order": 2,
+      "sections": {
+        "objectives": "- Declare primitive and reference variables.\n- Learn int, double, boolean, char, and String.\n- Understand the `final` keyword and type casting.",
+        "explanation": "Java is strongly typed. Primitive types include `int` (32-bit integer), `double` (64-bit floating point), `boolean` (`true` or `false`), and `char` (single Unicode character in single quotes).\n\n`String` is a reference type representing immutable text.\n\nUse `final` before a variable type to make it an immutable constant:\n`final double PI = 3.14159;`\n\nType casting allows converting between types:\n- Widening (automatic): `int` to `double`\n- Narrowing (explicit cast): `(int) 3.99` evaluates to `3`",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        int count = 5;\n        double price = 9.99;\n        boolean available = true;\n        String item = \"Book\";\n        System.out.println(item + \" costs $\" + price);\n    }\n}\n```",
+        "knowledge_checks": "Q: What is the difference between float and double in Java?\nA: double has 64 bits of precision while float has 32 bits; double is the default literal type.\nQ: How do you declare a constant variable in Java?\nA: Prefix the declaration with the final keyword.\nQ: What happens when you cast (int) 7.8?\nA: It truncates the decimal part, resulting in 7.",
+        "exercise": "Declare an integer `quantity = 3` and a double `unitPrice = 4.5`. Compute the total cost and print it.\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        int quantity = 3;\n        double unitPrice = 4.5;\n        // Compute and print total\n    }\n}\n```",
+        "common_mistakes": "- Assigning double values directly to int without an explicit cast.\n- Using `==` to compare Strings instead of `.equals()`.",
+        "recap": "- Primitive types store raw values (`int`, `double`, `boolean`, `char`).\n- `final` creates immutable constants."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        int count = 5;\n        double price = 9.99;\n        boolean available = true;\n        String item = \"Book\";\n        System.out.println(item + \" costs $\" + price);\n    }\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        int quantity = 3;\n        double unitPrice = 4.5;\n        // Compute and print total\n    }\n}",
+      "checks": [
+        {
+          "question": "What is the difference between float and double in Java?",
+          "answer": "double has 64 bits of precision while float has 32 bits; double is the default literal type."
+        },
+        {
+          "question": "How do you declare a constant variable in Java?",
+          "answer": "Prefix the declaration with the final keyword."
+        },
+        {
+          "question": "What happens when you cast (int) 7.8?",
+          "answer": "It truncates the decimal part, resulting in 7."
+        }
+      ]
+    },
+    {
+      "id": "03-input-output",
+      "title": "Input and Output",
+      "order": 3,
+      "sections": {
+        "objectives": "- Read input from standard input using `java.util.Scanner`.\n- Format output with `System.out.printf`.",
+        "explanation": "To read input, create a `Scanner` object wrapping `System.in`:\n```java\nimport java.util.Scanner;\n\nScanner scanner = new Scanner(System.in);\nString line = scanner.nextLine();\nint number = scanner.nextInt();\n```\n\nFor formatted output, `System.out.printf` supports format specifiers like `%s` (string), `%d` (integer), and `%.2f` (floating point to 2 decimals).",
+        "example": "```java\nimport java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        if (scanner.hasNextLine()) {\n            String name = scanner.nextLine();\n            System.out.println(\"Hello, \" + name);\n        }\n    }\n}\n```",
+        "knowledge_checks": "Q: Which class is commonly used for user input in console applications?\nA: java.util.Scanner.\nQ: What format specifier in printf formats a floating-point number to two decimal places?\nA: %.2f.\nQ: Why should you be careful when mixing nextInt() and nextLine()?\nA: nextInt() does not consume the trailing newline character, leaving it for the subsequent nextLine().",
+        "exercise": "Read an integer and print its square.\n\n```java starter\nimport java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        // Read integer and print its square\n    }\n}\n```",
+        "common_mistakes": "- Forgetting `import java.util.Scanner;`.\n- Calling `nextInt()` when input is not an integer, throwing `InputMismatchException`.",
+        "recap": "- Use `Scanner` with `System.in` for console input.\n- `printf` provides C-style string formatting."
+      },
+      "example_code": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        if (scanner.hasNextLine()) {\n            String name = scanner.nextLine();\n            System.out.println(\"Hello, \" + name);\n        }\n    }\n}",
+      "starter_code": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        // Read integer and print its square\n    }\n}",
+      "checks": [
+        {
+          "question": "Which class is commonly used for user input in console applications?",
+          "answer": "java.util.Scanner."
+        },
+        {
+          "question": "What format specifier in printf formats a floating-point number to two decimal places?",
+          "answer": "%.2f."
+        },
+        {
+          "question": "Why should you be careful when mixing nextInt() and nextLine()?",
+          "answer": "nextInt() does not consume the trailing newline character, leaving it for the subsequent nextLine()."
+        }
+      ]
+    },
+    {
+      "id": "04-operators",
+      "title": "Operators",
+      "order": 4,
+      "sections": {
+        "objectives": "- Work with arithmetic, relational, and logical operators.\n- Understand integer division versus floating point division.\n- Use ternary operators.",
+        "explanation": "Java supports standard arithmetic operators: `+`, `-`, `*`, `/`, `%` (modulo).\n\n**Integer division:**\nDividing two integers truncates the decimal: `7 / 2` is `3`. To get `3.5`, at least one operand must be a floating-point number: `7.0 / 2` or `(double) 7 / 2`.\n\n**Logical Operators:**\n- `&&`: Logical AND (short-circuiting)\n- `||`: Logical OR (short-circuiting)\n- `!`: Logical NOT\n\n**Ternary Operator:**\n`condition ? valueIfTrue : valueIfFalse`",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        int a = 10;\n        int b = 3;\n        System.out.println(a % b); // 1\n        String status = (a > b) ? \"greater\" : \"smaller\";\n        System.out.println(status);\n    }\n}\n```",
+        "knowledge_checks": "Q: What is the result of 9 / 2 in Java?\nA: 4, because both operands are integers and the fraction is truncated.\nQ: What does the % operator return?\nA: The remainder of integer division.\nQ: What is short-circuit evaluation in &&?\nA: If the left operand is false, the right operand is not evaluated.",
+        "exercise": "Given an integer `score = 75`, use a ternary operator to set `result` to \"Pass\" if `score >= 50`, else \"Fail\", then print `result`.\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        int score = 75;\n        // Use ternary operator to determine Pass or Fail and print it\n    }\n}\n```",
+        "common_mistakes": "- Expecting `1 / 2` to yield `0.5` instead of `0`.\n- Confusing `=` (assignment) with `==` (comparison).",
+        "recap": "- Integer division truncates towards zero.\n- Ternary operator provides inline conditional expressions."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        int a = 10;\n        int b = 3;\n        System.out.println(a % b); // 1\n        String status = (a > b) ? \"greater\" : \"smaller\";\n        System.out.println(status);\n    }\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        int score = 75;\n        // Use ternary operator to determine Pass or Fail and print it\n    }\n}",
+      "checks": [
+        {
+          "question": "What is the result of 9 / 2 in Java?",
+          "answer": "4, because both operands are integers and the fraction is truncated."
+        },
+        {
+          "question": "What does the % operator return?",
+          "answer": "The remainder of integer division."
+        },
+        {
+          "question": "What is short-circuit evaluation in &&?",
+          "answer": "If the left operand is false, the right operand is not evaluated."
+        }
+      ]
+    },
+    {
+      "id": "05-conditions",
+      "title": "Conditions",
+      "order": 5,
+      "sections": {
+        "objectives": "- Branch execution using `if`, `else if`, and `else`.\n- Switch statements.\n- Compare Strings safely using `.equals()`.",
+        "explanation": "Control flow allows executing code based on boolean expressions:\n```java\nif (score >= 90) {\n    grade = \"A\";\n} else if (score >= 80) {\n    grade = \"B\";\n} else {\n    grade = \"C\";\n}\n```\n\n**Crucial rule for Strings:**\nNever use `==` to compare String contents! `==` tests object reference identity (memory address). Always use `.equals()`:\n`if (name.equals(\"Alice\")) { ... }`\n\n`switch` matches discrete values (int, char, String, enums).",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        String command = \"start\";\n        if (command.equals(\"start\")) {\n            System.out.println(\"Starting engine...\");\n        } else {\n            System.out.println(\"Unknown command\");\n        }\n    }\n}\n```",
+        "knowledge_checks": "Q: Why shouldn't you compare Strings using ==?\nA: == compares object memory references, not character content; .equals() compares text content.\nQ: Can a switch statement evaluate String variables in modern Java?\nA: Yes, since Java 7 switch supports String cases.\nQ: What happens if a break statement is omitted in a traditional switch case?\nA: Execution falls through to the next case block.",
+        "exercise": "Check if a variable `int temp = 22` is above 30 (\"Hot\"), between 15 and 30 inclusive (\"Warm\"), or below 15 (\"Cold\"). Print the result.\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        int temp = 22;\n        // Print Hot, Warm, or Cold based on temp\n    }\n}\n```",
+        "common_mistakes": "- Comparing `str == \"hello\"` which can randomly evaluate to false for dynamically allocated strings.\n- Missing braces causing only the first following statement to be conditional.",
+        "recap": "- Use `if-else` for boolean ranges and `switch` for distinct values.\n- Always use `a.equals(b)` for string equality."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        String command = \"start\";\n        if (command.equals(\"start\")) {\n            System.out.println(\"Starting engine...\");\n        } else {\n            System.out.println(\"Unknown command\");\n        }\n    }\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        int temp = 22;\n        // Print Hot, Warm, or Cold based on temp\n    }\n}",
+      "checks": [
+        {
+          "question": "Why shouldn't you compare Strings using ==?",
+          "answer": "== compares object memory references, not character content; .equals() compares text content."
+        },
+        {
+          "question": "Can a switch statement evaluate String variables in modern Java?",
+          "answer": "Yes, since Java 7 switch supports String cases."
+        },
+        {
+          "question": "What happens if a break statement is omitted in a traditional switch case?",
+          "answer": "Execution falls through to the next case block."
+        }
+      ]
+    },
+    {
+      "id": "06-loops",
+      "title": "Loops",
+      "order": 6,
+      "sections": {
+        "objectives": "- Master `for`, `while`, and `do-while` loops.\n- Use `break` and `continue`.\n- Understand enhanced for-each loops.",
+        "explanation": "Loops repeat execution while a condition is true:\n\n```java\n// Traditional for loop\nfor (int i = 0; i < 5; i++) {\n    System.out.println(i);\n}\n\n// While loop\nwhile (condition) {\n    // runs while true\n}\n\n// Do-while loop\ndo {\n    // runs at least once\n} while (condition);\n```\n\n- `break` exits the loop immediately.\n- `continue` skips the remainder of the current iteration.",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 3; i++) {\n            System.out.println(\"Count: \" + i);\n        }\n    }\n}\n```",
+        "knowledge_checks": "Q: When is a do-while loop preferred over a while loop?\nA: When the body must execute at least once before checking the condition.\nQ: What does the continue keyword do?\nA: It jumps directly to the next iteration of the surrounding loop.\nQ: What is an off-by-one error?\nA: A loop iterating one time too few or too many due to < vs <= boundary confusion.",
+        "exercise": "Use a loop to print the first 5 multiples of 3 (3, 6, 9, 12, 15), each on a new line.\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        // Print 3, 6, 9, 12, 15 using a loop\n    }\n}\n```",
+        "common_mistakes": "- Creating accidental infinite loops by forgetting to increment loop counters.\n- Semicolon immediately after `for(...) ;` making the body empty.",
+        "recap": "- `for` is best for counting iterations.\n- `while` is best when the stopping condition is dynamic."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 3; i++) {\n            System.out.println(\"Count: \" + i);\n        }\n    }\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        // Print 3, 6, 9, 12, 15 using a loop\n    }\n}",
+      "checks": [
+        {
+          "question": "When is a do-while loop preferred over a while loop?",
+          "answer": "When the body must execute at least once before checking the condition."
+        },
+        {
+          "question": "What does the continue keyword do?",
+          "answer": "It jumps directly to the next iteration of the surrounding loop."
+        },
+        {
+          "question": "What is an off-by-one error?",
+          "answer": "A loop iterating one time too few or too many due to < vs <= boundary confusion."
+        }
+      ]
+    },
+    {
+      "id": "07-methods",
+      "title": "Methods",
+      "order": 7,
+      "sections": {
+        "objectives": "- Define reusable static methods.\n- Pass parameters and return values.\n- Method overloading.",
+        "explanation": "Methods group reusable logic under a name:\n```java\npublic static int square(int x) {\n    return x * x;\n}\n```\n\n- If a method returns no value, its return type is `void`.\n- Primitive parameters in Java are passed **by value** (a copy is passed).\n- **Method Overloading**: You can define multiple methods with the same name if their parameter lists differ in type or count.",
+        "example": "```java\npublic class Main {\n    static int add(int a, int b) {\n        return a + b;\n    }\n\n    static double add(double a, double b) {\n        return a + b;\n    }\n\n    public static void main(String[] args) {\n        System.out.println(add(2, 3));\n        System.out.println(add(2.5, 3.5));\n    }\n}\n```",
+        "knowledge_checks": "Q: What allows multiple methods in the same class to share the same name?\nA: Method overloading, provided their parameter types or counts differ.\nQ: Are arguments in Java passed by reference or by value?\nA: Java is strictly pass-by-value (copies of primitives or copies of references are passed).\nQ: What keyword indicates a method belongs to the class itself rather than instances?\nA: static.",
+        "exercise": "Write a static method `max(int a, int b)` that returns the larger of the two numbers. Call it in `main` with 12 and 25 and print the result.\n\n```java starter\npublic class Main {\n    // Define static int max(int a, int b)\n\n    public static void main(String[] args) {\n        // Call max(12, 25) and print result\n    }\n}\n```",
+        "common_mistakes": "- Attempting to call non-static methods directly from static `main`.\n- Forgetting a `return` statement along a code branch.",
+        "recap": "- Methods modularize and reuse code.\n- Overloading differentiates methods by signature."
+      },
+      "example_code": "public class Main {\n    static int add(int a, int b) {\n        return a + b;\n    }\n\n    static double add(double a, double b) {\n        return a + b;\n    }\n\n    public static void main(String[] args) {\n        System.out.println(add(2, 3));\n        System.out.println(add(2.5, 3.5));\n    }\n}",
+      "starter_code": "public class Main {\n    // Define static int max(int a, int b)\n\n    public static void main(String[] args) {\n        // Call max(12, 25) and print result\n    }\n}",
+      "checks": [
+        {
+          "question": "What allows multiple methods in the same class to share the same name?",
+          "answer": "Method overloading, provided their parameter types or counts differ."
+        },
+        {
+          "question": "Are arguments in Java passed by reference or by value?",
+          "answer": "Java is strictly pass-by-value (copies of primitives or copies of references are passed)."
+        },
+        {
+          "question": "What keyword indicates a method belongs to the class itself rather than instances?",
+          "answer": "static."
+        }
+      ]
+    },
+    {
+      "id": "08-arrays-and-strings",
+      "title": "Arrays and Strings",
+      "order": 8,
+      "sections": {
+        "objectives": "- Declare, allocate, and index fixed-size arrays.\n- Inspect array `.length`.\n- Utilize common String manipulation methods.",
+        "explanation": "Arrays are fixed-length sequences of elements of the same type:\n```java\nint[] numbers = new int[5]; // default initialized to 0\nint[] primes = {2, 3, 5, 7, 11};\nSystem.out.println(primes[0]); // 2\nSystem.out.println(primes.length); // 5\n```\n\nAccessing indices outside `0` to `length - 1` throws `ArrayIndexOutOfBoundsException`.\n\nStrings provide rich inspection methods:\n- `.length()`: number of characters\n- `.charAt(index)`: character at index\n- `.substring(start, end)`: sliced substring\n- `.contains(seq)`, `.toUpperCase()`, `.toLowerCase()`",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        int[] values = {10, 20, 30};\n        for (int v : values) {\n            System.out.println(v);\n        }\n        String text = \"Java\";\n        System.out.println(text.toUpperCase());\n    }\n}\n```",
+        "knowledge_checks": "Q: What property gives the number of elements in an array?\nA: .length (notice: no parentheses, unlike String.length()).\nQ: What exception is thrown when an invalid array index is accessed?\nA: ArrayIndexOutOfBoundsException.\nQ: Are Java Strings mutable?\nA: No, Java Strings are immutable; methods like toUpperCase() return new Strings.",
+        "exercise": "Given an array `int[] nums = {4, 7, 2, 9, 5};`, compute and print the largest number.\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        int[] nums = {4, 7, 2, 9, 5};\n        // Find and print maximum value\n    }\n}\n```",
+        "common_mistakes": "- Writing `array.length()` with parentheses.\n- Modifying a string and forgetting to reassign the result (`str.toUpperCase()` without `str = ...`).",
+        "recap": "- Arrays are fixed-size and 0-indexed.\n- Strings are immutable objects."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        int[] values = {10, 20, 30};\n        for (int v : values) {\n            System.out.println(v);\n        }\n        String text = \"Java\";\n        System.out.println(text.toUpperCase());\n    }\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        int[] nums = {4, 7, 2, 9, 5};\n        // Find and print maximum value\n    }\n}",
+      "checks": [
+        {
+          "question": "What property gives the number of elements in an array?",
+          "answer": ".length (notice: no parentheses, unlike String.length())."
+        },
+        {
+          "question": "What exception is thrown when an invalid array index is accessed?",
+          "answer": "ArrayIndexOutOfBoundsException."
+        },
+        {
+          "question": "Are Java Strings mutable?",
+          "answer": "No, Java Strings are immutable; methods like toUpperCase() return new Strings."
+        }
+      ]
+    },
+    {
+      "id": "09-classes-and-objects",
+      "title": "Classes and Objects",
+      "order": 9,
+      "sections": {
+        "objectives": "- Define classes with fields and constructors.\n- Instantiate objects using `new`.\n- Override the `toString()` method.",
+        "explanation": "A class is a blueprint for objects:\n```java\nclass Student {\n    String name;\n    int age;\n\n    // Constructor\n    Student(String name, int age) {\n        this.name = name;\n        this.age = age;\n    }\n\n    @Override\n    public String toString() {\n        return name + \" (\" + age + \")\";\n    }\n}\n```\n\n- `this` refers to the current instance.\n- Constructors initialize fields when `new Student(...)` is invoked.\n- `toString()` formats the object when printed.",
+        "example": "```java\npublic class Main {\n    static class Book {\n        String title;\n        Book(String title) {\n            this.title = title;\n        }\n    }\n\n    public static void main(String[] args) {\n        Book b = new Book(\"Clean Code\");\n        System.out.println(b.title);\n    }\n}\n```",
+        "knowledge_checks": "Q: What keyword allocates memory for a new object in Java?\nA: new.\nQ: What is the purpose of this keyword?\nA: It references the current instance of the class.\nQ: What method should you override to provide a custom string representation of an object?\nA: public String toString().",
+        "exercise": "Create a static class `Rectangle` with integer fields `width` and `height`, a constructor, and a method `area()` returning `width * height`. Instantiate it with width 4 and height 6, and print the area.\n\n```java starter\npublic class Main {\n    // Define static class Rectangle\n\n    public static void main(String[] args) {\n        // Create Rectangle(4, 6) and print its area\n    }\n}\n```",
+        "common_mistakes": "- Calling methods on an uninitialized reference, producing `NullPointerException`.\n- Forgetting `this.` when constructor parameters shadow field names.",
+        "recap": "- Classes encapsulate state (fields) and behavior (methods).\n- `new` creates object instances."
+      },
+      "example_code": "public class Main {\n    static class Book {\n        String title;\n        Book(String title) {\n            this.title = title;\n        }\n    }\n\n    public static void main(String[] args) {\n        Book b = new Book(\"Clean Code\");\n        System.out.println(b.title);\n    }\n}",
+      "starter_code": "public class Main {\n    // Define static class Rectangle\n\n    public static void main(String[] args) {\n        // Create Rectangle(4, 6) and print its area\n    }\n}",
+      "checks": [
+        {
+          "question": "What keyword allocates memory for a new object in Java?",
+          "answer": "new."
+        },
+        {
+          "question": "What is the purpose of this keyword?",
+          "answer": "It references the current instance of the class."
+        },
+        {
+          "question": "What method should you override to provide a custom string representation of an object?",
+          "answer": "public String toString()."
+        }
+      ]
+    },
+    {
+      "id": "10-encapsulation",
+      "title": "Encapsulation",
+      "order": 10,
+      "sections": {
+        "objectives": "- Protect object integrity using `private` fields.\n- Provide controlled access with getters and setters.\n- Understand visibility modifiers.",
+        "explanation": "Encapsulation bundles data with the methods that operate on it and hides internal state:\n- `private`: Accessible only within the declaring class.\n- `public`: Accessible from any class.\n- (default/package-private): Accessible within the same package.\n- `protected`: Accessible within the package and subclasses.\n\nSetters can enforce data validation rules before updating fields:\n```java\npublic void setAge(int age) {\n    if (age >= 0) {\n        this.age = age;\n    }\n}\n```",
+        "example": "```java\npublic class Main {\n    static class BankAccount {\n        private double balance;\n\n        public void deposit(double amount) {\n            if (amount > 0) balance += amount;\n        }\n\n        public double getBalance() {\n            return balance;\n        }\n    }\n\n    public static void main(String[] args) {\n        BankAccount acc = new BankAccount();\n        acc.deposit(100.0);\n        System.out.println(acc.getBalance());\n    }\n}\n```",
+        "knowledge_checks": "Q: Why are fields usually declared private?\nA: To prevent outside code from directly altering internal state into an invalid condition.\nQ: What naming convention is used for getter methods in Java?\nA: getFieldName() or isFieldName() for booleans.\nQ: What is encapsulation?\nA: Bundling data and behavior while restricting direct access to internal implementation details.",
+        "exercise": "Create a static class `Person` with private `name` and `age`, constructor, and getters `getName()` and `getAge()`. Instantiate and print the name and age.\n\n```java starter\npublic class Main {\n    // Define static class Person with private fields and public getters\n\n    public static void main(String[] args) {\n        // Instantiate Person and print name and age\n    }\n}\n```",
+        "common_mistakes": "- Making all fields public for convenience, breaking encapsulation guarantees.\n- Not validating inputs in setters.",
+        "recap": "- Keep fields `private`.\n- Provide read/write access via `getters` and `setters`."
+      },
+      "example_code": "public class Main {\n    static class BankAccount {\n        private double balance;\n\n        public void deposit(double amount) {\n            if (amount > 0) balance += amount;\n        }\n\n        public double getBalance() {\n            return balance;\n        }\n    }\n\n    public static void main(String[] args) {\n        BankAccount acc = new BankAccount();\n        acc.deposit(100.0);\n        System.out.println(acc.getBalance());\n    }\n}",
+      "starter_code": "public class Main {\n    // Define static class Person with private fields and public getters\n\n    public static void main(String[] args) {\n        // Instantiate Person and print name and age\n    }\n}",
+      "checks": [
+        {
+          "question": "Why are fields usually declared private?",
+          "answer": "To prevent outside code from directly altering internal state into an invalid condition."
+        },
+        {
+          "question": "What naming convention is used for getter methods in Java?",
+          "answer": "getFieldName() or isFieldName() for booleans."
+        },
+        {
+          "question": "What is encapsulation?",
+          "answer": "Bundling data and behavior while restricting direct access to internal implementation details."
+        }
+      ]
+    },
+    {
+      "id": "11-collections",
+      "title": "Collections",
+      "order": 11,
+      "sections": {
+        "objectives": "- Use dynamic lists with `java.util.ArrayList`.\n- Store key-value mappings with `java.util.HashMap`.\n- Iterate through collections.",
+        "explanation": "Java provides collections that resize dynamically:\n\n**ArrayList<E>**:\n```java\nimport java.util.ArrayList;\n\nArrayList<String> fruits = new ArrayList<>();\nfruits.add(\"Apple\");\nfruits.add(\"Banana\");\nSystem.out.println(fruits.get(0)); // Apple\nSystem.out.println(fruits.size()); // 2\n```\n\n**HashMap<K, V>**:\n```java\nimport java.util.HashMap;\n\nHashMap<String, Integer> ages = new HashMap<>();\nages.put(\"Alice\", 25);\nint age = ages.get(\"Alice\"); // 25\nboolean hasBob = ages.containsKey(\"Bob\");\n```",
+        "example": "```java\nimport java.util.ArrayList;\n\npublic class Main {\n    public static void main(String[] args) {\n        ArrayList<Integer> nums = new ArrayList<>();\n        nums.add(10);\n        nums.add(20);\n        int sum = 0;\n        for (int n : nums) sum += n;\n        System.out.println(\"Sum: \" + sum);\n    }\n}\n```",
+        "knowledge_checks": "Q: How does ArrayList differ from a regular array?\nA: ArrayList can dynamically grow and shrink; regular arrays have fixed capacity.\nQ: Can primitive types like int be directly stored in an ArrayList?\nA: No, collections store objects; Java automatically boxes primitives into wrapper types like Integer.\nQ: Which method checks if a key exists in a HashMap?\nA: containsKey(key).",
+        "exercise": "Create a `HashMap<String, Integer>` storing items and prices: \"Pen\": 2, \"Notebook\": 5. Print the price of \"Notebook\".\n\n```java starter\nimport java.util.HashMap;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Create HashMap and print price of Notebook\n    }\n}\n```",
+        "common_mistakes": "- Writing `ArrayList<int>` instead of `ArrayList<Integer>`.\n- Using `.length` instead of `.size()` on collections.",
+        "recap": "- `ArrayList` provides dynamic array functionality.\n- `HashMap` provides fast O(1) average lookup by key."
+      },
+      "example_code": "import java.util.ArrayList;\n\npublic class Main {\n    public static void main(String[] args) {\n        ArrayList<Integer> nums = new ArrayList<>();\n        nums.add(10);\n        nums.add(20);\n        int sum = 0;\n        for (int n : nums) sum += n;\n        System.out.println(\"Sum: \" + sum);\n    }\n}",
+      "starter_code": "import java.util.HashMap;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Create HashMap and print price of Notebook\n    }\n}",
+      "checks": [
+        {
+          "question": "How does ArrayList differ from a regular array?",
+          "answer": "ArrayList can dynamically grow and shrink; regular arrays have fixed capacity."
+        },
+        {
+          "question": "Can primitive types like int be directly stored in an ArrayList?",
+          "answer": "No, collections store objects; Java automatically boxes primitives into wrapper types like Integer."
+        },
+        {
+          "question": "Which method checks if a key exists in a HashMap?",
+          "answer": "containsKey(key)."
+        }
+      ]
+    },
+    {
+      "id": "12-exceptions",
+      "title": "Exceptions and Error Handling",
+      "order": 12,
+      "sections": {
+        "objectives": "- Handle errors with `try`, `catch`, and `finally`.\n- Throw exceptions with `throw`.\n- Distinguish checked vs unchecked exceptions.",
+        "explanation": "Exceptions represent runtime error conditions:\n```java\ntry {\n    int result = 10 / 0;\n} catch (ArithmeticException e) {\n    System.out.println(\"Cannot divide by zero: \" + e.getMessage());\n} finally {\n    System.out.println(\"Always runs\");\n}\n```\n\n- **Checked exceptions**: Inherit from `Exception` (excluding `RuntimeException`). Must be caught or declared in method signature with `throws`.\n- **Unchecked exceptions**: Inherit from `RuntimeException` (e.g. `NullPointerException`, `IndexOutOfBoundsException`).",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        try {\n            int num = Integer.parseInt(\"abc\");\n        } catch (NumberFormatException e) {\n            System.out.println(\"Parsing failed\");\n        }\n    }\n}\n```",
+        "knowledge_checks": "Q: Does a finally block execute if an exception occurs?\nA: Yes, finally blocks always execute regardless of whether an exception was thrown or caught.\nQ: What is the base class for exceptions that do not require mandatory handling?\nA: RuntimeException (unchecked exceptions).\nQ: What keyword is used to explicitly raise an exception?\nA: throw.",
+        "exercise": "Wrap parsing of string `\"xyz\"` with `Integer.parseInt` in a `try-catch` block. Catch `NumberFormatException` and print \"Caught NumberFormatException\".\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        // try to parse \"xyz\", catch NumberFormatException and print message\n    }\n}\n```",
+        "common_mistakes": "- Catching generic `Exception` and swallowing it silently without logging or handling.\n- Forgetting that `finally` runs even if a `return` statement is hit inside `try`.",
+        "recap": "- `try-catch` prevents crashes and handles errors gracefully.\n- `finally` ensures cleanup runs."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            int num = Integer.parseInt(\"abc\");\n        } catch (NumberFormatException e) {\n            System.out.println(\"Parsing failed\");\n        }\n    }\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        // try to parse \"xyz\", catch NumberFormatException and print message\n    }\n}",
+      "checks": [
+        {
+          "question": "Does a finally block execute if an exception occurs?",
+          "answer": "Yes, finally blocks always execute regardless of whether an exception was thrown or caught."
+        },
+        {
+          "question": "What is the base class for exceptions that do not require mandatory handling?",
+          "answer": "RuntimeException (unchecked exceptions)."
+        },
+        {
+          "question": "What keyword is used to explicitly raise an exception?",
+          "answer": "throw."
+        }
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "java-structure",
+      "title": "Program Structure",
+      "lesson_id": "01-program-structure",
+      "summary": "public class Main, main method, System.out.println, javac/java workflow.",
+      "prerequisites": [],
+      "error_categories": [
+        "missing_semicolon",
+        "class_name_mismatch",
+        "missing_main"
+      ]
+    },
+    {
+      "id": "java-types",
+      "title": "Variables and Types",
+      "lesson_id": "02-variables-and-types",
+      "summary": "int, double, boolean, String, char, final, type casting.",
+      "prerequisites": [
+        "java-structure"
+      ],
+      "error_categories": [
+        "type_mismatch",
+        "uninitialized_variable",
+        "lossy_cast"
+      ]
+    },
+    {
+      "id": "java-io",
+      "title": "Input and Output",
+      "lesson_id": "03-input-output",
+      "summary": "Scanner, System.out.println/print/printf, nextLine/nextInt.",
+      "prerequisites": [
+        "java-types"
+      ],
+      "error_categories": [
+        "scanner_not_closed",
+        "wrong_next_method",
+        "missing_import"
+      ]
+    },
+    {
+      "id": "java-operators",
+      "title": "Operators",
+      "lesson_id": "04-operators",
+      "summary": "Arithmetic, integer division, modulo, increment, comparison, logical, ternary.",
+      "prerequisites": [
+        "java-types"
+      ],
+      "error_categories": [
+        "integer_division",
+        "operator_precedence",
+        "wrong_comparison"
+      ]
+    },
+    {
+      "id": "java-conditions",
+      "title": "Conditions",
+      "lesson_id": "05-conditions",
+      "summary": "if/else if/else, switch, String comparison with .equals().",
+      "prerequisites": [
+        "java-operators"
+      ],
+      "error_categories": [
+        "reference_equality_on_string",
+        "missing_break",
+        "unreachable_else"
+      ]
+    },
+    {
+      "id": "java-loops",
+      "title": "Loops",
+      "lesson_id": "06-loops",
+      "summary": "for, while, do-while, enhanced for-each, break, continue.",
+      "prerequisites": [
+        "java-conditions"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "infinite_loop",
+        "wrong_loop_variable"
+      ]
+    },
+    {
+      "id": "java-methods",
+      "title": "Methods",
+      "lesson_id": "07-methods",
+      "summary": "Static methods, return types, void, parameters, overloading.",
+      "prerequisites": [
+        "java-loops"
+      ],
+      "error_categories": [
+        "missing_return",
+        "wrong_return_type",
+        "void_return_used"
+      ]
+    },
+    {
+      "id": "java-arrays",
+      "title": "Arrays and Strings",
+      "lesson_id": "08-arrays-and-strings",
+      "summary": "int[] arrays, .length, ArrayIndexOutOfBoundsException, String methods.",
+      "prerequisites": [
+        "java-methods"
+      ],
+      "error_categories": [
+        "array_out_of_bounds",
+        "null_string",
+        "string_equals_not_used"
+      ]
+    },
+    {
+      "id": "java-classes",
+      "title": "Classes and Objects",
+      "lesson_id": "09-classes-and-objects",
+      "summary": "Class definition, fields, constructor, new keyword, this, toString.",
+      "prerequisites": [
+        "java-methods"
+      ],
+      "error_categories": [
+        "missing_constructor",
+        "null_pointer",
+        "wrong_this_usage"
+      ]
+    },
+    {
+      "id": "java-encapsulation",
+      "title": "Encapsulation",
+      "lesson_id": "10-encapsulation",
+      "summary": "private fields, public getters/setters, access modifiers.",
+      "prerequisites": [
+        "java-classes"
+      ],
+      "error_categories": [
+        "public_field",
+        "missing_getter",
+        "setter_validation_skipped"
+      ]
+    },
+    {
+      "id": "java-collections",
+      "title": "Collections",
+      "lesson_id": "11-collections",
+      "summary": "ArrayList<T>, HashMap<K,V>, add/get/remove/put/containsKey.",
+      "prerequisites": [
+        "java-classes"
+      ],
+      "error_categories": [
+        "raw_type_warning",
+        "concurrent_modification",
+        "key_not_found"
+      ]
+    },
+    {
+      "id": "java-exceptions",
+      "title": "Exceptions",
+      "lesson_id": "12-exceptions",
+      "summary": "try/catch/finally, throw, checked vs unchecked, multi-catch.",
+      "prerequisites": [
+        "java-methods",
+        "java-arrays"
+      ],
+      "error_categories": [
+        "swallowed_exception",
+        "wrong_exception_type",
+        "unchecked_not_declared"
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "java-struct-hello",
+      "concept_id": "java-structure",
+      "lesson_id": "01-program-structure",
+      "type": "write-a-function",
+      "title": "Hello, MentorSmith",
+      "prompt": "Write a program that prints exactly:\nHello, MentorSmith!\nJava is compiled.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        // print the two lines\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "Hello, MentorSmith!\nJava is compiled.\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "hello-world",
+        "output"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-struct-predict",
+      "concept_id": "java-structure",
+      "lesson_id": "01-program-structure",
+      "type": "predict-output",
+      "title": "What does this print?",
+      "prompt": "Predict the exact output. Pay attention to which method adds a newline.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        System.out.print(\"A\");\n        System.out.println(\"B\");\n        System.out.println(\"C\");\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "AB\nC\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "print",
+        "println"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-types-cast",
+      "concept_id": "java-types",
+      "lesson_id": "02-variables-and-types",
+      "type": "predict-output",
+      "title": "Integer division surprise",
+      "prompt": "Predict the output. Java performs integer division when both operands are int.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int a = 7;\n        int b = 2;\n        System.out.println(a / b);\n        System.out.println((double) a / b);\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "3\n3.5\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "integer-division",
+        "casting"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-types-fix-final",
+      "concept_id": "java-types",
+      "lesson_id": "02-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Changing a constant",
+      "prompt": "This won't compile. Fix it so PI is 3.14159 and the program prints the area of a circle with radius 5.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        final double PI = 3.14159;\n        PI = 3.14;\n        System.out.println(PI * 5 * 5);\n    }\n}\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        final double PI = 3.14159;\n        System.out.println(PI * 5 * 5);\n    }\n}\n",
+      "expected_stdout": "78.53975\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "final",
+        "constant"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-operators-modulo",
+      "concept_id": "java-operators",
+      "lesson_id": "04-operators",
+      "type": "predict-output",
+      "title": "Even or odd?",
+      "prompt": "Predict what the ternary expression prints for n=7.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int n = 7;\n        String result = (n % 2 == 0) ? \"even\" : \"odd\";\n        System.out.println(result);\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "odd\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "modulo",
+        "ternary"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-conditions-string-eq",
+      "concept_id": "java-conditions",
+      "lesson_id": "05-conditions",
+      "type": "find-a-bug",
+      "title": "String comparison trap",
+      "prompt": "This always prints 'not java' even when the input is 'java'. Fix it.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        String lang = \"java\";\n        if (lang == \"java\") {\n            System.out.println(\"java!\");\n        } else {\n            System.out.println(\"not java\");\n        }\n    }\n}\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        String lang = \"java\";\n        if (lang.equals(\"java\")) {\n            System.out.println(\"java!\");\n        } else {\n            System.out.println(\"not java\");\n        }\n    }\n}\n",
+      "expected_stdout": "java!\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "string-comparison",
+        "equals"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-loops-sum",
+      "concept_id": "java-loops",
+      "lesson_id": "06-loops",
+      "type": "write-a-function",
+      "title": "Sum 1 to N",
+      "prompt": "Print the sum of integers from 1 to 10 inclusive. Expected output: 55",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int sum = 0;\n        // loop from 1 to 10\n        System.out.println(sum);\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "55\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "for-loop",
+        "accumulator"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-loops-offbyone",
+      "concept_id": "java-loops",
+      "lesson_id": "06-loops",
+      "type": "find-a-bug",
+      "title": "Off by one",
+      "prompt": "This prints 1 2 3 4 5 6 but should print 1 2 3 4 5 only. Fix the loop.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 6; i++) {\n            System.out.print(i + \" \");\n        }\n        System.out.println();\n    }\n}\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 5; i++) {\n            System.out.print(i + \" \");\n        }\n        System.out.println();\n    }\n}\n",
+      "expected_stdout": "1 2 3 4 5 \n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "off-by-one",
+        "for-loop"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-methods-overload",
+      "concept_id": "java-methods",
+      "lesson_id": "07-methods",
+      "type": "predict-output",
+      "title": "Overloaded add",
+      "prompt": "Predict the output. Java picks the method based on argument types.",
+      "code": "public class Main {\n    static int add(int a, int b) { return a + b; }\n    static double add(double a, double b) { return a + b; }\n    public static void main(String[] args) {\n        System.out.println(add(3, 4));\n        System.out.println(add(3.0, 4.0));\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "7\n7.0\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "overloading"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-arrays-oob",
+      "concept_id": "java-arrays",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "find-a-bug",
+      "title": "ArrayIndexOutOfBoundsException",
+      "prompt": "This crashes. Fix it so it prints all 3 elements without crashing.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int[] nums = {10, 20, 30};\n        for (int i = 0; i <= nums.length; i++) {\n            System.out.println(nums[i]);\n        }\n    }\n}\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        int[] nums = {10, 20, 30};\n        for (int i = 0; i < nums.length; i++) {\n            System.out.println(nums[i]);\n        }\n    }\n}\n",
+      "expected_stdout": "10\n20\n30\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "array-bounds",
+        "off-by-one"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-classes-tostring",
+      "concept_id": "java-classes",
+      "lesson_id": "09-classes-and-objects",
+      "type": "find-a-bug",
+      "title": "Useless toString",
+      "prompt": "Printing a Point object shows something like Point@1a2b3c. Override toString to print Point(3, 4) instead.",
+      "code": "public class Main {\n    static class Point {\n        int x, y;\n        Point(int x, int y) { this.x = x; this.y = y; }\n    }\n    public static void main(String[] args) {\n        System.out.println(new Point(3, 4));\n    }\n}\n",
+      "starter_code": "public class Main {\n    static class Point {\n        int x, y;\n        Point(int x, int y) { this.x = x; this.y = y; }\n        @Override\n        public String toString() { return \"Point(\" + x + \", \" + y + \")\"; }\n    }\n    public static void main(String[] args) {\n        System.out.println(new Point(3, 4));\n    }\n}\n",
+      "expected_stdout": "Point(3, 4)\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "tostring",
+        "override"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-collections-list",
+      "concept_id": "java-collections",
+      "lesson_id": "11-collections",
+      "type": "write-a-function",
+      "title": "ArrayList sum",
+      "prompt": "Create an ArrayList of integers [3, 7, 2, 9, 1], compute their sum and print it. Expected: 22",
+      "code": "import java.util.ArrayList;\n\npublic class Main {\n    public static void main(String[] args) {\n        ArrayList<Integer> numbers = new ArrayList<>();\n        // add 3, 7, 2, 9, 1\n        int sum = 0;\n        // sum them\n        System.out.println(sum);\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "22\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "arraylist",
+        "sum"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-exceptions-nfe",
+      "concept_id": "java-exceptions",
+      "lesson_id": "12-exceptions",
+      "type": "find-a-bug",
+      "title": "Crash on bad input",
+      "prompt": "Parsing 'abc' crashes with NumberFormatException. Catch it and print 'invalid number' instead.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        String input = \"abc\";\n        int value = Integer.parseInt(input);\n        System.out.println(value);\n    }\n}\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        String input = \"abc\";\n        try {\n            int value = Integer.parseInt(input);\n            System.out.println(value);\n        } catch (NumberFormatException e) {\n            System.out.println(\"invalid number\");\n        }\n    }\n}\n",
+      "expected_stdout": "invalid number\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "try-catch",
+        "NumberFormatException"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-io-print",
+      "concept_id": "java-io",
+      "lesson_id": "03-input-output",
+      "type": "predict-output",
+      "title": "Formatted printf output",
+      "prompt": "Predict what this printf outputs. %.2f rounds to two decimal places.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        double val = 3.14159;\n        System.out.printf(\"PI: %.2f\\n\", val);\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "PI: 3.14\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": true,
+      "tags": [
+        "printf",
+        "formatting"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-encapsulation-getter",
+      "concept_id": "java-encapsulation",
+      "lesson_id": "10-encapsulation",
+      "type": "write-a-function",
+      "title": "Encapsulated user age",
+      "prompt": "Write a static class User with private int age, a constructor User(int age), and a getter getAge(). Instantiate User(21) and print its age.",
+      "code": "public class Main {\n    static class User {\n        private int age;\n        public User(int age) { this.age = age; }\n        public int getAge() { return this.age; }\n    }\n    public static void main(String[] args) {\n        User u = new User(21);\n        System.out.println(u.getAge());\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "21\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "getter",
+        "private"
+      ],
+      "graded_by": "deterministic"
+    }
+  ],
+  "projects": [
+    {
+      "id": "java-bank-account-sim",
+      "title": "Bank Account & Transaction Simulator",
+      "purpose": "Master Java OOP fundamentals, encapsulation, defensive validation, and Scanner interaction.",
+      "concepts": [
+        "java-structure",
+        "java-types",
+        "java-conditions",
+        "java-methods",
+        "java-classes",
+        "java-encapsulation"
+      ],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "BankAccount encapsulation",
+          "requirements": "Create BankAccount with private accountNumber, holderName, and balance. Reject negative deposits or withdrawals exceeding balance.",
+          "acceptance_criteria": [
+            "Validates positive deposit amounts",
+            "Withdrawal checks sufficient funds and returns boolean success",
+            "Balance can only be mutated through deposit/withdraw methods"
+          ],
+          "hint": "Check if (amount <= 0) return false; before modifying balance."
+        },
+        {
+          "title": "Transaction history recording",
+          "requirements": "Track an ArrayList of Transaction objects with timestamp, type (DEPOSIT/WITHDRAW), and resulting balance.",
+          "acceptance_criteria": [
+            "Every successful mutation appends a Transaction record",
+            "Provides printStatement() method formatting transactions",
+            "Protects history from external modification"
+          ],
+          "hint": "Return new ArrayList<>(transactions) in getTransactions() to prevent outside mutations."
+        },
+        {
+          "title": "Interactive Console Menu",
+          "requirements": "Provide a loop offering deposit, withdraw, check balance, and statement options via Scanner.",
+          "acceptance_criteria": [
+            "Loop continues until exit option is chosen",
+            "Handles invalid menu choice with polite notice",
+            "Maintains account state throughout user session"
+          ],
+          "hint": "Use a switch (choice) block inside while (!exit)."
+        }
+      ],
+      "extensions": [
+        "Support multiple accounts with account lookup by ID",
+        "Add interest calculation for savings accounts",
+        "Persist account records to a local text file"
+      ]
+    },
+    {
+      "id": "java-inventory-manager",
+      "title": "Enterprise Inventory Management System",
+      "purpose": "Harness Java Collections (HashMap, ArrayList), custom Exceptions, and file persistence.",
+      "concepts": [
+        "java-classes",
+        "java-encapsulation",
+        "java-collections",
+        "java-exceptions"
+      ],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Item entity and custom exceptions",
+          "requirements": "Create Product item class and custom checked exceptions InsufficientStockException and DuplicateItemException.",
+          "acceptance_criteria": [
+            "Exceptions inherit from Exception and carry descriptive messages",
+            "Product equals and hashCode methods use SKU string",
+            "Product fields are immutable or properly validated"
+          ],
+          "hint": "Override equals(Object o) and hashCode() using Objects.hash(sku)."
+        },
+        {
+          "title": "Inventory catalog engine",
+          "requirements": "Implement Inventory service using HashMap<String, Product> supporting restock, sell, and query operations.",
+          "acceptance_criteria": [
+            "Throws InsufficientStockException when quantity requested exceeds stock",
+            "Lookup by SKU runs in O(1) average time complexity",
+            "Methods handle null inputs safely"
+          ],
+          "hint": "Use inventoryMap.get(sku) and check product.getQuantity() >= needed."
+        },
+        {
+          "title": "Robust file export and audit report",
+          "requirements": "Write inventory status to report.csv and implement try-with-resources to safeguard against file leaks.",
+          "acceptance_criteria": [
+            "Uses try (PrintWriter writer = new PrintWriter(...)) {} structure",
+            "Logs warnings for low-stock thresholds (< 5 units)",
+            "Re-reads catalog cleanly on startup"
+          ],
+          "hint": "Use BufferedReader and line.split(\",\") to parse existing catalog."
+        }
+      ],
+      "extensions": [
+        "Filter catalog by price range or category using Java Streams",
+        "Sort products by stock quantity or name with Comparator",
+        "Add unit tests using JUnit assertThrows"
+      ]
+    },
+    {
+      "id": "java-concurrent-cache-server",
+      "title": "Thread-Safe In-Memory Cache & Server",
+      "purpose": "Master advanced Java concurrency: ReentrantLock / ConcurrentHashMap, TTL expiration, and TCP Sockets.",
+      "concepts": [
+        "java-classes",
+        "java-collections",
+        "java-exceptions"
+      ],
+      "difficulty": "advanced",
+      "milestones": [
+        {
+          "title": "Thread-safe cache core with TTL",
+          "requirements": "Implement ConcurrentCache<K, V> supporting put(key, value, ttlMillis) and get(key) with expiry eviction.",
+          "acceptance_criteria": [
+            "Uses ConcurrentHashMap or ReadWriteLock for thread safety",
+            "Expired keys return null and are lazily or eagerly pruned",
+            "Supports stats tracking (hits, misses, evictions)"
+          ],
+          "hint": "Store a CacheEntry<V> object holding the value and expiration timestamp."
+        },
+        {
+          "title": "Background cleaner thread daemon",
+          "requirements": "Start a scheduled executor service or background daemon thread that periodically purges expired keys.",
+          "acceptance_criteria": [
+            "ScheduledExecutorService runs every N seconds",
+            "Clean shutdown hook terminates executor safely without hanging process",
+            "Does not throw ConcurrentModificationException during cleanup"
+          ],
+          "hint": "Use Executors.newSingleThreadScheduledExecutor(r -> { Thread t = new Thread(r); t.setDaemon(true); return t; })."
+        },
+        {
+          "title": "TCP client protocol handler",
+          "requirements": "Bind ServerSocket on port 8080 and handle client commands: GET <key>, SET <key> <val> <ttl>, STATS.",
+          "acceptance_criteria": [
+            "Spawns worker thread per client connection or uses thread pool",
+            "Parses command string and returns protocol response (OK / VALUE / NOT_FOUND)",
+            "Safely closes sockets on client disconnect"
+          ],
+          "hint": "Wrap clientSocket.getInputStream() in BufferedReader and output in PrintWriter."
+        }
+      ],
+      "extensions": [
+        "Implement LRU eviction policy when capacity limit is reached",
+        "Support snapshot serialization to disk for persistence",
+        "Benchmark throughput with multi-threaded stress test"
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "java-cpp-memory",
+      "concept": "Memory management and garbage collection",
+      "languages": [
+        "java",
+        "cpp"
+      ],
+      "same": "Both languages run compiled object-oriented code with classes and methods.",
+      "different": [
+        "Java runs in the JVM with an automatic Garbage Collector (GC); objects created with `new` are freed when unreachable.",
+        "C++ uses deterministic lifetime (RAII, destructors, smart pointers) and direct memory management without a GC pause.",
+        "Java has no pointers or manual `delete`, preventing memory leaks from forgotten frees, but gives up deterministic destruction order."
+      ],
+      "snippets": [
+        "// Java: JVM garbage collector manages memory\nPoint p = new Point(1, 2);\n// Automatically freed when no longer referenced",
+        "// C++: RAII deterministic lifetime\nauto p = std::make_unique<Point>(1, 2);\n// Freed deterministically as soon as p leaves scope"
+      ],
+      "question": "What is the main trade-off between Java's garbage collection and C++'s RAII?"
+    }
+  ]
+}

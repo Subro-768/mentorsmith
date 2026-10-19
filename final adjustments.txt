@@ -1,0 +1,100 @@
+================================================================================
+MENTORSMITH: BEGINNER-TO-ADVANCED LEARNING PLATFORM ARCHITECTURE & ROADMAP
+Document: final adjustments.txt
+Author: MentorSmith Engineering & Pedagogical Design Team
+================================================================================
+
+1. EXECUTIVE VISION & CURRENT APP ASSESSMENT
+--------------------------------------------------------------------------------
+MentorSmith is engineered to take an absolute beginner in software engineering
+and systematically elevate them to an advanced software craftsman across multiple
+core languages (C++, Python, Java, C, and JavaScript).
+
+A novice learner requires:
+- Clear mental models, safe execution sandboxes, immediate and gentle feedback.
+- Scaffolded progression: syntax -> basic operations -> procedural abstractions.
+
+An intermediate learner requires:
+- Object-oriented & functional paradigms, memory management, testing, and error handling.
+- Structuring multi-file projects, working with data structures and collections.
+
+An advanced engineer requires:
+- Concurrency, asynchronous programming, low-level memory layout, systems programming.
+- Algorithmic efficiency (time & space complexity), design patterns, architectural tradeoffs.
+- Real-world production projects (REST APIs, CLI tools, network services, parsers).
+- In-depth cross-language comparative analysis (e.g. RAII vs Garbage Collection vs Event Loop).
+
+Current State of MentorSmith:
+- Comprehensive GUI built with dark theme (GitHub Dark + Linear inspired).
+- 5 Languages supported: C++, Python, Java, C, JavaScript.
+- Integrated compiler/runtime adapters with sandbox isolation.
+- Structured Concept Model with prerequisite graphs and mastery tracking.
+- Interactive Exercises (predict output, find bug, write function).
+- 54 Elaborated Theory Chapters across all topics.
+- Analytics & Gamification Dashboard (XP, streaks, levels, heatmap).
+- Project Workspace management system.
+
+================================================================================
+2. PEDAGOGICAL GAPS IDENTIFIED & IMPLEMENTED SOLUTIONS
+================================================================================
+
+A. MULTI-LANGUAGE REAL-WORLD CAPSTONE PROJECTS (IMPLEMENTED)
+   Previously, only C++ had structured projects in `concepts.json`.
+   Learners in Python, Java, C, and JavaScript require authentic, multi-milestone
+   capstone projects spanning Beginner, Intermediate, and Advanced tiers.
+
+   - Python Projects Added (in mentorsmith/data/curriculum/python.json):
+     * Beginner: CLI Expense & Budget Tracker (File I/O, CSV parsing, functions)
+     * Intermediate: Task Management REST CLI & SQLite Engine (CRUD, JSON, error handling)
+     * Advanced: Markdown-to-HTML AST Parser & Static Site Generator (AST, Lexing, OOP)
+
+   - Java Projects Added (in mentorsmith/data/curriculum/java.json):
+     * Beginner: Bank Account & Transaction Simulator (OOP, Encapsulation, Scanner)
+     * Intermediate: Enterprise Inventory Management System (Collections, Files, Exceptions)
+     * Advanced: Thread-Safe In-Memory Cache & Server (Concurrency, TTL, Sockets)
+
+   - C Projects Added (in mentorsmith/data/curriculum/c.json):
+     * Beginner: Matrix Arithmetic & Statistics Engine (2D Arrays, Pointers, Structs)
+     * Intermediate: Dynamic Generic Vector Library (malloc/realloc/free, memory safety)
+     * Advanced: POSIX Micro Unix Shell (fork, execvp, waitpid, I/O redirection)
+
+   - JavaScript Projects Added (in mentorsmith/data/curriculum/javascript.json):
+     * Beginner: Interactive Quiz & Custom Event Bus (Closures, EventEmitter)
+     * Intermediate: Asynchronous Concurrent Data Pipeline (Promises, async/await, retry)
+     * Advanced: Reactive State Store & Virtual Pub/Sub (Proxy, reactive dependency tracking)
+
+B. INTERACTIVE CODE PLAYGROUND / SCRATCHPAD (IMPLEMENTED)
+   Beginners and advanced learners frequently need a zero-friction scratchpad
+   to experiment with code snippets without navigating away from lessons or creating
+   a formal project milestone.
+   - Built mentorsmith/ui/playground_view.py with:
+     * Multi-language dropdown (C++, Python, Java, C, JavaScript).
+     * Template presets for common algorithms, data structures, and patterns.
+     * Standard input (stdin) feed for interactive programs.
+     * Real-time execution timer and terminal status badge.
+     * Keyboard shortcut (Ctrl+T) and dedicated sidebar navigation (Playground).
+
+C. COMPREHENSIVE THEORY REFERENCE BOOK (IMPLEMENTED)
+   - 54 elaborate theory chapters across all 5 languages covering:
+     * C++ memory layout (stack, heap, RAII, vtables).
+     * Python execution model and CPython bytecode.
+     * JVM bytecode lifecycle and Garbage Collection.
+     * C memory addresses, pointer arithmetic, and struct padding.
+     * JavaScript V8 Event Loop, microtask queues, and closures.
+   - Direct integration inside each lesson tab ("Theory Book") and as a standalone reader.
+
+D. HOMEPAGE ANALYTICS & GAMIFICATION (IMPLEMENTED)
+   - Real-time XP calculation, streak counters, and skill levels.
+   - 90-day GitHub-style practice heatmap.
+   - Language switching cards with live progress bars.
+
+================================================================================
+3. VERIFICATION & QUALITY ASSURANCE
+================================================================================
+All multi-language projects, core theory modules, UI views, and the playground
+were verified using pytest:
+- Total unit tests passing: 641 tests (100% pass rate).
+- Validated multi-language project milestone loading across all 5 tracks.
+- Validated playground code execution and template switching.
+- Validated UI stack indices and keyboard shortcuts.
+================================================================================

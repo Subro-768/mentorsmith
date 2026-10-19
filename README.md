@@ -28,6 +28,36 @@ its logic is unit-tested, but nobody has watched it start.
 
 ---
 
+## Installing it as a Linux application
+
+```bash
+python3 tools/install_desktop.py          # per-user install, no sudo needed
+mentorsmith                              # or launch "MentorSmith" from your menu
+```
+
+That writes three things under `~/.local`, and refreshes the icon and desktop
+caches:
+
+| Path | What |
+|---|---|
+| `~/.local/bin/mentorsmith` | launcher, pointing at this checkout |
+| `~/.local/share/applications/mentorsmith.desktop` | menu entry |
+| `~/.local/share/icons/hicolor/<n>x<n>/apps/mentorsmith.png` | 8 icon sizes |
+
+`--dry-run` shows what it would do; `--uninstall` removes it.
+
+Editing the source takes effect immediately — the launcher points at the
+checkout rather than copying files, so there is nothing to reinstall.
+
+**The logo.** `mentorsmith/assets/logo.svg` is the single source of truth.
+`tools/build_icons.py` renders it to every size the desktop and Android need
+using PyQt6's QtSvg, so there is no Inkscape or ImageMagick requirement:
+
+```bash
+python3 tools/build_icons.py
+python3 tools/build_icons.py --check     # fail if the PNGs are stale
+```
+
 ## Try it in five minutes
 
 ```bash

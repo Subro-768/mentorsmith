@@ -33,15 +33,17 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 CODE_FENCE: dict[str, str] = {
     "cpp": "cpp",
     "python": "python",
+    "java": "java",
     "c": "c",
     "javascript": "javascript",
 }
 
-LANGUAGE_IDS: tuple[str, ...] = ("cpp", "python", "c", "javascript")
+LANGUAGE_IDS: tuple[str, ...] = ("cpp", "python", "java", "c", "javascript")
 
 LANGUAGE_LABELS: dict[str, str] = {
     "cpp": "C++",
     "python": "Python",
+    "java": "Java",
     "c": "C",
     "javascript": "JavaScript",
 }

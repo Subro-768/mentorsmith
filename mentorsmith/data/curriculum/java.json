@@ -1,0 +1,544 @@
+{
+  "language": "java",
+  "concepts": [
+    {
+      "id": "java-structure",
+      "title": "Program Structure",
+      "lesson_id": "01-program-structure",
+      "summary": "public class Main, main method, System.out.println, javac/java workflow.",
+      "prerequisites": [],
+      "error_categories": [
+        "missing_semicolon",
+        "class_name_mismatch",
+        "missing_main"
+      ]
+    },
+    {
+      "id": "java-types",
+      "title": "Variables and Types",
+      "lesson_id": "02-variables-and-types",
+      "summary": "int, double, boolean, String, char, final, type casting.",
+      "prerequisites": [
+        "java-structure"
+      ],
+      "error_categories": [
+        "type_mismatch",
+        "uninitialized_variable",
+        "lossy_cast"
+      ]
+    },
+    {
+      "id": "java-io",
+      "title": "Input and Output",
+      "lesson_id": "03-input-output",
+      "summary": "Scanner, System.out.println/print/printf, nextLine/nextInt.",
+      "prerequisites": [
+        "java-types"
+      ],
+      "error_categories": [
+        "scanner_not_closed",
+        "wrong_next_method",
+        "missing_import"
+      ]
+    },
+    {
+      "id": "java-operators",
+      "title": "Operators",
+      "lesson_id": "04-operators",
+      "summary": "Arithmetic, integer division, modulo, increment, comparison, logical, ternary.",
+      "prerequisites": [
+        "java-types"
+      ],
+      "error_categories": [
+        "integer_division",
+        "operator_precedence",
+        "wrong_comparison"
+      ]
+    },
+    {
+      "id": "java-conditions",
+      "title": "Conditions",
+      "lesson_id": "05-conditions",
+      "summary": "if/else if/else, switch, String comparison with .equals().",
+      "prerequisites": [
+        "java-operators"
+      ],
+      "error_categories": [
+        "reference_equality_on_string",
+        "missing_break",
+        "unreachable_else"
+      ]
+    },
+    {
+      "id": "java-loops",
+      "title": "Loops",
+      "lesson_id": "06-loops",
+      "summary": "for, while, do-while, enhanced for-each, break, continue.",
+      "prerequisites": [
+        "java-conditions"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "infinite_loop",
+        "wrong_loop_variable"
+      ]
+    },
+    {
+      "id": "java-methods",
+      "title": "Methods",
+      "lesson_id": "07-methods",
+      "summary": "Static methods, return types, void, parameters, overloading.",
+      "prerequisites": [
+        "java-loops"
+      ],
+      "error_categories": [
+        "missing_return",
+        "wrong_return_type",
+        "void_return_used"
+      ]
+    },
+    {
+      "id": "java-arrays",
+      "title": "Arrays and Strings",
+      "lesson_id": "08-arrays-and-strings",
+      "summary": "int[] arrays, .length, ArrayIndexOutOfBoundsException, String methods.",
+      "prerequisites": [
+        "java-methods"
+      ],
+      "error_categories": [
+        "array_out_of_bounds",
+        "null_string",
+        "string_equals_not_used"
+      ]
+    },
+    {
+      "id": "java-classes",
+      "title": "Classes and Objects",
+      "lesson_id": "09-classes-and-objects",
+      "summary": "Class definition, fields, constructor, new keyword, this, toString.",
+      "prerequisites": [
+        "java-methods"
+      ],
+      "error_categories": [
+        "missing_constructor",
+        "null_pointer",
+        "wrong_this_usage"
+      ]
+    },
+    {
+      "id": "java-encapsulation",
+      "title": "Encapsulation",
+      "lesson_id": "10-encapsulation",
+      "summary": "private fields, public getters/setters, access modifiers.",
+      "prerequisites": [
+        "java-classes"
+      ],
+      "error_categories": [
+        "public_field",
+        "missing_getter",
+        "setter_validation_skipped"
+      ]
+    },
+    {
+      "id": "java-collections",
+      "title": "Collections",
+      "lesson_id": "11-collections",
+      "summary": "ArrayList<T>, HashMap<K,V>, add/get/remove/put/containsKey.",
+      "prerequisites": [
+        "java-classes"
+      ],
+      "error_categories": [
+        "raw_type_warning",
+        "concurrent_modification",
+        "key_not_found"
+      ]
+    },
+    {
+      "id": "java-exceptions",
+      "title": "Exceptions",
+      "lesson_id": "12-exceptions",
+      "summary": "try/catch/finally, throw, checked vs unchecked, multi-catch.",
+      "prerequisites": [
+        "java-methods",
+        "java-arrays"
+      ],
+      "error_categories": [
+        "swallowed_exception",
+        "wrong_exception_type",
+        "unchecked_not_declared"
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "java-struct-hello",
+      "concept_id": "java-structure",
+      "lesson_id": "01-program-structure",
+      "type": "write-a-function",
+      "title": "Hello, MentorSmith",
+      "prompt": "Write a program that prints exactly:\nHello, MentorSmith!\nJava is compiled.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        // print the two lines\n    }\n}\n",
+      "expected_stdout": "Hello, MentorSmith!\nJava is compiled.\n",
+      "tags": [
+        "hello-world",
+        "output"
+      ]
+    },
+    {
+      "id": "java-struct-predict",
+      "concept_id": "java-structure",
+      "lesson_id": "01-program-structure",
+      "type": "predict-output",
+      "title": "What does this print?",
+      "prompt": "Predict the exact output. Pay attention to which method adds a newline.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        System.out.print(\"A\");\n        System.out.println(\"B\");\n        System.out.println(\"C\");\n    }\n}\n",
+      "expected_stdout": "AB\nC\n",
+      "novel": true,
+      "tags": [
+        "print",
+        "println"
+      ]
+    },
+    {
+      "id": "java-types-cast",
+      "concept_id": "java-types",
+      "lesson_id": "02-variables-and-types",
+      "type": "predict-output",
+      "title": "Integer division surprise",
+      "prompt": "Predict the output. Java performs integer division when both operands are int.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int a = 7;\n        int b = 2;\n        System.out.println(a / b);\n        System.out.println((double) a / b);\n    }\n}\n",
+      "expected_stdout": "3\n3.5\n",
+      "novel": true,
+      "tags": [
+        "integer-division",
+        "casting"
+      ]
+    },
+    {
+      "id": "java-types-fix-final",
+      "concept_id": "java-types",
+      "lesson_id": "02-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Changing a constant",
+      "prompt": "This won't compile. Fix it so PI is 3.14159 and the program prints the area of a circle with radius 5.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        final double PI = 3.14159;\n        PI = 3.14;\n        System.out.println(PI * 5 * 5);\n    }\n}\n",
+      "expected_stdout": "78.53975\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        final double PI = 3.14159;\n        System.out.println(PI * 5 * 5);\n    }\n}\n",
+      "tags": [
+        "final",
+        "constant"
+      ]
+    },
+    {
+      "id": "java-operators-modulo",
+      "concept_id": "java-operators",
+      "lesson_id": "04-operators",
+      "type": "predict-output",
+      "title": "Even or odd?",
+      "prompt": "Predict what the ternary expression prints for n=7.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int n = 7;\n        String result = (n % 2 == 0) ? \"even\" : \"odd\";\n        System.out.println(result);\n    }\n}\n",
+      "expected_stdout": "odd\n",
+      "novel": true,
+      "tags": [
+        "modulo",
+        "ternary"
+      ]
+    },
+    {
+      "id": "java-conditions-string-eq",
+      "concept_id": "java-conditions",
+      "lesson_id": "05-conditions",
+      "type": "find-a-bug",
+      "title": "String comparison trap",
+      "prompt": "This always prints 'not java' even when the input is 'java'. Fix it.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        String lang = \"java\";\n        if (lang == \"java\") {\n            System.out.println(\"java!\");\n        } else {\n            System.out.println(\"not java\");\n        }\n    }\n}\n",
+      "expected_stdout": "java!\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        String lang = \"java\";\n        if (lang.equals(\"java\")) {\n            System.out.println(\"java!\");\n        } else {\n            System.out.println(\"not java\");\n        }\n    }\n}\n",
+      "tags": [
+        "string-comparison",
+        "equals"
+      ]
+    },
+    {
+      "id": "java-loops-sum",
+      "concept_id": "java-loops",
+      "lesson_id": "06-loops",
+      "type": "write-a-function",
+      "title": "Sum 1 to N",
+      "prompt": "Print the sum of integers from 1 to 10 inclusive. Expected output: 55",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int sum = 0;\n        // loop from 1 to 10\n        System.out.println(sum);\n    }\n}\n",
+      "expected_stdout": "55\n",
+      "tags": [
+        "for-loop",
+        "accumulator"
+      ]
+    },
+    {
+      "id": "java-loops-offbyone",
+      "concept_id": "java-loops",
+      "lesson_id": "06-loops",
+      "type": "find-a-bug",
+      "title": "Off by one",
+      "prompt": "This prints 1 2 3 4 5 6 but should print 1 2 3 4 5 only. Fix the loop.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 6; i++) {\n            System.out.print(i + \" \");\n        }\n        System.out.println();\n    }\n}\n",
+      "expected_stdout": "1 2 3 4 5 \n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 5; i++) {\n            System.out.print(i + \" \");\n        }\n        System.out.println();\n    }\n}\n",
+      "tags": [
+        "off-by-one",
+        "for-loop"
+      ]
+    },
+    {
+      "id": "java-methods-overload",
+      "concept_id": "java-methods",
+      "lesson_id": "07-methods",
+      "type": "predict-output",
+      "title": "Overloaded add",
+      "prompt": "Predict the output. Java picks the method based on argument types.",
+      "code": "public class Main {\n    static int add(int a, int b) { return a + b; }\n    static double add(double a, double b) { return a + b; }\n    public static void main(String[] args) {\n        System.out.println(add(3, 4));\n        System.out.println(add(3.0, 4.0));\n    }\n}\n",
+      "expected_stdout": "7\n7.0\n",
+      "novel": true,
+      "tags": [
+        "overloading"
+      ]
+    },
+    {
+      "id": "java-arrays-oob",
+      "concept_id": "java-arrays",
+      "lesson_id": "08-arrays-and-strings",
+      "type": "find-a-bug",
+      "title": "ArrayIndexOutOfBoundsException",
+      "prompt": "This crashes. Fix it so it prints all 3 elements without crashing.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int[] nums = {10, 20, 30};\n        for (int i = 0; i <= nums.length; i++) {\n            System.out.println(nums[i]);\n        }\n    }\n}\n",
+      "expected_stdout": "10\n20\n30\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        int[] nums = {10, 20, 30};\n        for (int i = 0; i < nums.length; i++) {\n            System.out.println(nums[i]);\n        }\n    }\n}\n",
+      "tags": [
+        "array-bounds",
+        "off-by-one"
+      ]
+    },
+    {
+      "id": "java-classes-tostring",
+      "concept_id": "java-classes",
+      "lesson_id": "09-classes-and-objects",
+      "type": "find-a-bug",
+      "title": "Useless toString",
+      "prompt": "Printing a Point object shows something like Point@1a2b3c. Override toString to print Point(3, 4) instead.",
+      "code": "public class Main {\n    static class Point {\n        int x, y;\n        Point(int x, int y) { this.x = x; this.y = y; }\n    }\n    public static void main(String[] args) {\n        System.out.println(new Point(3, 4));\n    }\n}\n",
+      "expected_stdout": "Point(3, 4)\n",
+      "starter_code": "public class Main {\n    static class Point {\n        int x, y;\n        Point(int x, int y) { this.x = x; this.y = y; }\n        @Override\n        public String toString() { return \"Point(\" + x + \", \" + y + \")\"; }\n    }\n    public static void main(String[] args) {\n        System.out.println(new Point(3, 4));\n    }\n}\n",
+      "tags": [
+        "tostring",
+        "override"
+      ]
+    },
+    {
+      "id": "java-collections-list",
+      "concept_id": "java-collections",
+      "lesson_id": "11-collections",
+      "type": "write-a-function",
+      "title": "ArrayList sum",
+      "prompt": "Create an ArrayList of integers [3, 7, 2, 9, 1], compute their sum and print it. Expected: 22",
+      "code": "import java.util.ArrayList;\n\npublic class Main {\n    public static void main(String[] args) {\n        ArrayList<Integer> numbers = new ArrayList<>();\n        // add 3, 7, 2, 9, 1\n        int sum = 0;\n        // sum them\n        System.out.println(sum);\n    }\n}\n",
+      "expected_stdout": "22\n",
+      "tags": [
+        "arraylist",
+        "sum"
+      ]
+    },
+    {
+      "id": "java-exceptions-nfe",
+      "concept_id": "java-exceptions",
+      "lesson_id": "12-exceptions",
+      "type": "find-a-bug",
+      "title": "Crash on bad input",
+      "prompt": "Parsing 'abc' crashes with NumberFormatException. Catch it and print 'invalid number' instead.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        String input = \"abc\";\n        int value = Integer.parseInt(input);\n        System.out.println(value);\n    }\n}\n",
+      "expected_stdout": "invalid number\n",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        String input = \"abc\";\n        try {\n            int value = Integer.parseInt(input);\n            System.out.println(value);\n        } catch (NumberFormatException e) {\n            System.out.println(\"invalid number\");\n        }\n    }\n}\n",
+      "tags": [
+        "try-catch",
+        "NumberFormatException"
+      ]
+    },
+    {
+      "id": "java-io-print",
+      "concept_id": "java-io",
+      "lesson_id": "03-input-output",
+      "type": "predict-output",
+      "title": "Formatted printf output",
+      "prompt": "Predict what this printf outputs. %.2f rounds to two decimal places.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        double val = 3.14159;\n        System.out.printf(\"PI: %.2f\\n\", val);\n    }\n}\n",
+      "expected_stdout": "PI: 3.14\n",
+      "novel": true,
+      "tags": [
+        "printf",
+        "formatting"
+      ]
+    },
+    {
+      "id": "java-encapsulation-getter",
+      "concept_id": "java-encapsulation",
+      "lesson_id": "10-encapsulation",
+      "type": "write-a-function",
+      "title": "Encapsulated user age",
+      "prompt": "Write a static class User with private int age, a constructor User(int age), and a getter getAge(). Instantiate User(21) and print its age.",
+      "code": "public class Main {\n    static class User {\n        private int age;\n        public User(int age) { this.age = age; }\n        public int getAge() { return this.age; }\n    }\n    public static void main(String[] args) {\n        User u = new User(21);\n        System.out.println(u.getAge());\n    }\n}\n",
+      "expected_stdout": "21\n",
+      "tags": [
+        "getter",
+        "private"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "java-bank-account-sim",
+      "title": "Bank Account & Transaction Simulator",
+      "purpose": "Master Java OOP fundamentals, encapsulation, defensive validation, and Scanner interaction.",
+      "concepts": [
+        "java-structure",
+        "java-types",
+        "java-conditions",
+        "java-methods",
+        "java-classes",
+        "java-encapsulation"
+      ],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "BankAccount encapsulation",
+          "requirements": "Create BankAccount with private accountNumber, holderName, and balance. Reject negative deposits or withdrawals exceeding balance.",
+          "acceptance_criteria": [
+            "Validates positive deposit amounts",
+            "Withdrawal checks sufficient funds and returns boolean success",
+            "Balance can only be mutated through deposit/withdraw methods"
+          ],
+          "hint": "Check if (amount <= 0) return false; before modifying balance."
+        },
+        {
+          "title": "Transaction history recording",
+          "requirements": "Track an ArrayList of Transaction objects with timestamp, type (DEPOSIT/WITHDRAW), and resulting balance.",
+          "acceptance_criteria": [
+            "Every successful mutation appends a Transaction record",
+            "Provides printStatement() method formatting transactions",
+            "Protects history from external modification"
+          ],
+          "hint": "Return new ArrayList<>(transactions) in getTransactions() to prevent outside mutations."
+        },
+        {
+          "title": "Interactive Console Menu",
+          "requirements": "Provide a loop offering deposit, withdraw, check balance, and statement options via Scanner.",
+          "acceptance_criteria": [
+            "Loop continues until exit option is chosen",
+            "Handles invalid menu choice with polite notice",
+            "Maintains account state throughout user session"
+          ],
+          "hint": "Use a switch (choice) block inside while (!exit)."
+        }
+      ],
+      "extensions": [
+        "Support multiple accounts with account lookup by ID",
+        "Add interest calculation for savings accounts",
+        "Persist account records to a local text file"
+      ]
+    },
+    {
+      "id": "java-inventory-manager",
+      "title": "Enterprise Inventory Management System",
+      "purpose": "Harness Java Collections (HashMap, ArrayList), custom Exceptions, and file persistence.",
+      "concepts": [
+        "java-classes",
+        "java-encapsulation",
+        "java-collections",
+        "java-exceptions"
+      ],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Item entity and custom exceptions",
+          "requirements": "Create Product item class and custom checked exceptions InsufficientStockException and DuplicateItemException.",
+          "acceptance_criteria": [
+            "Exceptions inherit from Exception and carry descriptive messages",
+            "Product equals and hashCode methods use SKU string",
+            "Product fields are immutable or properly validated"
+          ],
+          "hint": "Override equals(Object o) and hashCode() using Objects.hash(sku)."
+        },
+        {
+          "title": "Inventory catalog engine",
+          "requirements": "Implement Inventory service using HashMap<String, Product> supporting restock, sell, and query operations.",
+          "acceptance_criteria": [
+            "Throws InsufficientStockException when quantity requested exceeds stock",
+            "Lookup by SKU runs in O(1) average time complexity",
+            "Methods handle null inputs safely"
+          ],
+          "hint": "Use inventoryMap.get(sku) and check product.getQuantity() >= needed."
+        },
+        {
+          "title": "Robust file export and audit report",
+          "requirements": "Write inventory status to report.csv and implement try-with-resources to safeguard against file leaks.",
+          "acceptance_criteria": [
+            "Uses try (PrintWriter writer = new PrintWriter(...)) {} structure",
+            "Logs warnings for low-stock thresholds (< 5 units)",
+            "Re-reads catalog cleanly on startup"
+          ],
+          "hint": "Use BufferedReader and line.split(\",\") to parse existing catalog."
+        }
+      ],
+      "extensions": [
+        "Filter catalog by price range or category using Java Streams",
+        "Sort products by stock quantity or name with Comparator",
+        "Add unit tests using JUnit assertThrows"
+      ]
+    },
+    {
+      "id": "java-concurrent-cache-server",
+      "title": "Thread-Safe In-Memory Cache & Server",
+      "purpose": "Master advanced Java concurrency: ReentrantLock / ConcurrentHashMap, TTL expiration, and TCP Sockets.",
+      "concepts": [
+        "java-classes",
+        "java-collections",
+        "java-exceptions"
+      ],
+      "difficulty": "advanced",
+      "milestones": [
+        {
+          "title": "Thread-safe cache core with TTL",
+          "requirements": "Implement ConcurrentCache<K, V> supporting put(key, value, ttlMillis) and get(key) with expiry eviction.",
+          "acceptance_criteria": [
+            "Uses ConcurrentHashMap or ReadWriteLock for thread safety",
+            "Expired keys return null and are lazily or eagerly pruned",
+            "Supports stats tracking (hits, misses, evictions)"
+          ],
+          "hint": "Store a CacheEntry<V> object holding the value and expiration timestamp."
+        },
+        {
+          "title": "Background cleaner thread daemon",
+          "requirements": "Start a scheduled executor service or background daemon thread that periodically purges expired keys.",
+          "acceptance_criteria": [
+            "ScheduledExecutorService runs every N seconds",
+            "Clean shutdown hook terminates executor safely without hanging process",
+            "Does not throw ConcurrentModificationException during cleanup"
+          ],
+          "hint": "Use Executors.newSingleThreadScheduledExecutor(r -> { Thread t = new Thread(r); t.setDaemon(true); return t; })."
+        },
+        {
+          "title": "TCP client protocol handler",
+          "requirements": "Bind ServerSocket on port 8080 and handle client commands: GET <key>, SET <key> <val> <ttl>, STATS.",
+          "acceptance_criteria": [
+            "Spawns worker thread per client connection or uses thread pool",
+            "Parses command string and returns protocol response (OK / VALUE / NOT_FOUND)",
+            "Safely closes sockets on client disconnect"
+          ],
+          "hint": "Wrap clientSocket.getInputStream() in BufferedReader and output in PrintWriter."
+        }
+      ],
+      "extensions": [
+        "Implement LRU eviction policy when capacity limit is reached",
+        "Support snapshot serialization to disk for persistence",
+        "Benchmark throughput with multi-threaded stress test"
+      ]
+    }
+  ]
+}

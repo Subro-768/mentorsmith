@@ -1,16 +1,14 @@
-"""AI tutor chat panel with the three assistance levels.
-
-The panel is responsible for being honest about the network transfer: it shows
-a persistent notice that code and prompts leave the machine, and it labels the
-level the tutor is currently allowed to use.
-"""
+"""AI tutor chat panel — bubble-style messages, segmented level control."""
 
 from __future__ import annotations
+
+import html as html_module
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
@@ -25,12 +23,10 @@ from . import theme
 
 
 class ChatPanel(QWidget):
-    """Conversation view for the AI tutor."""
+    """Conversation view for the AI tutor with bubble-style layout."""
 
-    #: Emitted with (message, assistance_level) when the learner sends.
-    message_requested = pyqtSignal(str, str)
-    #: Emitted when the learner asks for a hint without typing anything.
-    hint_requested = pyqtSignal(str)
+    message_requested = pyqtSignal(str, str)   # (message, level)
+    hint_requested    = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -41,13 +37,39 @@ class ChatPanel(QWidget):
     # ------------------------------------------------------------------
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        header = QHBoxLayout()
-        header.addWidget(QLabel("Assistance level:"))
+        # ── Top bar ──────────────────────────────────────────────────────
+        topbar = QWidget()
+        topbar.setStyleSheet(
+            f"background-color: {theme.SURFACE_ALT}; "
+            f"border-bottom: 1px solid {theme.BORDER};"
+        )
+        topbar.setFixedHeight(46)
+        topbar_lay = QHBoxLayout(topbar)
+        topbar_lay.setContentsMargins(12, 0, 12, 0)
+        topbar_lay.setSpacing(8)
+
+        tutor_icon = QLabel("🤖")
+        tutor_icon.setStyleSheet("font-size: 16px;")
+        topbar_lay.addWidget(tutor_icon)
+
+        tutor_title = QLabel("AI Tutor")
+        tutor_title.setStyleSheet(
+            f"font-size: 13px; font-weight: 700; color: {theme.FOREGROUND};"
+        )
+        topbar_lay.addWidget(tutor_title)
+        topbar_lay.addStretch(1)
+
+        # Level control
+        level_lbl = QLabel("Level:")
+        level_lbl.setStyleSheet(f"color: {theme.MUTED}; font-size: 12px;")
+        topbar_lay.addWidget(level_lbl)
 
         self.level_combo = QComboBox()
+        self.level_combo.setFixedWidth(150)
+        self.level_combo.setFixedHeight(28)
         for level in ASSISTANCE_LEVELS:
             self.level_combo.addItem(LEVEL_LABELS[level], level)
         self.level_combo.setToolTip(
@@ -58,61 +80,99 @@ class ChatPanel(QWidget):
             "for the full explanation at any time."
         )
         self.level_combo.setCurrentIndex(1)
-        header.addWidget(self.level_combo)
-        header.addStretch(1)
+        topbar_lay.addWidget(self.level_combo)
 
-        self.request_hint_button = QPushButton("Just a hint")
-        self.request_hint_button.setToolTip(
-            "Ask the tutor for a clue without writing a message."
-        )
-        header.addWidget(self.request_hint_button)
-        layout.addLayout(header)
+        self.request_hint_button = QPushButton("💡 Hint")
+        self.request_hint_button.setObjectName("subtle")
+        self.request_hint_button.setFixedHeight(28)
+        self.request_hint_button.setFixedWidth(70)
+        self.request_hint_button.setToolTip("Ask the tutor for a clue without writing a message.")
+        topbar_lay.addWidget(self.request_hint_button)
 
-        # Always-visible transparency about what leaves the machine.
+        layout.addWidget(topbar)
+
+        # ── Privacy notice ────────────────────────────────────────────────
         self.notice = QLabel()
         self.notice.setWordWrap(True)
-        self.notice.setObjectName("warning")
+        self.notice.setStyleSheet(
+            f"background-color: {theme.WARNING_BG}; color: {theme.WARNING}; "
+            f"border-bottom: 1px solid {theme.BORDER}; "
+            f"font-size: 11px; padding: 6px 14px;"
+        )
         self.notice.setText(
-            "Your code, compiler output and messages are sent to an external "
-            "AI provider when you ask a question. Nothing is sent otherwise."
+            "⚠  Your code, compiler output and messages are sent to an external AI provider when you ask. "
+            "Nothing is sent otherwise."
         )
         layout.addWidget(self.notice)
 
+        # ── Transcript ────────────────────────────────────────────────────
         self.transcript = QTextBrowser()
         self.transcript.setOpenExternalLinks(False)
+        self.transcript.setFrameShape(QFrame.Shape.NoFrame)
+        self.transcript.setStyleSheet(
+            f"QTextBrowser {{ background-color: {theme.BASE}; border: none; "
+            f"padding: 12px; }}"
+        )
         layout.addWidget(self.transcript, 1)
 
-        self.input = QPlainTextEdit()
-        self.input.setPlaceholderText(
-            "Ask a question, or describe what you expected to happen…"
+        # ── Input area ────────────────────────────────────────────────────
+        input_container = QWidget()
+        input_container.setStyleSheet(
+            f"background-color: {theme.SURFACE}; "
+            f"border-top: 1px solid {theme.BORDER};"
         )
-        self.input.setMaximumHeight(90)
+        input_lay = QVBoxLayout(input_container)
+        input_lay.setContentsMargins(12, 10, 12, 10)
+        input_lay.setSpacing(6)
+
+        self.input = QPlainTextEdit()
+        self.input.setPlaceholderText("Ask a question, or describe what you expected to happen…")
+        self.input.setMaximumHeight(80)
+        self.input.setMinimumHeight(50)
         self.input.setTabChangesFocus(True)
-        layout.addWidget(self.input)
+        self.input.setStyleSheet(
+            f"QPlainTextEdit {{ background-color: {theme.SURFACE_ALT}; "
+            f"border: 1px solid {theme.BORDER}; border-radius: 8px; "
+            f"padding: 8px 12px; color: {theme.FOREGROUND}; font-size: 13px; }}"
+            f"QPlainTextEdit:focus {{ border-color: {theme.ACCENT}; }}"
+        )
+        input_lay.addWidget(self.input)
 
-        buttons = QHBoxLayout()
+        # Bottom row: status + buttons
+        bottom_row = QHBoxLayout()
+        bottom_row.setSpacing(8)
+
         self.sending_label = QLabel()
-        self.sending_label.setObjectName("muted")
-        buttons.addWidget(self.sending_label)
-        buttons.addStretch(1)
+        self.sending_label.setStyleSheet(f"color: {theme.MUTED}; font-size: 12px;")
+        bottom_row.addWidget(self.sending_label)
+        bottom_row.addStretch(1)
 
-        self.clear_button = QPushButton("Clear chat")
-        buttons.addWidget(self.clear_button)
+        self.clear_button = QPushButton("Clear")
+        self.clear_button.setObjectName("subtle")
+        self.clear_button.setFixedHeight(32)
+        self.clear_button.setFixedWidth(60)
+        bottom_row.addWidget(self.clear_button)
 
-        self.send_button = QPushButton("Send")
+        self.send_button = QPushButton("Send  ↑")
         self.send_button.setObjectName("primary")
+        self.send_button.setFixedHeight(32)
+        self.send_button.setFixedWidth(90)
         self.send_button.setEnabled(False)
-        buttons.addWidget(self.send_button)
-        layout.addLayout(buttons)
+        bottom_row.addWidget(self.send_button)
 
-        # Wiring. The input is multi-line, so Enter inserts a newline and
-        # Ctrl+Enter (or Cmd+Enter) sends.
+        input_lay.addLayout(bottom_row)
+        layout.addWidget(input_container)
+
+        # Wiring
         self.send_button.clicked.connect(self._on_send)
         send_shortcut = QShortcut(QKeySequence("Ctrl+Return"), self.input)
         send_shortcut.activated.connect(self._on_send)
         self.clear_button.clicked.connect(self.clear_transcript)
         self.request_hint_button.clicked.connect(self._on_hint)
         self.level_combo.currentIndexChanged.connect(self._on_level_changed)
+
+        # Enable send when text typed
+        self.input.textChanged.connect(self._on_input_changed)
 
     # ------------------------------------------------------------------
     # Behaviour
@@ -139,20 +199,21 @@ class ChatPanel(QWidget):
         self.add_learner_message(text)
         self.message_requested.emit(text, self.current_level())
 
+    def _on_input_changed(self) -> None:
+        has_text = bool(self.input.toPlainText().strip())
+        self.send_button.setEnabled(has_text and self.provider_ready)
+
     def submit_text(self, text: str, level: str | None = None) -> None:
-        """Programmatic send, used by the hint button and keyboard shortcuts."""
         self.set_level(level or self.current_level())
         self.input.setPlainText(text)
         self._on_send()
 
     def set_sending(self, sending: bool) -> None:
-        """Toggle controls while a provider call is in flight."""
         self.send_button.setEnabled(not sending and self.provider_ready)
         self.request_hint_button.setEnabled(not sending and self.provider_ready)
         self.level_combo.setEnabled(not sending)
-        self.sending_label.setText("Waiting for the tutor…" if sending else "")
+        self.sending_label.setText("⏳ Waiting for the tutor…" if sending else "")
 
-    #: Mirrors whether a provider is configured, so controls can be disabled.
     provider_ready: bool = False
 
     def set_provider_ready(self, ready: bool) -> None:
@@ -161,45 +222,75 @@ class ChatPanel(QWidget):
         self.request_hint_button.setEnabled(ready)
         if not ready:
             self.notice.setText(
-                "No AI provider is configured, so the tutor is offline. "
-                "Lessons, compiling and running still work. Open Settings to "
-                "add a provider."
+                "🔴  No AI provider configured — tutor is offline. "
+                "Lessons, compiling and running still work. Open Settings to add a provider."
             )
-            self.notice.setObjectName("error")
-            self.notice.style().unpolish(self.notice)
-            self.notice.style().polish(self.notice)
+            self.notice.setStyleSheet(
+                f"background-color: {theme.ERROR_BG}; color: {theme.ERROR}; "
+                f"border-bottom: 1px solid {theme.BORDER}; "
+                f"font-size: 11px; padding: 6px 14px;"
+            )
 
     def set_provider_note(self, note: str) -> None:
-        """Show where prompts are going, from the provider's own description."""
         self.notice.setText(
-            f"Code and prompts are sent to: {note}\n"
-            "This only happens when you send a message."
+            f"🔒  Code and prompts are sent to: {note} — only when you send a message."
+        )
+        self.notice.setStyleSheet(
+            f"background-color: {theme.INFO_BG}; color: {theme.INFO}; "
+            f"border-bottom: 1px solid {theme.BORDER}; "
+            f"font-size: 11px; padding: 6px 14px;"
         )
 
     # ------------------------------------------------------------------
-    # Transcript rendering
+    # Transcript rendering — bubble style
     # ------------------------------------------------------------------
     def clear_transcript(self) -> None:
         self.transcript.clear()
 
     def add_learner_message(self, text: str) -> None:
-        self._append("You", text, theme.ACCENT)
+        escaped = html_module.escape(text)
+        self.transcript.append(
+            f"<div style='margin:8px 0; text-align:right'>"
+            f"<span style='display:inline-block; background:{theme.ACCENT}; "
+            f"color:{theme.ACCENT_TEXT}; border-radius:12px 12px 2px 12px; "
+            f"padding:8px 14px; max-width:80%; font-size:13px; "
+            f"white-space:pre-wrap'>{escaped}</span>"
+            f"<div style='font-size:10px; color:{theme.PLACEHOLDER}; margin-top:3px'>You</div>"
+            f"</div>"
+        )
+        self._scroll_to_bottom()
 
     def add_tutor_message(self, html: str) -> None:
-        self._append("Tutor", html, theme.SUCCESS, is_html=True)
+        self.transcript.append(
+            f"<div style='margin:8px 0'>"
+            f"<div style='font-size:10px; color:{theme.PLACEHOLDER}; margin-bottom:3px'>🤖 Tutor</div>"
+            f"<span style='display:inline-block; background:{theme.SURFACE_ALT}; "
+            f"color:{theme.FOREGROUND}; border-radius:2px 12px 12px 12px; "
+            f"border:1px solid {theme.BORDER}; "
+            f"padding:10px 14px; max-width:85%; font-size:13px'>{html}</span>"
+            f"</div>"
+        )
+        self._scroll_to_bottom()
 
     def add_tutor_error(self, text: str) -> None:
-        self._append("Tutor (error)", text, theme.ERROR)
+        escaped = html_module.escape(text)
+        self.transcript.append(
+            f"<div style='margin:6px 0; padding:8px 12px; "
+            f"background:{theme.ERROR_BG}; border-left:3px solid {theme.ERROR}; "
+            f"border-radius:4px; color:{theme.ERROR}; font-size:12px'>"
+            f"⚠ {escaped}</div>"
+        )
+        self._scroll_to_bottom()
 
     def add_system_note(self, text: str) -> None:
-        self._append("", f"<i>{text}</i>", theme.MUTED, is_html=True)
+        self.transcript.append(
+            f"<div style='margin:4px 0; text-align:center'>"
+            f"<span style='color:{theme.PLACEHOLDER}; font-size:11px; "
+            f"font-style:italic'>{text}</span>"
+            f"</div>"
+        )
+        self._scroll_to_bottom()
 
-    def _append(self, who: str, text: str, colour: str, is_html: bool = False) -> None:
-        """Append a labelled block to the transcript."""
-        import html as html_module
-
-        heading = f"<b style='color:{colour}'>{html_module.escape(who)}</b>" if who else ""
-        body = text if is_html else f"<span style='white-space:pre-wrap'>{html_module.escape(text)}</span>"
-        self.transcript.append(f"<div style='margin-bottom:10px'>{heading}{body}</div>")
-        scrollbar = self.transcript.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+    def _scroll_to_bottom(self) -> None:
+        sb = self.transcript.verticalScrollBar()
+        sb.setValue(sb.maximum())

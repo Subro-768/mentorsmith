@@ -130,7 +130,8 @@ def limit_resources(cpu_seconds: int, memory_bytes: int, max_file_bytes: int) ->
             pass
 
     set_if_supported(resource.RLIMIT_CPU, cpu_seconds, cpu_seconds + 1)
-    set_if_supported(resource.RLIMIT_AS, memory_bytes, memory_bytes)
+    if memory_bytes > 0:
+        set_if_supported(resource.RLIMIT_AS, memory_bytes, memory_bytes)
     set_if_supported(resource.RLIMIT_FSIZE, max_file_bytes, max_file_bytes)
     set_if_supported(resource.RLIMIT_CORE, 0, 0)
 
@@ -146,6 +147,7 @@ class RunSpec:
     memory_limit_bytes: int = 1024 * 1024 * 1024
     #: Extra argv prefix applied at spawn time, used for sandbox wrappers.
     prefix: list[str] = field(default_factory=list)
+    limit_memory: bool = True
 
 
 class ProcessHandle:
@@ -359,7 +361,9 @@ def start(spec: RunSpec) -> ProcessHandle:
             text=True,
             start_new_session=True,
             preexec_fn=lambda: limit_resources(
-                int(spec.timeout) + 1, spec.memory_limit_bytes, 10 * 1024 * 1024
+                int(spec.timeout) + 1,
+                spec.memory_limit_bytes if spec.limit_memory else -1,
+                10 * 1024 * 1024,
             ),
         )
     except OSError as exc:

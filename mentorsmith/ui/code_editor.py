@@ -175,16 +175,15 @@ class CodeEditor(QPlainTextEdit):
         self.setTabStopDistance(4 * self.fontMetrics().horizontalAdvance(" "))
 
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-        font.setPointSize(11)
+        font.setPointSize(12)
         self.setFont(font)
 
+        # Use the new deep navy base color for the editor background
         palette = self.palette()
         palette.setColor(QPalette.ColorRole.Base, QColor(theme.SURFACE))
         palette.setColor(QPalette.ColorRole.Text, QColor(theme.FOREGROUND))
-        palette.setColor(
-            QPalette.ColorRole.Highlight, QColor(theme.ACCENT)
-        )
-        palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#101010"))
+        palette.setColor(QPalette.ColorRole.Highlight, QColor(theme.ACCENT))
+        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(theme.ACCENT_TEXT))
         self.setPalette(palette)
 
         self._gutter = LineNumberGutter(self)
@@ -213,7 +212,7 @@ class CodeEditor(QPlainTextEdit):
     def line_number_width(self) -> int:
         """Width needed for the widest line number currently displayed."""
         digits = max(2, len(str(max(1, self.blockCount()))))
-        return 12 + self.fontMetrics().horizontalAdvance("9") * digits
+        return 16 + self.fontMetrics().horizontalAdvance("9") * digits
 
     def resizeEvent(self, event) -> None:  # noqa: N802 - Qt API
         super().resizeEvent(event)
@@ -225,41 +224,39 @@ class CodeEditor(QPlainTextEdit):
     def paint_line_numbers(self, event) -> None:
         """Draw the numbers for the currently visible blocks."""
         painter = QPainter(self._gutter)
-        painter.fillRect(event.rect(), QColor(theme.SURFACE_ALT))
-        painter.setPen(QColor(theme.MUTED))
+        # Gutter gets a slightly darker shade than the editor
+        painter.fillRect(event.rect(), QColor(theme.BASE))
 
-        block = self.firstVisibleBlock()
+        block        = self.firstVisibleBlock()
         block_number = block.blockNumber()
-        top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
-        bottom = top + self.blockBoundingRect(block).height()
+        top          = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
+        bottom       = top + self.blockBoundingRect(block).height()
 
         current = self.textCursor().blockNumber()
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
+                # Current line number in accent color, others muted
                 painter.setPen(
-                    QColor(theme.ACCENT) if block_number == current else QColor(theme.MUTED)
+                    QColor(theme.ACCENT_LIGHT) if block_number == current
+                    else QColor(theme.PLACEHOLDER)
                 )
                 painter.drawText(
                     0,
                     int(top),
-                    self._gutter.width() - 6,
+                    self._gutter.width() - 8,
                     self.fontMetrics().height(),
                     Qt.AlignmentFlag.AlignRight,
                     str(block_number + 1),
                 )
-            block = block.next()
-            top = bottom
-            bottom = top + self.blockBoundingRect(block).height()
+            block        = block.next()
+            top          = bottom
+            bottom       = top + self.blockBoundingRect(block).height()
             block_number += 1
 
     def _highlight_current_line(self) -> None:
-        """Add a subtle band on the cursor's line.
-
-        Uses an extra selection rather than an ``ExtraSelection`` format so the
-        highlight survives the syntax highlighter reformatting the block.
-        """
+        """Add a subtle band on the cursor's line."""
         selection = QTextEdit.ExtraSelection()
-        colour = QColor(theme.SURFACE_ALT)
+        colour = QColor(theme.SURFACE_HOV)   # Slightly lighter than editor bg
         selection.format.setBackground(colour)
         selection.format.setProperty(QTextCharFormat.Property.FullWidthSelection, True)
         selection.cursor = self.textCursor()
@@ -303,9 +300,12 @@ def markdown_to_html(text: str) -> str:
         if not code_buffer:
             return
         body = html_module.escape("\n".join(code_buffer))
-        out.append(f'<pre style="background:{theme.SURFACE};padding:8px;'
-                   f'border:1px solid {theme.BORDER};border-radius:4px;'
-                   f'color:{theme.SYNTAX_STRING};">{body}</pre>')
+        out.append(
+            f'<pre style="background:{theme.BASE}; padding:14px 16px; '
+            f'border:1px solid {theme.BORDER}; border-radius:8px; '
+            f'font-family:monospace; font-size:12px; overflow-x:auto; '
+            f'color:{theme.SYNTAX_TYPE};">{body}</pre>'
+        )
         code_buffer.clear()
 
     def inline(value: str) -> str:

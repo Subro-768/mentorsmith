@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MentorSmith mark.
+
+  A smith forges raw stock into something usable, which is what the tutor
+  tries to do with a learner's first attempts. The anvil is the teaching; the
+  spark above it is the moment it clicks.
+
+  Drawn on a 512x512 grid so it renders identically at 16px and at 512px.
+  Three rules keep it legible when small:
+    * one flat silhouette, no strokes thinner than ~20px on this grid
+    * three values only - plate, metal, spark - so it still reads in greyscale
+      and for a colour-blind viewer
+    * nothing overlaps: the spark sits clear of the anvil so the shape reads
+      even if one colour is dropped
+
+  Regenerate the PNGs with:  python3 tools/build_icons.py
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#2A2D31"/>
+      <stop offset="100%" stop-color="#141619"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#9BDDFF"/>
+      <stop offset="100%" stop-color="#4FC1FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Plate -->
+  <rect x="0" y="0" width="512" height="512" rx="112" ry="112" fill="url(#plate)"/>
+
+  <!--
+    Anvil, as a single silhouette.
+
+    Left edge -> flat top face -> horn tapering to a point on the right
+             -> underside stepping back in -> waist -> base.
+
+    The horn is a straight taper rather than a curve: at 16px a curve here
+    turns into an ambiguous smudge, and the taper reads cleanly at every size.
+
+    Note: no comments inside the `d` attribute. XML does not allow a comment in
+    an attribute value, and Qt's parser rejects the whole file when it finds
+    one.
+  -->
+  <path fill="url(#metal)" d="
+      M108 250
+      L286 250
+      L404 214
+      L404 262
+      L300 306
+      L300 330
+      L212 330
+      L212 352
+      L108 352
+      Z"/>
+
+  <!-- Base: two slabs, the lower one narrower, so the anvil looks seated. -->
+  <rect x="140" y="368" width="232" height="34" rx="10" fill="#5CC7FA"/>
+  <rect x="188" y="410" width="136" height="32" rx="10" fill="#3FA3D8"/>
+
+  <!--
+    Spark, placed clear above the horn.
+
+    A four-point star rather than a burst of lines: it survives at 8px, and it
+    stays recognisable when the plate colour is flattened away.
+  -->
+  <path fill="#FFB454" d="
+      M330 74
+      L346 124
+      L396 140
+      L346 156
+      L330 206
+      L314 156
+      L264 140
+      L314 124
+      Z"/>
+
+  <!-- Two smaller embers, offset so they read as heat, not decoration. -->
+  <circle cx="424" cy="106" r="10" fill="#FFB454" opacity="0.75"/>
+  <circle cx="252" cy="94"  r="7"  fill="#FFB454" opacity="0.5"/>
+</svg>

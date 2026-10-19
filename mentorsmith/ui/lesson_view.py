@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ..compiler.toolchain import CommandResult, Toolchain, ToolMissingError
-from ..core import comparisons
+from ..core import comparisons, theory
 from ..core.curriculum import Lesson
 from . import theme
 from .chat_panel import ChatPanel
@@ -87,45 +87,76 @@ class LessonView(QWidget):
     # ------------------------------------------------------------------
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
-        root.setContentsMargins(8, 8, 8, 8)
-        root.setSpacing(8)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
-        # ---- header ----
-        header = QHBoxLayout()
+        # ── Header bar ───────────────────────────────────────────────────
+        header_bar = QWidget()
+        header_bar.setFixedHeight(52)
+        header_bar.setStyleSheet(
+            f"background-color: {theme.SURFACE}; "
+            f"border-bottom: 1px solid {theme.BORDER};"
+        )
+        header = QHBoxLayout(header_bar)
+        header.setContentsMargins(16, 0, 16, 0)
+        header.setSpacing(10)
+
+        self.prev_button = QPushButton("← Prev")
+        self.prev_button.setObjectName("subtle")
+        self.prev_button.setFixedHeight(34)
+        self.prev_button.setFixedWidth(76)
+
         self.title_label = QLabel("No lesson selected")
+        self.title_label.setStyleSheet(
+            f"font-size: 15px; font-weight: 700; color: {theme.FOREGROUND};"
+        )
         self.title_label.setObjectName("title")
-        header.addWidget(self.title_label)
-        header.addStretch(1)
 
-        self.prev_button = QPushButton("← Previous")
         self.next_button = QPushButton("Next →")
+        self.next_button.setObjectName("subtle")
+        self.next_button.setFixedHeight(34)
+        self.next_button.setFixedWidth(76)
+
         self.complete_button = QPushButton("Mark complete")
         self.complete_button.setObjectName("primary")
+        self.complete_button.setFixedHeight(34)
+
         header.addWidget(self.prev_button)
+        header.addWidget(self.title_label)
+        header.addStretch(1)
         header.addWidget(self.next_button)
         header.addWidget(self.complete_button)
-        root.addLayout(header)
+        root.addWidget(header_bar)
 
-        # ---- main splitter ----
+        # ── Main splitter ─────────────────────────────────────────────────
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.setStyleSheet(f"background: {theme.BASE};")
 
-        # Left: the reading material.
+        # Left: reading material tabs
         self.material_tabs = QTabWidget()
-        self.lesson_view = MarkdownView()
-        self.objectives_view = MarkdownView()
-        self.exercise_view = MarkdownView()
-        self.mistakes_view = MarkdownView()
-        self.recap_view = MarkdownView()
+        self.material_tabs.setStyleSheet(
+            f"QTabWidget::pane {{ border: none; background: {theme.BASE}; }}"
+            f"QTabBar {{ background: {theme.SURFACE}; }}"
+            f"QTabBar::tab {{ padding: 9px 16px; font-size: 12px; }}"
+        )
+        self.lesson_view       = MarkdownView()
+        self.theory_view       = MarkdownView()
+        self.objectives_view   = MarkdownView()
+        self.exercise_view     = MarkdownView()
+        self.mistakes_view     = MarkdownView()
+        self.recap_view        = MarkdownView()
 
-        self.material_tabs.addTab(self.lesson_view, "Explanation")
-        self.material_tabs.addTab(self.objectives_view, "Objectives")
-        self.material_tabs.addTab(self.exercise_view, "Exercise")
-        self.material_tabs.addTab(self.mistakes_view, "Common mistakes")
-        self.material_tabs.addTab(self.recap_view, "Recap")
+        self.material_tabs.addTab(self.lesson_view,     "📝 Explanation")
+        self.material_tabs.addTab(self.theory_view,     "📚 Theory Book")
+        self.material_tabs.addTab(self.objectives_view, "🎯 Objectives")
+        self.material_tabs.addTab(self.exercise_view,   "✏  Exercise")
+        self.material_tabs.addTab(self.mistakes_view,   "⚠  Mistakes")
+        self.material_tabs.addTab(self.recap_view,      "🔁 Recap")
 
         checks_page = QWidget()
+        checks_page.setStyleSheet(f"background: {theme.BASE};")
         checks_layout = QVBoxLayout(checks_page)
-        checks_layout.setContentsMargins(8, 8, 8, 8)
+        checks_layout.setContentsMargins(16, 12, 16, 12)
         checks_intro = QLabel(
             "Answer each question out loud or in your own words, then reveal "
             "the answer. Being wrong here is useful — it tells you what to "
@@ -136,82 +167,124 @@ class LessonView(QWidget):
         checks_layout.addWidget(checks_intro)
 
         checks_layout_buttons = QHBoxLayout()
-        self.next_check_button = QPushButton("Reveal answer")
+        self.next_check_button = QPushButton("Reveal next answer")
+        self.next_check_button.setObjectName("subtle")
+        self.next_check_button.setFixedHeight(32)
         checks_layout_buttons.addWidget(self.next_check_button)
+        checks_layout_buttons.addStretch(1)
         checks_layout.addLayout(checks_layout_buttons)
         checks_layout.addStretch(1)
-        self.material_tabs.addTab(checks_page, "Knowledge checks")
+        self.material_tabs.addTab(checks_page, "🧠 Checks")
         self._build_checks_content(checks_page)
 
         self.comparisons_view = MarkdownView()
         self.comparisons_view.setPlaceholderText(
             "Cross-language comparisons appear here once another language is added."
         )
-        self.material_tabs.addTab(self.comparisons_view, "Compare languages")
+        self.material_tabs.addTab(self.comparisons_view, "⟷ Compare")
 
         self.splitter.addWidget(self.material_tabs)
 
-        # Right: code, and below it the evidence plus the tutor.
+        # Right: code editor + output
         right = QWidget()
+        right.setStyleSheet(f"background: {theme.BASE};")
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(6)
+        right_layout.setSpacing(0)
 
-        editor_box = QWidget()
-        editor_layout = QVBoxLayout(editor_box)
-        editor_layout.setContentsMargins(0, 0, 0, 0)
-        editor_layout.setSpacing(6)
+        # Editor toolbar
+        toolbar = QWidget()
+        toolbar.setFixedHeight(46)
+        toolbar.setStyleSheet(
+            f"background-color: {theme.SURFACE_ALT}; "
+            f"border-bottom: 1px solid {theme.BORDER};"
+        )
+        controls = QHBoxLayout(toolbar)
+        controls.setContentsMargins(12, 0, 12, 0)
+        controls.setSpacing(8)
 
-        controls = QHBoxLayout()
-        self.run_button = QPushButton("Compile & Run")
+        self.run_button = QPushButton("▶  Compile & Run")
         self.run_button.setObjectName("primary")
-        self.stop_button = QPushButton("Stop")
+        self.run_button.setFixedHeight(34)
+
+        self.stop_button = QPushButton("⏹ Stop")
+        self.stop_button.setFixedHeight(34)
         self.stop_button.setEnabled(False)
-        self.reset_button = QPushButton("Reset code")
-        self.ask_tutor_button = QPushButton("Ask the tutor")
+
+        self.reset_button = QPushButton("↺ Reset")
+        self.reset_button.setObjectName("subtle")
+        self.reset_button.setFixedHeight(34)
+
+        self.ask_tutor_button = QPushButton("🤖 Ask Tutor")
+        self.ask_tutor_button.setFixedHeight(34)
+
         controls.addWidget(self.run_button)
         controls.addWidget(self.stop_button)
         controls.addWidget(self.reset_button)
         controls.addStretch(1)
-        controls.addWidget(QLabel("stdin:"))
+
+        stdin_lbl = QLabel("stdin:")
+        stdin_lbl.setStyleSheet(f"color: {theme.MUTED}; font-size: 12px;")
+        controls.addWidget(stdin_lbl)
+
         self.stdin_edit = QLineEdit()
-        self.stdin_edit.setPlaceholderText("optional text your program reads")
-        self.stdin_edit.setMaximumWidth(260)
+        self.stdin_edit.setPlaceholderText("optional stdin")
+        self.stdin_edit.setMaximumWidth(200)
+        self.stdin_edit.setFixedHeight(30)
         controls.addWidget(self.stdin_edit)
+
         controls.addWidget(self.ask_tutor_button)
-        editor_layout.addLayout(controls)
+        right_layout.addWidget(toolbar)
 
         self.editor = CodeEditor()
-        editor_layout.addWidget(self.editor, 1)
-        right_layout.addWidget(editor_box, 3)
+        right_layout.addWidget(self.editor, 3)
 
-        # Evidence + tutor tabs.
+        # Output + chat tabs
         self.output_tabs = QTabWidget()
+        self.output_tabs.setStyleSheet(
+            f"QTabWidget::pane {{ border-top: 1px solid {theme.BORDER}; "
+            f"background: {theme.BASE}; border-radius: 0; }}"
+            f"QTabBar {{ background: {theme.SURFACE_ALT}; }}"
+            f"QTabBar::tab {{ padding: 8px 16px; font-size: 12px; }}"
+        )
 
         self.output_view = QTextBrowser()
         self.output_view.setPlaceholderText("Compiler and runtime output appear here.")
-        self.output_tabs.addTab(self.output_view, "Output")
+        self.output_view.setStyleSheet(
+            f"QTextBrowser {{ background: {theme.BASE}; border: none; padding: 12px; }}"
+        )
+        self.output_tabs.addTab(self.output_view, "📟 Output")
 
         self.chat_panel = ChatPanel()
-        self.output_tabs.addTab(self.chat_panel, "AI tutor")
+        self.output_tabs.addTab(self.chat_panel, "🤖 AI Tutor")
         right_layout.addWidget(self.output_tabs, 2)
 
         self.splitter.addWidget(right)
         self.splitter.setStretchFactor(0, 3)
         self.splitter.setStretchFactor(1, 4)
-        # Give the reading pane enough room for prose to wrap without a
-        # horizontal scrollbar; the code pane takes the remainder.
         self.splitter.setSizes([560, 800])
         root.addWidget(self.splitter, 1)
 
-        # ---- status line ----
+        # ── Status bar ────────────────────────────────────────────────────
+        status_bar = QWidget()
+        status_bar.setFixedHeight(28)
+        status_bar.setStyleSheet(
+            f"background-color: {theme.SURFACE_ALT}; "
+            f"border-top: 1px solid {theme.BORDER};"
+        )
+        status_lay = QHBoxLayout(status_bar)
+        status_lay.setContentsMargins(14, 0, 14, 0)
         self.status_label = QLabel()
         self.status_label.setObjectName("muted")
-        self.status_label.setWordWrap(True)
-        root.addWidget(self.status_label)
+        self.status_label.setWordWrap(False)
+        self.status_label.setStyleSheet("font-size: 11px;")
+        status_lay.addWidget(self.status_label)
+        status_lay.addStretch(1)
+        root.addWidget(status_bar)
+
         self.refresh_sandbox_status()
 
-        # ---- wiring ----
+        # ── Wiring ────────────────────────────────────────────────────────
         self.run_button.clicked.connect(self.on_run_clicked)
         self.stop_button.clicked.connect(self.on_stop_clicked)
         self.reset_button.clicked.connect(self.on_reset_clicked)
@@ -302,6 +375,11 @@ class LessonView(QWidget):
         self.lesson_view.setHtml(
             f"<h2>{lesson.title}</h2>" + markdown_to_html(lesson.section("explanation"))
         )
+        th_ch = theory.get_chapter(lesson.language, lesson.id)
+        if th_ch:
+            self.theory_view.setHtml(markdown_to_html(th_ch.content))
+        else:
+            self.theory_view.setHtml(f"<p style='color:{theme.MUTED}'>No extended theory chapter for this lesson.</p>")
         self.objectives_view.setHtml(
             "<h2>Objectives</h2>" + markdown_to_html(lesson.section("objectives"))
         )

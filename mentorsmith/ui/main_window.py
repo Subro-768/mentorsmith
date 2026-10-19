@@ -1,16 +1,18 @@
-"""Main window: navigation, persistence wiring and the tutor threads."""
+"""Main window: vertical sidebar navigation, persistence wiring and tutor threads."""
 
 from __future__ import annotations
 
 from PyQt6.QtCore import QThread, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QKeySequence
+from PyQt6.QtGui import QAction, QFont, QKeySequence
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QStackedWidget,
     QStatusBar,
     QVBoxLayout,
@@ -27,33 +29,52 @@ from ..providers.openai_compat import build_provider, network_allowed
 from ..services.insights import build_report
 from ..services.tutor import TutorContext, TutorReply, TutorService
 from . import theme
+from .analytics_view import AnalyticsView
 from .dashboard import DashboardView, InsightsPanel, ProgressView
 from .developer_view import DeveloperView
 from .lesson_view import LessonView
 from .practice_view import PracticeView
+from .playground_view import PlaygroundView
 from .projects_view import ProjectsView
 from .settings_dialog import SettingsDialog
+from .theory_view import TheoryView
 
-#: Page indices, named so navigation code is readable.
-PAGE_DASHBOARD = 0
-PAGE_PRACTICE = 1
-PAGE_LESSON = 2
-PAGE_INSIGHTS = 3
-PAGE_PROJECTS = 4
-PAGE_PROGRESS = 5
-PAGE_DEVELOPER = 6
+#: Page indices
+PAGE_DASHBOARD  = 0
+PAGE_PRACTICE   = 1
+PAGE_LESSON     = 2
+PAGE_INSIGHTS   = 3
+PAGE_PROJECTS   = 4
+PAGE_PROGRESS   = 5
+PAGE_DEVELOPER  = 6
+PAGE_ANALYTICS  = 7
+PAGE_THEORY     = 8
+PAGE_PLAYGROUND = 9
+
+_NAV_ITEMS = [
+    (PAGE_ANALYTICS,  "📊", "Analytics"),
+    (PAGE_DASHBOARD,  "🏠", "Dashboard"),
+    (PAGE_PLAYGROUND, "💻", "Playground"),
+    (PAGE_THEORY,     "📚", "Theory Book"),
+    (PAGE_PRACTICE,   "⚡", "Practice"),
+    (PAGE_LESSON,     "📖", "Lessons"),
+    (PAGE_INSIGHTS,   "🎯", "Mastery"),
+    (PAGE_PROJECTS,   "🏗", "Projects"),
+    (PAGE_PROGRESS,   "📋", "History"),
+    (PAGE_DEVELOPER,  "🛠", "Developer"),
+]
 
 
 class TutorWorker(QThread):
     """Calls the provider off the GUI thread so the window never freezes."""
 
-    replied = pyqtSignal(object)      # TutorReply
-    failed = pyqtSignal(str)
+    replied = pyqtSignal(object)   # TutorReply
+    failed  = pyqtSignal(str)
 
     def __init__(self, service: TutorService, context: TutorContext) -> None:
         super().__init__()
-        self.service = service
-        self.context = context
+        self.service  = service
+        self.context  = context
 
     def run(self) -> None:  # noqa: D102 - QThread API
         try:
@@ -64,33 +85,80 @@ class TutorWorker(QThread):
             self.failed.emit(f"Unexpected failure talking to the tutor: {exc}")
 
 
+# ---------------------------------------------------------------------------
+# Sidebar nav button
+# ---------------------------------------------------------------------------
+
+class SidebarButton(QPushButton):
+    """Icon + label nav button with active / inactive visual states."""
+
+    def __init__(self, icon: str, label: str, parent: QWidget | None = None) -> None:
+        super().__init__(f"  {icon}  {label}", parent)
+        self._active = False
+        self._set_style()
+
+    def set_active(self, active: bool) -> None:
+        self._active = active
+        self._set_style()
+
+    def _set_style(self) -> None:
+        name = "nav_item_active" if self._active else "nav_item"
+        self.setObjectName(name)
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+
+# ---------------------------------------------------------------------------
+# Status chip widget
+# ---------------------------------------------------------------------------
+
+class StatusChip(QLabel):
+    """Compact rounded badge showing a brief status string."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.set_state("muted", "—")
+
+    def set_state(self, kind: str, text: str) -> None:
+        """kind: 'success' | 'error' | 'warning' | 'muted'"""
+        self.setText(text)
+        self.setObjectName(f"badge_{kind}")
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.setToolTip(text)
+
+
+# ---------------------------------------------------------------------------
+# Main window
+# ---------------------------------------------------------------------------
+
 class MainWindow(QMainWindow):
-    """The application window."""
+    """The application window with a vertical sidebar."""
 
     def __init__(self, database: Database | None = None) -> None:
         super().__init__()
-        self.setWindowTitle("MentorSmith — C++ tutor")
-        self.resize(1420, 900)
+        self.setWindowTitle("MentorSmith")
+        self.resize(1440, 900)
 
         self.settings = load_settings()
         self.database = database or Database(_db_path())
         self.database.connect()
 
-        self.lessons: list[Lesson] = []
-        self.language = "cpp"
-
-        # Every language that could be loaded. One broken track must not stop
-        # the app, so failures are collected rather than raised.
-        self.tracks = curriculum_registry.load_all()
-        self.track_errors: dict[str, str] = {}
-
-        self.current_lesson_id: str | None = None
-        self._tutor_worker: TutorWorker | None = None
-        self._pending_rubric_exercise: str | None = None
+        self.lessons:           list[Lesson] = []
+        self.language:          str          = "cpp"
+        self.tracks                          = curriculum_registry.load_all()
+        self.track_errors:      dict[str, str] = {}
+        self.current_lesson_id: str | None   = None
+        self._tutor_worker:     TutorWorker | None = None
+        self._pending_rubric_exercise: str | None  = None
 
         self._apply_track("cpp")
         self._build_toolchain()
         self._build_ui()
+        # Apply saved theme (default: dark_orange)
+        saved_theme = self.settings.get("theme", "dark_orange")
+        theme.apply_theme(self, saved_theme)
         self._wire()
         self.refresh_all()
         self.show_page(PAGE_DASHBOARD)
@@ -99,21 +167,19 @@ class MainWindow(QMainWindow):
     # Construction
     # ------------------------------------------------------------------
     def _apply_track(self, language: str) -> None:
-        """Point the window at one language's curriculum."""
         track = self.tracks.get(language)
         if track is None:
             reason = self.track_errors.get(language, "not available")
             self.statusBar().showMessage(f"Language '{language}' unavailable: {reason}")
             return
-        self.language = language
-        self.lessons = track.lessons
-        self.lesson_ids = {lesson.id for lesson in track.lessons}
-        self.model = track.model
-        self.bank = track.bank
+        self.language          = language
+        self.lessons           = track.lessons
+        self.lesson_ids        = {lesson.id for lesson in track.lessons}
+        self.model             = track.model
+        self.bank              = track.bank
         self.current_lesson_id = None
 
     def switch_language(self, language: str) -> None:
-        """Reload everything for a different language track."""
         if language == self.language and self.current_lesson_id is not None:
             return
         track = self.tracks.get(language)
@@ -132,18 +198,19 @@ class MainWindow(QMainWindow):
         self._apply_track(language)
         self._build_toolchain()
 
-        # Rebuild the widgets that hold per-language data.
-        self.practice_view.database = self.database
-        self.practice_view.bank = self.bank
+        self.practice_view.database  = self.database
+        self.practice_view.bank      = self.bank
         self.practice_view.toolchain = self.toolchain
-        self.practice_view.session = None
+        self.practice_view.session   = None
         self.practice_view._current_exercise_id = None
-        self.projects_view.database = self.database
-        self.projects_view.model = self.model
-        self.projects_view.language = language
+        self.projects_view.database  = self.database
+        self.projects_view.model     = self.model
+        self.projects_view.language  = language
 
         self.lesson_view.toolchain = self.toolchain
         self.lesson_view.refresh_sandbox_status()
+        self.theory_view.set_language(language)
+        self.playground_view.set_language(language)
 
         self.refresh_all()
         self.show_page(PAGE_DASHBOARD)
@@ -153,54 +220,78 @@ class MainWindow(QMainWindow):
         )
 
     def _build_toolchain(self) -> None:
-        """Create the execution adapter for the current language."""
         adapter = execution_adapter(
             self.language,
             default_work_dir() / self.language,
             sandbox=bool(self.settings.get("sandbox_enabled", False)),
         )
         adapter.compile_timeout = 30
-        adapter.run_timeout = 5
-        self.toolchain = adapter
+        adapter.run_timeout     = 5
+        self.toolchain          = adapter
 
     def _build_ui(self) -> None:
         self.setStyleSheet(theme.STYLESHEET)
 
-        central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(0, 6, 0, 0)
-        layout.setSpacing(0)
+        # Root layout: sidebar | content
+        root_widget = QWidget()
+        root_layout = QHBoxLayout(root_widget)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
 
-        nav = QWidget()
-        nav.setStyleSheet(f"background-color: {theme.SURFACE_ALT};")
-        nav_layout = QHBoxLayout(nav)
-        nav_layout.setContentsMargins(10, 6, 10, 6)
-        nav_layout.setSpacing(8)
+        # ── Sidebar ──────────────────────────────────────────────────────
+        sidebar = QWidget()
+        sidebar.setObjectName("sidebar")
+        sidebar.setFixedWidth(210)
+        sidebar_layout = QVBoxLayout(sidebar)
+        sidebar_layout.setContentsMargins(12, 16, 12, 16)
+        sidebar_layout.setSpacing(4)
 
+        # Brand
         brand = QLabel("MentorSmith")
-        brand.setStyleSheet(
-            f"font-size: 15px; font-weight: bold; color: {theme.ACCENT};"
-        )
-        nav_layout.addWidget(brand)
+        brand.setObjectName("brand")
+        sidebar_layout.addWidget(brand)
 
-        self.nav_buttons: dict[int, QPushButton] = {}
-        for index, label in (
-            (PAGE_DASHBOARD, "Dashboard"),
-            (PAGE_PRACTICE, "Practice"),
-            (PAGE_LESSON, "Lessons"),
-            (PAGE_INSIGHTS, "Progress"),
-            (PAGE_PROJECTS, "Projects"),
-            (PAGE_PROGRESS, "History"),
-            (PAGE_DEVELOPER, "Developer"),
-        ):
-            button = QPushButton(label)
-            button.clicked.connect(lambda _=False, i=index: self.show_page(i))
-            nav_layout.addWidget(button)
-            self.nav_buttons[index] = button
-        nav_layout.addStretch(1)
+        tagline = QLabel("C++ Learning Studio")
+        tagline.setObjectName("muted")
+        tagline.setStyleSheet(f"font-size: 11px; color: {theme.PLACEHOLDER}; margin-bottom: 12px;")
+        sidebar_layout.addWidget(tagline)
 
-        nav_layout.addWidget(QLabel("Language:"))
+        # Divider
+        div1 = QFrame()
+        div1.setFrameShape(QFrame.Shape.HLine)
+        div1.setStyleSheet(f"background-color: {theme.BORDER}; max-height: 1px; margin: 4px 0;")
+        sidebar_layout.addWidget(div1)
+
+        # Nav section label
+        nav_label = QLabel("NAVIGATION")
+        nav_label.setObjectName("section_header")
+        nav_label.setStyleSheet(f"font-size: 10px; color: {theme.PLACEHOLDER}; margin: 8px 4px 4px 4px;")
+        sidebar_layout.addWidget(nav_label)
+
+        # Nav buttons
+        self.nav_buttons: dict[int, SidebarButton] = {}
+        for index, icon, label in _NAV_ITEMS:
+            btn = SidebarButton(icon, label)
+            btn.setFixedHeight(42)
+            btn.clicked.connect(lambda _=False, i=index: self.show_page(i))
+            sidebar_layout.addWidget(btn)
+            self.nav_buttons[index] = btn
+
+        sidebar_layout.addStretch(1)
+
+        # Bottom section — language + status
+        div2 = QFrame()
+        div2.setFrameShape(QFrame.Shape.HLine)
+        div2.setStyleSheet(f"background-color: {theme.BORDER}; max-height: 1px; margin: 4px 0;")
+        sidebar_layout.addWidget(div2)
+
+        lang_label = QLabel("LANGUAGE")
+        lang_label.setObjectName("section_header")
+        lang_label.setStyleSheet(f"font-size: 10px; color: {theme.PLACEHOLDER}; margin: 8px 4px 2px 4px;")
+        sidebar_layout.addWidget(lang_label)
+
         self.language_combo = QComboBox()
+        self.language_combo.setFixedHeight(34)
         for language in curriculum_registry.LANGUAGE_IDS:
             track = self.tracks.get(language)
             label = curriculum_registry.display_name(language)
@@ -208,47 +299,74 @@ class MainWindow(QMainWindow):
                 label += " (unavailable)"
             self.language_combo.addItem(label, language)
         self.language_combo.setToolTip(
-            "Switching language reloads the lessons, concepts and exercises. "
+            "Switching language reloads the lessons, concepts and exercises.\n"
             "Progress is tracked separately per language."
         )
-        nav_layout.addWidget(self.language_combo)
+        sidebar_layout.addWidget(self.language_combo)
 
-        self.tool_label = QLabel()
-        self.tool_label.setObjectName("muted")
-        nav_layout.addWidget(self.tool_label)
+        # Tool chip
+        self.tool_chip = StatusChip()
+        self.tool_chip.setFixedHeight(24)
+        sidebar_layout.addWidget(self.tool_chip)
 
-        self.provider_label = QLabel()
-        self.provider_label.setObjectName("muted")
-        nav_layout.addWidget(self.provider_label)
+        # Provider chip
+        self.provider_chip = StatusChip()
+        self.provider_chip.setFixedHeight(24)
+        sidebar_layout.addWidget(self.provider_chip)
 
-        self.settings_button = QPushButton("Settings")
-        nav_layout.addWidget(self.settings_button)
-        layout.addWidget(nav)
+        # Settings button
+        self.settings_button = QPushButton("⚙  Settings")
+        self.settings_button.setObjectName("subtle")
+        self.settings_button.setFixedHeight(36)
+        self.settings_button.setStyleSheet("text-align: left; padding-left: 10px;")
+        sidebar_layout.addWidget(self.settings_button)
+
+        root_layout.addWidget(sidebar)
+
+        # ── Content stack ─────────────────────────────────────────────────
+        content_area = QWidget()
+        content_area.setObjectName("content_area")
+        content_layout = QVBoxLayout(content_area)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(0)
 
         self.stack = QStackedWidget()
-        self.dashboard = DashboardView()
-        self.practice_view = PracticeView(self.database, self.bank, self.toolchain)
-        self.lesson_view = LessonView(toolchain=self.toolchain)
-        self.insights = InsightsPanel()
-        self.projects_view = ProjectsView(self.database, self.model)
-        self.progress_view = ProgressView()
+        self.dashboard      = DashboardView()
+        self.practice_view  = PracticeView(self.database, self.bank, self.toolchain)
+        self.lesson_view    = LessonView(toolchain=self.toolchain)
+        self.insights       = InsightsPanel()
+        self.projects_view  = ProjectsView(self.database, self.model)
+        self.progress_view  = ProgressView()
+        self.developer_view = DeveloperView(self.database)
+        self.analytics_view = AnalyticsView(self.database)
+        self.theory_view    = TheoryView()
+        self.playground_view = PlaygroundView()
 
-        self.stack.addWidget(self.dashboard)              # 0
-        self.stack.addWidget(self.practice_view)          # 1
-        self.stack.addWidget(self.lesson_view)            # 2
-        self.stack.addWidget(self.insights)               # 3
-        self.stack.addWidget(self.projects_view)          # 4
-        self.stack.addWidget(self.progress_view)          # 5
-        self.developer_view = DeveloperView(self.database)  # 6
-        self.stack.addWidget(self.developer_view)         # 6
-        layout.addWidget(self.stack, 1)
+        self.stack.addWidget(self.dashboard)       # 0
+        self.stack.addWidget(self.practice_view)   # 1
+        self.stack.addWidget(self.lesson_view)     # 2
+        self.stack.addWidget(self.insights)        # 3
+        self.stack.addWidget(self.projects_view)   # 4
+        self.stack.addWidget(self.progress_view)   # 5
+        self.stack.addWidget(self.developer_view)  # 6
+        self.stack.addWidget(self.analytics_view)  # 7
+        self.stack.addWidget(self.theory_view)     # 8
+        self.stack.addWidget(self.playground_view) # 9
 
-        self.setCentralWidget(central)
-        self.setStatusBar(QStatusBar())
+        content_layout.addWidget(self.stack, 1)
+        root_layout.addWidget(content_area, 1)
+
+        self.setCentralWidget(root_widget)
+
+        status_bar = QStatusBar()
+        status_bar.setFixedHeight(26)
+        self.setStatusBar(status_bar)
         self.statusBar().showMessage("Ready")
 
+        # Keyboard shortcuts
         for key, slot in (
             ("Ctrl+R", lambda: self.show_page(PAGE_DASHBOARD)),
+            ("Ctrl+T", lambda: self.show_page(PAGE_PLAYGROUND)),
             ("Ctrl+K", lambda: self.show_page(PAGE_PRACTICE)),
             ("Ctrl+L", lambda: self.show_page(PAGE_LESSON)),
             ("Ctrl+P", lambda: self.show_page(PAGE_INSIGHTS)),
@@ -284,6 +402,17 @@ class MainWindow(QMainWindow):
         self.insights.projects_requested.connect(lambda: self.show_page(PAGE_PROJECTS))
         self.projects_view.data_changed.connect(self.refresh_insights)
 
+        self.analytics_view.language_switch_requested.connect(self._on_analytics_language_switch)
+        self.theory_view.open_lesson_requested.connect(self.open_lesson)
+
+    def _on_analytics_language_switch(self, language: str) -> None:
+        idx = self.language_combo.findData(language)
+        if idx >= 0:
+            self.language_combo.setCurrentIndex(idx)
+        else:
+            self.switch_language(language)
+        self.show_page(PAGE_DASHBOARD)
+
     # ------------------------------------------------------------------
     # Navigation
     # ------------------------------------------------------------------
@@ -294,14 +423,18 @@ class MainWindow(QMainWindow):
 
     def show_page(self, index: int) -> None:
         self.stack.setCurrentIndex(index)
-        for page, button in self.nav_buttons.items():
-            button.setObjectName("primary" if page == index else "")
-            button.style().unpolish(button)
-            button.style().polish(button)
+        for page, btn in self.nav_buttons.items():
+            btn.set_active(page == index)
         if index == PAGE_LESSON and self.current_lesson_id is None:
             self.open_lesson(self.lessons[0].id)
         if index == PAGE_INSIGHTS:
             self.refresh_insights()
+        if index == PAGE_ANALYTICS:
+            self.analytics_view.refresh()
+        if index == PAGE_THEORY:
+            self.theory_view.set_language(self.language)
+        if index == PAGE_PLAYGROUND:
+            self.playground_view.set_language(self.language)
 
     def open_lesson(self, lesson_id: str) -> None:
         lesson = next((l for l in self.lessons if l.id == lesson_id), None)
@@ -323,7 +456,7 @@ class MainWindow(QMainWindow):
             return
         done = self.database.is_lesson_complete(self.current_lesson_id, self.language)
         self.lesson_view.complete_button.setText(
-            "Completed ✓" if done else "Mark complete"
+            "✓ Completed" if done else "Mark complete"
         )
 
     def _navigate(self, step: int) -> None:
@@ -400,28 +533,27 @@ class MainWindow(QMainWindow):
         self.progress_view.refresh(self.database, self.database.completed_lessons(self.language))
 
     def refresh_insights(self) -> None:
-        """Rebuild the Phase 2 dashboard from stored evidence for this language."""
         report = build_report(self.database, self.model, self.bank, language=self.language)
         self.insights.set_report(report)
         self.practice_view.set_recommendations(report.recommendations)
         self.projects_view.refresh(report.assessments)
 
     def _refresh_tool_status(self) -> None:
-        """Show what is installed for the current language."""
         try:
             info = self.toolchain.detect()
             if info.available:
-                self.tool_label.setText(f"{info.tool_name}")
-                self.tool_label.setToolTip(info.version)
+                self.tool_chip.set_state("success", f"⚙ {info.tool_name}")
+                self.tool_chip.setToolTip(info.version)
             else:
-                self.tool_label.setText("tool missing")
-                self.tool_label.setToolTip(info.install_hint)
-        except Exception:  # pragma: no cover - defensive
-            self.tool_label.setText("")
+                self.tool_chip.set_state("error", "⚙ tool missing")
+                self.tool_chip.setToolTip(info.install_hint)
+        except Exception:  # pragma: no cover
+            self.tool_chip.set_state("muted", "⚙ unknown")
 
     def refresh_all(self) -> None:
         self.refresh_progress_views()
         self.refresh_insights()
+        self.analytics_view.refresh()
         self._refresh_provider_status()
         self._refresh_tool_status()
 
@@ -435,18 +567,18 @@ class MainWindow(QMainWindow):
         if not network_allowed():
             for chat in self._all_chat_panels():
                 chat.set_provider_ready(False)
-            self.provider_label.setText("AI: offline (blocked)")
+            self.provider_chip.set_state("warning", "AI: offline")
             return
 
         if self.provider.configured:
             for chat in self._all_chat_panels():
                 chat.set_provider_ready(True)
                 chat.set_provider_note(self.provider.describe())
-            self.provider_label.setText("AI: configured")
+            self.provider_chip.set_state("success", "AI: ready")
         else:
             for chat in self._all_chat_panels():
                 chat.set_provider_ready(False)
-            self.provider_label.setText("AI: not configured")
+            self.provider_chip.set_state("error", "AI: not set")
 
     def _all_chat_panels(self):
         return (self.lesson_view.chat(), self.practice_view.chat())
@@ -459,11 +591,8 @@ class MainWindow(QMainWindow):
         *,
         rubric_exercise: str | None = None,
     ) -> None:
-        """Dispatch one tutor turn, or explain why it cannot be sent."""
         if not network_allowed():
-            chat.add_tutor_error(
-                "AI calls are blocked because MENTORSMITH_OFFLINE is set."
-            )
+            chat.add_tutor_error("AI calls are blocked because MENTORSMITH_OFFLINE is set.")
             return
 
         if not self.provider.configured:
@@ -472,9 +601,7 @@ class MainWindow(QMainWindow):
             except ProviderError as exc:
                 chat.add_tutor_error(str(exc))
             else:
-                chat.add_tutor_error(
-                    "The provider is not fully configured. Open Settings."
-                )
+                chat.add_tutor_error("The provider is not fully configured. Open Settings.")
             return
 
         if self._tutor_worker is not None and self._tutor_worker.isRunning():
@@ -499,12 +626,11 @@ class MainWindow(QMainWindow):
         self._send_to_tutor(self.lesson_view.chat(), context, level)
 
     def _on_practice_tutor(self, message: str, level: str, marker: str) -> None:
-        """Handle the three kinds of tutor request the practice screen makes."""
         if marker == "__back_to_lesson__":
             self.show_page(PAGE_LESSON)
             return
 
-        chat = self.practice_view.chat()
+        chat    = self.practice_view.chat()
         session = self.practice_view.session
         if session is None:
             return
@@ -516,28 +642,23 @@ class MainWindow(QMainWindow):
                 section=f"exercise type {session.exercise.type}",
                 user_message=message,
             )
-            self._send_to_tutor(
-                chat, context, "guided", rubric_exercise=exercise_id
-            )
+            self._send_to_tutor(chat, context, "guided", rubric_exercise=exercise_id)
             return
 
-        # __practice__ - ordinary help with the learner's code and real output.
         context = TutorContext(
             lesson_title=session.exercise.concept_id,
             section=f"exercise: {session.exercise.title} ({session.exercise.type})",
             code=session.editor_code() if hasattr(session, "editor_code") else "",
             user_message=message,
         )
-        view = self.practice_view
-        context.code = view.editor.code()
+        view               = self.practice_view
+        context.code       = view.editor.code()
         context.compile_output = view.result_view.toPlainText()[:4000]
-        context.attempt_count = session.session.attempts
+        context.attempt_count  = session.session.attempts
         context.misconception_shown = session.session.hints_used > 0
         self._send_to_tutor(chat, context, level)
 
-    def _on_tutor_reply(
-        self, reply: TutorReply, chat, rubric_exercise: str | None
-    ) -> None:
+    def _on_tutor_reply(self, reply: TutorReply, chat, rubric_exercise: str | None) -> None:
         chat.add_tutor_message(reply.as_chat_text())
 
         if rubric_exercise:
@@ -555,20 +676,15 @@ class MainWindow(QMainWindow):
             )
 
     def _record_rubric_grade(self, reply: TutorReply, chat, exercise_id: str) -> None:
-        """Parse a verdict from the tutor and record it as an interpretive grade.
-
-        The reply is untrusted text: :func:`parse_verdict` is the only thing
-        that reads it, and it can do nothing except pick a verdict.
-        """
         from ..services.practice import parse_verdict
 
         verdict, reason = parse_verdict(reply.raw)
 
-        session = self.practice_view.session
+        session  = self.practice_view.session
         exercise = self.bank.get(exercise_id)
         if session is None or exercise is None:
             return
-        # Rebuild a session bound to this exercise so the grade lands on it.
+
         from ..services.practice import PracticeSession
 
         grading = PracticeSession(
@@ -602,24 +718,27 @@ class MainWindow(QMainWindow):
             self.settings = load_settings()
             self._build_toolchain()
             self.practice_view.toolchain = self.toolchain
-            self.lesson_view.toolchain = self.toolchain
+            self.lesson_view.toolchain   = self.toolchain
             self.lesson_view.refresh_sandbox_status()
             self._refresh_provider_status()
+            # Apply any theme change immediately
+            new_theme = self.settings.get("theme", "dark_orange")
+            if new_theme != theme.active_theme():
+                theme.apply_theme(self, new_theme)
             self.statusBar().showMessage("Settings saved")
 
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt API
         try:
             self.toolchain.stop()
-        except Exception:  # pragma: no cover - defensive
+        except Exception:  # pragma: no cover
             pass
         try:
             self.database.close()
-        except Exception:  # pragma: no cover - defensive
+        except Exception:  # pragma: no cover
             pass
         super().closeEvent(event)
 
 
 def _db_path() -> str:
     from ..config import db_path
-
     return str(db_path())

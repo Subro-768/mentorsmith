@@ -1,129 +1,439 @@
 {
   "language": "c",
   "concepts": [
-    { "id": "c-program", "title": "Program Structure", "lesson_id": "01-program-structure",
-      "summary": "main, the exit status, #include and compiling with warnings.", "prerequisites": [],
-      "error_categories": ["missing_include", "missing_semicolon", "implicit_declaration"] },
-    { "id": "c-types", "title": "Types and Storage", "lesson_id": "02-types",
-      "summary": "Basic types, integer division, conversions and format specifiers.", "prerequisites": ["c-program"],
-      "error_categories": ["format_mismatch", "integer_division", "signed_unsigned"] },
-    { "id": "c-flow", "title": "Conditions and Loops", "lesson_id": "03-conditions-and-loops",
-      "summary": "if/else/switch and the three loop forms.", "prerequisites": ["c-types"],
-      "error_categories": ["off_by_one", "infinite_loop", "assignment_vs_comparison"] },
-    { "id": "c-functions", "title": "Functions", "lesson_id": "04-functions",
-      "summary": "Parameters, pointers as the only pass-by-reference, prototypes.", "prerequisites": ["c-flow"],
-      "error_categories": ["missing_prototype", "dangling_pointer", "array_return"] },
-    { "id": "c-arrays-strings", "title": "Arrays and Strings", "lesson_id": "05-arrays-and-strings",
-      "summary": "Fixed-size arrays, null-terminated strings and safe copying.", "prerequisites": ["c-types", "c-flow"],
-      "error_categories": ["buffer_overflow", "out_of_bounds", "missing_null_terminator"] },
-    { "id": "c-pointers", "title": "Pointers", "lesson_id": "06-pointers",
-      "summary": "Addresses, dereferencing, NULL and pointer arithmetic.", "prerequisites": ["c-types", "c-arrays-strings"],
-      "error_categories": ["null_dereference", "uninitialised_pointer", "wrong_pointer_decl"] },
-    { "id": "c-structures", "title": "Structures", "lesson_id": "07-structures",
-      "summary": "Grouping data, . versus ->, typedef and arrays of structs.", "prerequisites": ["c-types", "c-pointers"],
-      "error_categories": ["member_access", "missing_typedef"] },
-    { "id": "c-memory", "title": "Memory Management", "lesson_id": "08-memory",
-      "summary": "malloc, free, leaks, double frees and growing an array.", "prerequisites": ["c-pointers"],
-      "error_categories": ["memory_leak", "double_free", "use_after_free", "wrong_malloc_size"] },
-    { "id": "c-files", "title": "File Handling", "lesson_id": "09-files",
-      "summary": "fopen, fgets, fprintf, modes and safe parsing.", "prerequisites": ["c-arrays-strings", "c-structures"],
-      "error_categories": ["file_not_checked", "wrong_mode", "buffer_overflow"] }
+    {
+      "id": "c-program",
+      "title": "Program Structure",
+      "lesson_id": "01-program-structure",
+      "summary": "main, the exit status, #include and compiling with warnings.",
+      "prerequisites": [],
+      "error_categories": [
+        "missing_include",
+        "missing_semicolon",
+        "implicit_declaration"
+      ]
+    },
+    {
+      "id": "c-types",
+      "title": "Types and Storage",
+      "lesson_id": "02-types",
+      "summary": "Basic types, integer division, conversions and format specifiers.",
+      "prerequisites": [
+        "c-program"
+      ],
+      "error_categories": [
+        "format_mismatch",
+        "integer_division",
+        "signed_unsigned"
+      ]
+    },
+    {
+      "id": "c-flow",
+      "title": "Conditions and Loops",
+      "lesson_id": "03-conditions-and-loops",
+      "summary": "if/else/switch and the three loop forms.",
+      "prerequisites": [
+        "c-types"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "infinite_loop",
+        "assignment_vs_comparison"
+      ]
+    },
+    {
+      "id": "c-functions",
+      "title": "Functions",
+      "lesson_id": "04-functions",
+      "summary": "Parameters, pointers as the only pass-by-reference, prototypes.",
+      "prerequisites": [
+        "c-flow"
+      ],
+      "error_categories": [
+        "missing_prototype",
+        "dangling_pointer",
+        "array_return"
+      ]
+    },
+    {
+      "id": "c-arrays-strings",
+      "title": "Arrays and Strings",
+      "lesson_id": "05-arrays-and-strings",
+      "summary": "Fixed-size arrays, null-terminated strings and safe copying.",
+      "prerequisites": [
+        "c-types",
+        "c-flow"
+      ],
+      "error_categories": [
+        "buffer_overflow",
+        "out_of_bounds",
+        "missing_null_terminator"
+      ]
+    },
+    {
+      "id": "c-pointers",
+      "title": "Pointers",
+      "lesson_id": "06-pointers",
+      "summary": "Addresses, dereferencing, NULL and pointer arithmetic.",
+      "prerequisites": [
+        "c-types",
+        "c-arrays-strings"
+      ],
+      "error_categories": [
+        "null_dereference",
+        "uninitialised_pointer",
+        "wrong_pointer_decl"
+      ]
+    },
+    {
+      "id": "c-structures",
+      "title": "Structures",
+      "lesson_id": "07-structures",
+      "summary": "Grouping data, . versus ->, typedef and arrays of structs.",
+      "prerequisites": [
+        "c-types",
+        "c-pointers"
+      ],
+      "error_categories": [
+        "member_access",
+        "missing_typedef"
+      ]
+    },
+    {
+      "id": "c-memory",
+      "title": "Memory Management",
+      "lesson_id": "08-memory",
+      "summary": "malloc, free, leaks, double frees and growing an array.",
+      "prerequisites": [
+        "c-pointers"
+      ],
+      "error_categories": [
+        "memory_leak",
+        "double_free",
+        "use_after_free",
+        "wrong_malloc_size"
+      ]
+    },
+    {
+      "id": "c-files",
+      "title": "File Handling",
+      "lesson_id": "09-files",
+      "summary": "fopen, fgets, fprintf, modes and safe parsing.",
+      "prerequisites": [
+        "c-arrays-strings",
+        "c-structures"
+      ],
+      "error_categories": [
+        "file_not_checked",
+        "wrong_mode",
+        "buffer_overflow"
+      ]
+    }
   ],
   "exercises": [
     {
-      "id": "c-types-format", "concept_id": "c-types", "lesson_id": "02-types",
-      "type": "find-a-bug", "title": "Wrong format specifier",
+      "id": "c-types-format",
+      "concept_id": "c-types",
+      "lesson_id": "02-types",
+      "type": "find-a-bug",
+      "title": "Wrong format specifier",
       "prompt": "This prints garbage because a double is printed with %d. Fix the specifier so it prints 3.50.",
       "code": "#include <stdio.h>\n\nint main(void) {\n    double result = 3.5;\n    printf(\"%.2f\\n\", result);\n    return 0;\n}\n",
       "expected_stdout": "3.50\n",
       "starter_code": "#include <stdio.h>\n\nint main(void) {\n    double result = 3.5;\n    printf(\"%.2f\\n\", result);\n    return 0;\n}\n",
-      "tags": ["format"]
+      "tags": [
+        "format"
+      ]
     },
     {
-      "id": "c-types-intdiv", "concept_id": "c-types", "lesson_id": "02-types",
-      "type": "predict-output", "title": "Integer division truncates",
+      "id": "c-types-intdiv",
+      "concept_id": "c-types",
+      "lesson_id": "02-types",
+      "type": "predict-output",
+      "title": "Integer division truncates",
       "prompt": "Predict both lines exactly.",
       "code": "#include <stdio.h>\n\nint main(void) {\n    int a = 7, b = 2;\n    printf(\"%d\\n\", a / b);\n    printf(\"%.1f\\n\", (double)a / b);\n    return 0;\n}\n",
-      "expected_stdout": "3\n3.5\n", "novel": true, "tags": ["integer-division"]
+      "expected_stdout": "3\n3.5\n",
+      "novel": true,
+      "tags": [
+        "integer-division"
+      ]
     },
     {
-      "id": "c-flow-offbyone", "concept_id": "c-flow", "lesson_id": "03-conditions-and-loops",
-      "type": "find-a-bug", "title": "One extra pass",
+      "id": "c-flow-offbyone",
+      "concept_id": "c-flow",
+      "lesson_id": "03-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "One extra pass",
       "prompt": "It prints 1 2 3 4 5 6. Fix it so it prints 1 2 3 4 5.",
       "code": "#include <stdio.h>\n\nint main(void) {\n    int i;\n    for (i = 1; i <= 5; ++i) printf(\"%d \", i);\n    printf(\"\\n\");\n    return 0;\n}\n",
       "expected_stdout": "1 2 3 4 5 \n",
       "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int i;\n    for (i = 1; i < 5; ++i) printf(\"%d \", i);\n    printf(\"\\n\");\n    return 0;\n}\n",
-      "tags": ["off-by-one"]
+      "tags": [
+        "off-by-one"
+      ]
     },
     {
-      "id": "c-functions-swap", "concept_id": "c-functions", "lesson_id": "04-functions",
-      "type": "find-a-bug", "title": "The change that vanishes",
+      "id": "c-functions-swap",
+      "concept_id": "c-functions",
+      "lesson_id": "04-functions",
+      "type": "find-a-bug",
+      "title": "The change that vanishes",
       "prompt": "The function is called but nothing changes. Fix it so this prints 11.",
       "code": "#include <stdio.h>\n\nvoid increment(int x) {\n    x = x + 1;\n}\n\nint main(void) {\n    int n = 10;\n    increment(n);\n    printf(\"%d\\n\", n);\n    return 0;\n}\n",
       "expected_stdout": "11\n",
       "starter_code": "#include <stdio.h>\n\nvoid increment(int *x) {\n    *x = *x + 1;\n}\n\nint main(void) {\n    int n = 10;\n    increment(&n);\n    printf(\"%d\\n\", n);\n    return 0;\n}\n",
-      "tags": ["pass-by-pointer"]
+      "tags": [
+        "pass-by-pointer"
+      ]
     },
     {
-      "id": "c-arrays-overflow", "concept_id": "c-arrays-strings", "lesson_id": "05-arrays-and-strings",
-      "type": "find-a-bug", "title": "Reading past the end",
+      "id": "c-arrays-overflow",
+      "concept_id": "c-arrays-strings",
+      "lesson_id": "05-arrays-and-strings",
+      "type": "find-a-bug",
+      "title": "Reading past the end",
       "prompt": "This reads one element beyond the array. Fix the loop so the sum is 10.",
       "code": "#include <stdio.h>\n\nint main(void) {\n    int nums[4] = {1, 2, 3, 4};\n    int sum = 0;\n    for (int i = 0; i <= 4; ++i) sum += nums[i];\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
       "expected_stdout": "10\n",
       "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int nums[4] = {1, 2, 3, 4};\n    int sum = 0;\n    for (int i = 0; i < 4; ++i) sum += nums[i];\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
-      "tags": ["out-of-bounds", "off-by-one"]
+      "tags": [
+        "out-of-bounds",
+        "off-by-one"
+      ]
     },
     {
-      "id": "c-arrays-strlen", "concept_id": "c-arrays-strings", "lesson_id": "05-arrays-and-strings",
-      "type": "predict-output", "title": "sizeof versus strlen",
+      "id": "c-arrays-strlen",
+      "concept_id": "c-arrays-strings",
+      "lesson_id": "05-arrays-and-strings",
+      "type": "predict-output",
+      "title": "sizeof versus strlen",
       "prompt": "Predict both numbers, and explain the difference in your own words afterwards.",
       "code": "#include <stdio.h>\n#include <string.h>\n\nint main(void) {\n    char greeting[] = \"Hello\";\n    printf(\"%zu\\n\", sizeof(greeting));\n    printf(\"%zu\\n\", strlen(greeting));\n    return 0;\n}\n",
-      "expected_stdout": "6\n5\n", "novel": true, "tags": ["string"]
+      "expected_stdout": "6\n5\n",
+      "novel": true,
+      "tags": [
+        "string"
+      ]
     },
     {
-      "id": "c-pointers-decl", "concept_id": "c-pointers", "lesson_id": "06-pointers",
-      "type": "find-a-bug", "title": "Only one pointer",
+      "id": "c-pointers-decl",
+      "concept_id": "c-pointers",
+      "lesson_id": "06-pointers",
+      "type": "find-a-bug",
+      "title": "Only one pointer",
       "prompt": "The compiler warns because q is not a pointer. Fix the declaration so both are pointers and this prints 1 2.",
       "code": "#include <stdio.h>\n\nint main(void) {\n    int a = 1, b = 2;\n    int *p, q;\n    p = &a;\n    q = &b;\n    printf(\"%d %d\\n\", *p, *q);\n    return 0;\n}\n",
       "expected_stdout": "1 2\n",
       "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int a = 1, b = 2;\n    int *p, *q;\n    p = &a;\n    q = &b;\n    printf(\"%d %d\\n\", *p, *q);\n    return 0;\n}\n",
-      "tags": ["declaration"]
+      "tags": [
+        "declaration"
+      ]
     },
     {
-      "id": "c-memory-malloc-size", "concept_id": "c-memory", "lesson_id": "08-memory",
-      "type": "find-a-bug", "title": "Ten bytes, not ten ints",
+      "id": "c-memory-malloc-size",
+      "concept_id": "c-memory",
+      "lesson_id": "08-memory",
+      "type": "find-a-bug",
+      "title": "Ten bytes, not ten ints",
       "prompt": "This allocates the wrong number of bytes and then reads past it. Make it allocate room for 10 ints and print their sum as 45.",
       "code": "#include <stdio.h>\n#include <stdlib.h>\n\nint main(void) {\n    int *values = malloc(10);\n    int total = 0;\n    for (int i = 0; i < 10; ++i) { values[i] = i; total += values[i]; }\n    printf(\"%d\\n\", total);\n    free(values);\n    return 0;\n}\n",
       "expected_stdout": "45\n",
       "starter_code": "#include <stdio.h>\n#include <stdlib.h>\n\nint main(void) {\n    int *values = malloc(10 * sizeof(*values));\n    int total = 0;\n    for (int i = 0; i < 10; ++i) { values[i] = i; total += values[i]; }\n    printf(\"%d\\n\", total);\n    free(values);\n    return 0;\n}\n",
-      "tags": ["malloc", "sizeof"]
+      "tags": [
+        "malloc",
+        "sizeof"
+      ]
     },
     {
-      "id": "c-files-check", "concept_id": "c-files", "lesson_id": "09-files",
-      "type": "find-a-bug", "title": "The unchecked open",
+      "id": "c-files-check",
+      "concept_id": "c-files",
+      "lesson_id": "09-files",
+      "type": "find-a-bug",
+      "title": "The unchecked open",
       "prompt": "For a missing file this silently does nothing. Make it print 'missing'.",
       "code": "#include <stdio.h>\n\nint main(void) {\n    FILE *file = fopen(\"no_such_file.txt\", \"r\");\n    if (file != NULL) {\n        fclose(file);\n    }\n    printf(\"missing\\n\");\n    return 0;\n}\n",
       "expected_stdout": "missing\n",
       "starter_code": "#include <stdio.h>\n\nint main(void) {\n    FILE *file = fopen(\"no_such_file.txt\", \"r\");\n    if (file == NULL) {\n        printf(\"missing\\n\");\n        return 1;\n    }\n    fclose(file);\n    printf(\"opened\\n\");\n    return 0;\n}\n",
-      "tags": ["file-not-checked"]
+      "tags": [
+        "file-not-checked"
+      ]
     },
     {
-      "id": "c-program-explicit-void", "concept_id": "c-program", "lesson_id": "01-program-structure",
-      "type": "find-a-bug", "title": "Unspecified arguments",
+      "id": "c-program-explicit-void",
+      "concept_id": "c-program",
+      "lesson_id": "01-program-structure",
+      "type": "find-a-bug",
+      "title": "Unspecified arguments",
       "prompt": "The compiler warns about unspecified arguments. Fix the signature so this compiles cleanly and prints the total.",
       "code": "#include <stdio.h>\n\nint main() {\n    int total = 7;\n    printf(\"%d\\n\", total);\n    return 0;\n}\n",
       "expected_stdout": "7\n",
       "starter_code": "#include <stdio.h>\n\nint main(void) {\n    int total = 7;\n    printf(\"%d\\n\", total);\n    return 0;\n}\n",
-      "tags": ["main-signature"]
+      "tags": [
+        "main-signature"
+      ]
     },
     {
-      "id": "c-structures-arrow", "concept_id": "c-structures", "lesson_id": "07-structures",
-      "type": "find-a-bug", "title": "Dot where you need an arrow",
+      "id": "c-structures-arrow",
+      "concept_id": "c-structures",
+      "lesson_id": "07-structures",
+      "type": "find-a-bug",
+      "title": "Dot where you need an arrow",
       "prompt": "This does not compile because of the member access. Fix it so it prints 12.",
       "code": "#include <stdio.h>\n\ntypedef struct { int x; int y; } Point;\n\nint main(void) {\n    Point p = {3, 4};\n    Point *pointer = &p;\n    printf(\"%d\\n\", pointer.x * pointer.y);\n    return 0;\n}\n",
       "expected_stdout": "12\n",
       "starter_code": "#include <stdio.h>\n\ntypedef struct { int x; int y; } Point;\n\nint main(void) {\n    Point p = {3, 4};\n    Point *pointer = &p;\n    printf(\"%d\\n\", pointer->x * pointer->y);\n    return 0;\n}\n",
-      "tags": ["member-access"]
+      "tags": [
+        "member-access"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "c-matrix-calc",
+      "title": "Matrix Arithmetic & Statistics Engine",
+      "purpose": "Master C 2D arrays, pointer arithmetic, manual memory indexing, and struct definitions.",
+      "concepts": [
+        "c-types",
+        "c-arrays-strings",
+        "c-pointers",
+        "c-functions",
+        "c-structures"
+      ],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "Matrix structure & memory representation",
+          "requirements": "Define a Matrix struct with rows, cols, and a flat 1D data array or double pointer.",
+          "acceptance_criteria": [
+            "Encapsulates dimensions safely",
+            "Accesses element (r, c) via formula data[r * cols + c]",
+            "Compiles cleanly with -Wall -Wextra"
+          ],
+          "hint": "A flat 1D buffer of size rows * cols guarantees contiguous memory layout and better cache locality."
+        },
+        {
+          "title": "Matrix addition and multiplication",
+          "requirements": "Write matrix_add and matrix_multiply functions validating dimension compatibility.",
+          "acceptance_criteria": [
+            "Checks dimension constraints before calculation",
+            "Multiplication computes dot products accurately across rows and columns",
+            "Returns error code if dimensions mismatch"
+          ],
+          "hint": "Multiplication requires A->cols == B->rows, yielding result of size A->rows x B->cols."
+        },
+        {
+          "title": "Statistical transformations",
+          "requirements": "Calculate determinant (for 2x2 and 3x3), trace, and transpose into a new matrix.",
+          "acceptance_criteria": [
+            "Transpose flips dimensions and elements correctly",
+            "Calculates accurate determinant",
+            "Handles zero matrix without division by zero errors"
+          ],
+          "hint": "Transpose formula: B->data[c * B->cols + r] = A->data[r * A->cols + c]."
+        }
+      ],
+      "extensions": [
+        "Read matrix data from formatted text file",
+        "Implement Gaussian elimination for linear systems",
+        "Benchmark cache performance of row-major vs col-major traversal"
+      ]
+    },
+    {
+      "id": "c-dynamic-vector-lib",
+      "title": "Dynamic Generic Vector Library",
+      "purpose": "Deep dive into manual dynamic memory allocation: malloc, realloc, free, growth factors, and pointer safety.",
+      "concepts": [
+        "c-pointers",
+        "c-memory",
+        "c-structures"
+      ],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Vector lifecycle management",
+          "requirements": "Implement vector_create(initial_capacity), vector_free(vec), tracking size and capacity.",
+          "acceptance_criteria": [
+            "malloc allocates buffer and checks for NULL failure",
+            "vector_free frees internal buffer and zeroes out struct pointers",
+            "No memory leaks under valgrind analysis"
+          ],
+          "hint": "Always test if (vec->data == NULL) handle out-of-memory error."
+        },
+        {
+          "title": "Geometric reallocation & push_back",
+          "requirements": "Implement vector_push(vec, value) that automatically doubles capacity when size == capacity.",
+          "acceptance_criteria": [
+            "Doubles capacity via realloc when limit reached",
+            "Preserves original data on reallocation",
+            "Guarantees amortized O(1) insertion time"
+          ],
+          "hint": "Use temp = realloc(vec->data, new_cap * sizeof(int)); if (!temp) rollback."
+        },
+        {
+          "title": "Safe indexing and deletion",
+          "requirements": "Implement vector_get, vector_set with bounds checking, and vector_remove_at with memory shifting.",
+          "acceptance_criteria": [
+            "Out of bounds access returns error code or false",
+            "Removal shifts subsequent elements with memmove",
+            "Size decrements reliably after removal"
+          ],
+          "hint": "Use memmove(&vec->data[index], &vec->data[index + 1], (vec->size - index - 1) * sizeof(int))."
+        }
+      ],
+      "extensions": [
+        "Support generic void* elements with custom element size",
+        "Implement vector_shrink_to_fit to reclaim unused memory",
+        "Add sorting using standard qsort"
+      ]
+    },
+    {
+      "id": "c-posix-micro-shell",
+      "title": "POSIX Micro Unix Shell",
+      "purpose": "Master systems programming: process management (fork, execvp, waitpid), signal handling, and I/O redirection.",
+      "concepts": [
+        "c-pointers",
+        "c-memory",
+        "c-arrays-strings"
+      ],
+      "difficulty": "advanced",
+      "milestones": [
+        {
+          "title": "REPL loop & command parsing",
+          "requirements": "Read user input line with getline, tokenize arguments using strtok into char* argv[] array.",
+          "acceptance_criteria": [
+            "Handles arbitrary argument count up to MAX_ARGS",
+            "Terminates argument array with NULL pointer for execvp",
+            "Empty input re-prompts without crashing"
+          ],
+          "hint": "strtok(line, \" \\t\\n\") repeatedly until NULL."
+        },
+        {
+          "title": "Fork & process execution",
+          "requirements": "Fork child process to execute commands with execvp, parent waits with waitpid.",
+          "acceptance_criteria": [
+            "Child executes external binaries (ls, pwd, echo)",
+            "Parent captures exit status with WIFEXITED and WEXITSTATUS",
+            "Handles non-existent commands with descriptive error"
+          ],
+          "hint": "pid_t pid = fork(); if (pid == 0) execvp(args[0], args); else waitpid(pid, &status, 0);"
+        },
+        {
+          "title": "Built-in commands & I/O redirection",
+          "requirements": "Implement built-ins (cd, exit) and file redirection (> output.txt) using open and dup2.",
+          "acceptance_criteria": [
+            "cd updates process working directory via chdir()",
+            "Redirects stdout to file descriptor when > symbol detected",
+            "Restores standard descriptors after execution"
+          ],
+          "hint": "int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644); dup2(fd, STDOUT_FILENO); close(fd);"
+        }
+      ],
+      "extensions": [
+        "Support pipe | between two commands",
+        "Handle SIGINT (Ctrl+C) gracefully without killing shell",
+        "Add background command execution (&)"
+      ]
     }
   ]
 }

@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import os
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
@@ -46,23 +48,39 @@ class SettingsDialog(QDialog):
 
     # ------------------------------------------------------------------
     def _build_ui(self) -> None:
+        self.setStyleSheet(
+            f"QDialog {{ background-color: {theme.SURFACE}; }}"
+        )
         layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 16)
 
-        # ---- AI provider ----
-        provider_box = QGroupBox("AI provider")
+        # ── Title ────────────────────────────────────────────────────────
+        title = QLabel("Settings")
+        title.setObjectName("title")
+        layout.addWidget(title)
+
+        # ── AI provider ──────────────────────────────────────────────────
+        provider_box = QGroupBox("AI Provider")
         provider_form = QFormLayout(provider_box)
+        provider_form.setSpacing(10)
+        provider_form.setContentsMargins(12, 16, 12, 12)
+        provider_form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.base_url_edit = QLineEdit()
         self.base_url_edit.setPlaceholderText("https://your-provider.example/v1")
+        self.base_url_edit.setFixedHeight(34)
         provider_form.addRow("Base URL:", self.base_url_edit)
 
         self.model_edit = QLineEdit()
         self.model_edit.setPlaceholderText("the exact model name your account can use")
+        self.model_edit.setFixedHeight(34)
         provider_form.addRow("Model:", self.model_edit)
 
         self.timeout_spin = QSpinBox()
         self.timeout_spin.setRange(5, 600)
         self.timeout_spin.setSuffix(" s")
+        self.timeout_spin.setFixedHeight(34)
         provider_form.addRow("Request timeout:", self.timeout_spin)
 
         key_label = QLabel(
@@ -80,9 +98,11 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(provider_box)
 
-        # ---- toolchain ----
-        toolchain_box = QGroupBox("C++ toolchain")
+        # ── Toolchain ─────────────────────────────────────────────────────
+        toolchain_box = QGroupBox("C++ Toolchain")
         toolchain_layout = QVBoxLayout(toolchain_box)
+        toolchain_layout.setContentsMargins(12, 16, 12, 12)
+        toolchain_layout.setSpacing(8)
 
         self.sandbox_check = QCheckBox(
             "Run learner code inside a bubblewrap sandbox when available"
@@ -106,9 +126,12 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(toolchain_box)
 
-        # ---- privacy ----
-        privacy_box = QGroupBox("What leaves this machine")
+        # ── Privacy ───────────────────────────────────────────────────────
+        privacy_box = QGroupBox("Privacy — What Leaves This Machine")
         privacy_layout = QVBoxLayout(privacy_box)
+        privacy_layout.setContentsMargins(12, 16, 12, 12)
+        privacy_layout.setSpacing(8)
+
         privacy_text = QLabel(
             "When you send a message to the tutor, the following is sent to your "
             "configured provider:<ul>"
@@ -121,40 +144,74 @@ class SettingsDialog(QDialog):
             "variable <code>MENTORSMITH_OFFLINE=1</code> blocks all AI calls."
         )
         privacy_text.setWordWrap(True)
+        privacy_text.setStyleSheet(f"color: {theme.MUTED}; font-size: 12px;")
         privacy_layout.addWidget(privacy_text)
 
         offline_row = QHBoxLayout()
         self.offline_check = QCheckBox("Block all AI calls for this run")
         offline_row.addWidget(self.offline_check)
         offline_note = QLabel(
-            "Takes effect immediately without a restart. Useful when you do not "
-            "want code leaving the machine."
+            "Takes effect immediately without a restart."
         )
         offline_note.setObjectName("muted")
         offline_note.setWordWrap(True)
         offline_row.addWidget(offline_note, 1)
         privacy_layout.addLayout(offline_row)
-        privacy_layout.addStretch(1)
 
         layout.addWidget(privacy_box)
 
-        # ---- buttons ----
+        # ── Appearance / Theme ──────────────────────────────────────────
+        appearance_box = QGroupBox("Appearance")
+        appearance_form = QFormLayout(appearance_box)
+        appearance_form.setSpacing(10)
+        appearance_form.setContentsMargins(12, 16, 12, 12)
+        appearance_form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+
+        self.theme_combo = QComboBox()
+        self.theme_combo.setFixedHeight(34)
+        for theme_id, theme_label in theme.THEMES.items():
+            self.theme_combo.addItem(theme_label, theme_id)
+        appearance_form.addRow("Color theme:", self.theme_combo)
+
+        theme_note = QLabel(
+            "Theme is applied immediately after clicking Save. "
+            "It persists across restarts."
+        )
+        theme_note.setObjectName("muted")
+        theme_note.setWordWrap(True)
+        appearance_form.addRow("", theme_note)
+
+        layout.addWidget(appearance_box)
+
+        # ── Test output ────────────────────────────────────────────────
         self.test_output = QPlainTextEdit()
         self.test_output.setReadOnly(True)
-        self.test_output.setPlaceholderText(
-            "Output from a test request appears here."
+        self.test_output.setPlaceholderText("Output from a test request appears here.")
+        self.test_output.setMaximumHeight(100)
+        self.test_output.setStyleSheet(
+            f"QPlainTextEdit {{ background: {theme.BASE}; border: 1px solid {theme.BORDER}; "
+            f"border-radius: 8px; font-family: monospace; font-size: 12px; padding: 8px; }}"
         )
-        self.test_output.setMaximumHeight(110)
         layout.addWidget(self.test_output)
 
+        # ── Buttons ───────────────────────────────────────────────────────
         buttons = QHBoxLayout()
-        self.test_button = QPushButton("Test connection")
+        self.test_button = QPushButton("⚡ Test connection")
+        self.test_button.setFixedHeight(36)
         buttons.addWidget(self.test_button)
         buttons.addStretch(1)
 
         box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
+        # Style Save as primary
+        save_btn = box.button(QDialogButtonBox.StandardButton.Save)
+        if save_btn:
+            save_btn.setObjectName("primary")
+            save_btn.setFixedHeight(36)
+        cancel_btn = box.button(QDialogButtonBox.StandardButton.Cancel)
+        if cancel_btn:
+            cancel_btn.setFixedHeight(36)
         buttons.addWidget(box)
         layout.addLayout(buttons)
 
@@ -169,6 +226,11 @@ class SettingsDialog(QDialog):
         self.timeout_spin.setValue(int(self.settings.get("provider_timeout", 60) or 60))
         self.sandbox_check.setChecked(bool(self.settings.get("sandbox_enabled", False)))
         self.offline_check.setChecked(is_truthy(os.environ.get("MENTORSMITH_OFFLINE", "")))
+        # Select current theme
+        saved_theme = self.settings.get("theme", "dark_orange")
+        idx = self.theme_combo.findData(saved_theme)
+        if idx >= 0:
+            self.theme_combo.setCurrentIndex(idx)
         self._refresh_key_status()
         self._refresh_sandbox_detail()
 
@@ -253,6 +315,10 @@ class SettingsDialog(QDialog):
         self.settings["provider_model"] = self.model_edit.text().strip()
         self.settings["provider_timeout"] = self.timeout_spin.value()
         self.settings["sandbox_enabled"] = self.sandbox_check.isChecked()
+        # Persist selected theme
+        selected_theme = self.theme_combo.currentData()
+        if selected_theme:
+            self.settings["theme"] = selected_theme
         save_settings(self.settings)
 
         if self.offline_check.isChecked():

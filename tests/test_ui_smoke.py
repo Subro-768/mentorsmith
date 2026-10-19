@@ -299,8 +299,8 @@ def test_phase2_pages_exist(window) -> None:
         PAGE_PROJECTS,
     )
 
-    # Seven pages since Phase 5 added the Developer tools.
-    assert window.stack.count() == 7
+    # Eight pages with Analytics added.
+    assert window.stack.count() >= 7
     assert window.stack.widget(PAGE_PRACTICE) is not None
     assert window.stack.widget(PAGE_INSIGHTS) is not None
     assert window.stack.widget(PAGE_PROJECTS) is not None

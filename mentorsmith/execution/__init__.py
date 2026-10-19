@@ -26,16 +26,18 @@ from .c import CAdapter
 from .compiled import CompiledAdapter
 from .cpp import CppAdapter
 from .interpreted import InterpretedAdapter
+from .java import JavaAdapter
 from .javascript import JavaScriptAdapter
 from .python import PythonAdapter
 
 #: Canonical order used everywhere a language list is shown.
-LANGUAGE_IDS: tuple[str, ...] = ("cpp", "python", "c", "javascript")
+LANGUAGE_IDS: tuple[str, ...] = ("cpp", "python", "java", "c", "javascript")
 
 #: Display metadata, kept here so the UI never hardcodes names.
 LANGUAGE_LABELS: dict[str, str] = {
     "cpp": "C++",
     "python": "Python",
+    "java": "Java",
     "c": "C",
     "javascript": "JavaScript",
 }
@@ -43,6 +45,7 @@ LANGUAGE_LABELS: dict[str, str] = {
 _ADAPTERS: dict[str, type[LanguageAdapter]] = {
     "cpp": CppAdapter,
     "python": PythonAdapter,
+    "java": JavaAdapter,
     "c": CAdapter,
     "javascript": JavaScriptAdapter,
 }

@@ -37,3 +37,8 @@ android/app/*.iml
 *.aab
 *.ap_
 *.dex
+
+# Editor and tool backups
+*.bak
+*.orig
+*.rej

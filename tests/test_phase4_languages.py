@@ -14,7 +14,7 @@ from mentorsmith.core.db import Database
 from mentorsmith.execution import adapter, detect, detect_all
 from mentorsmith.execution.base import LanguageAdapter, ToolMissingError
 
-LANGUAGES = ("cpp", "python", "c", "javascript")
+LANGUAGES = ("cpp", "python", "java", "c", "javascript")
 
 
 @pytest.fixture()
@@ -117,6 +117,7 @@ def test_cpp_uses_the_cxx_standard(work: Path) -> None:
 HELLO = {
     "cpp": '#include <iostream>\nint main(){ std::cout << "ok\\n"; return 0; }\n',
     "python": 'print("ok")\n',
+    "java": 'public class Main { public static void main(String[] args) { System.out.println("ok"); } }\n',
     "c": '#include <stdio.h>\nint main(void){ printf("ok\\n"); return 0; }\n',
     "javascript": 'console.log("ok");\n',
 }
@@ -142,6 +143,7 @@ def test_each_language_reports_failures(language: str, work: Path) -> None:
     broken = {
         "cpp": "int main() { int x = ; }\n",
         "python": 'print("unterminated\n',
+        "java": "public class Main { public static void main(String[] args) { int x = ; } }\n",
         "c": "int main(void) { return zzz; }\n",
         "javascript": "const x = ;\n",
     }[language]
@@ -164,6 +166,7 @@ def test_each_language_enforces_the_timeout(language: str, work: Path) -> None:
     spin = {
         "cpp": "int main(){ for(;;){} }\n",
         "python": "while True:\n    pass\n",
+        "java": "public class Main { public static void main(String[] args) { for(;;){} } }\n",
         "c": "int main(void){ for(;;){} return 0; }\n",
         "javascript": "while (true) {}\n",
     }[language]

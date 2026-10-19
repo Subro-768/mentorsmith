@@ -73,6 +73,8 @@ def default_settings() -> dict:
         "assistance_level": "guided",
         # Toolchain
         "sandbox_enabled": False,
+        # Appearance — "dark_orange" | "dark_purple" | "light"
+        "theme": "dark_orange",
     }
 
 

@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=MentorSmith
+GenericName=Programming Tutor
+Comment=Learn programming fundamentals with real compilers and an AI tutor
+# Calls the launcher installed into ~/.local/bin, which points back at this
+# checkout. An earlier version used `python3 %k/../main.py`, which resolved to
+# ~/.local/share/main.py - a path that does not exist - so the menu entry
+# silently failed to launch.
+Exec=mentorsmith
+Icon=mentorsmith
+Terminal=false
+Categories=Education;
+Keywords=programming;c++;python;java;javascript;tutor;learn;compiler;education;
+StartupNotify=true
+StartupWMClass=mentorsmith

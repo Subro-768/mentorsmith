@@ -191,6 +191,22 @@ COMPARISONS: tuple[Comparison, ...] = (
             "file, and what is the JavaScript equivalent obligation?"
         ),
     ),
+    Comparison(
+        id="java-cpp-memory",
+        concept="Memory management and garbage collection",
+        languages=("java", "cpp"),
+        same="Both languages run compiled object-oriented code with classes and methods.",
+        different=(
+            "Java runs in the JVM with an automatic Garbage Collector (GC); objects created with `new` are freed when unreachable.",
+            "C++ uses deterministic lifetime (RAII, destructors, smart pointers) and direct memory management without a GC pause.",
+            "Java has no pointers or manual `delete`, preventing memory leaks from forgotten frees, but gives up deterministic destruction order.",
+        ),
+        snippets=(
+            "// Java: JVM garbage collector manages memory\nPoint p = new Point(1, 2);\n// Automatically freed when no longer referenced",
+            "// C++: RAII deterministic lifetime\nauto p = std::make_unique<Point>(1, 2);\n// Freed deterministically as soon as p leaves scope",
+        ),
+        question="What is the main trade-off between Java's garbage collection and C++'s RAII?",
+    ),
 )
 
 

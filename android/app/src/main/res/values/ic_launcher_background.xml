@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The plate colour, so the adaptive icon's background matches the SVG plate. -->
+<resources>
+    <color name="ic_launcher_background">#16181B</color>
+</resources>

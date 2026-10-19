@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Anvil + spark on a transparent 108dp canvas.
+
+  The safe zone is the inner 72dp (a 66dp circle is centred at 54,54), so the
+  mark is scaled to about 62% and the launcher mask cannot clip the horn tip.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- anvil silhouette -->
+    <path
+        android:fillColor="#4FC1FF"
+        android:pathData="M25.5,53 L60.5,53 L85,44 L85,54 L63.5,64.5 L63.5,70 L47.5,70 L47.5,75.5 L25.5,75.5 Z" />
+
+    <!-- base slabs -->
+    <path android:fillColor="#5CC7FA" android:pathData="M31.5,78 L76.5,78 L76.5,82.5 L31.5,82.5 Z" />
+    <path android:fillColor="#3FA3D8" android:pathData="M41,85 L67,85 L67,89.5 L41,89.5 Z" />
+
+    <!-- spark -->
+    <path
+        android:fillColor="#FFB454"
+        android:pathData="M70,16 L74.5,29.5 L88,34 L74.5,38.5 L70,52 L65.5,38.5 L52,34 L65.5,29.5 Z" />
+    <path android:fillColor="#FFB454" android:fillAlpha="0.75" android:pathData="M89,22 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+</vector>

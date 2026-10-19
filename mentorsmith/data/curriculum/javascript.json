@@ -1,128 +1,431 @@
 {
   "language": "javascript",
   "concepts": [
-    { "id": "js-variables", "title": "Variables and Types", "lesson_id": "01-variables-and-types",
-      "summary": "const/let, primitives, truthiness and coercion.", "prerequisites": [],
-      "error_categories": ["coercion", "type_error", "using_var"] },
-    { "id": "js-flow", "title": "Conditions and Loops", "lesson_id": "02-conditions-and-loops",
-      "summary": "if/switch, for/for-of/while and the loop closure bug.", "prerequisites": ["js-variables"],
-      "error_categories": ["off_by_one", "for_in_on_array", "closure_in_loop", "infinite_loop"] },
-    { "id": "js-functions", "title": "Functions", "lesson_id": "03-functions",
-      "summary": "Declarations, arrows, defaults, rest and passing rules.", "prerequisites": ["js-variables"],
-      "error_categories": ["missing_return", "arrow_this", "constructor_arrow"] },
-    { "id": "js-collections", "title": "Arrays and Objects", "lesson_id": "04-arrays-and-objects",
-      "summary": "map/filter/reduce, sort with a comparator, objects and Map.", "prerequisites": ["js-variables", "js-flow"],
-      "error_categories": ["sort_without_comparator", "mutating_sort", "undefined_property", "or_instead_of_nullish"] },
-    { "id": "js-scope", "title": "Scope and Closures", "lesson_id": "05-scope",
-      "summary": "Block scope, the temporal dead zone and closure privacy.", "prerequisites": ["js-functions"],
-      "error_categories": ["var_scope_leak", "temporal_dead_zone", "closure_capture_bug"] },
-    { "id": "js-errors", "title": "Error Handling", "lesson_id": "06-error-handling",
-      "summary": "Error types, throw/catch/finally, cause and not swallowing.", "prerequisites": ["js-functions", "js-collections"],
-      "error_categories": ["swallowed_error", "bare_catch", "throwing_non_error"] },
-    { "id": "js-modules", "title": "Modules", "lesson_id": "07-modules",
-      "summary": "Named and default exports, extension rules and circular imports.", "prerequisites": ["js-functions"],
-      "error_categories": ["missing_extension", "circular_import", "commonjs_mix"] },
-    { "id": "js-async", "title": "Asynchronous Fundamentals", "lesson_id": "08-async",
-      "summary": "Event loop, promises, async/await and parallel work.", "prerequisites": ["js-functions", "js-errors"],
-      "error_categories": ["missing_await", "sequential_await", "blocking_event_loop", "unhandled_rejection"] }
+    {
+      "id": "js-variables",
+      "title": "Variables and Types",
+      "lesson_id": "01-variables-and-types",
+      "summary": "const/let, primitives, truthiness and coercion.",
+      "prerequisites": [],
+      "error_categories": [
+        "coercion",
+        "type_error",
+        "using_var"
+      ]
+    },
+    {
+      "id": "js-flow",
+      "title": "Conditions and Loops",
+      "lesson_id": "02-conditions-and-loops",
+      "summary": "if/switch, for/for-of/while and the loop closure bug.",
+      "prerequisites": [
+        "js-variables"
+      ],
+      "error_categories": [
+        "off_by_one",
+        "for_in_on_array",
+        "closure_in_loop",
+        "infinite_loop"
+      ]
+    },
+    {
+      "id": "js-functions",
+      "title": "Functions",
+      "lesson_id": "03-functions",
+      "summary": "Declarations, arrows, defaults, rest and passing rules.",
+      "prerequisites": [
+        "js-variables"
+      ],
+      "error_categories": [
+        "missing_return",
+        "arrow_this",
+        "constructor_arrow"
+      ]
+    },
+    {
+      "id": "js-collections",
+      "title": "Arrays and Objects",
+      "lesson_id": "04-arrays-and-objects",
+      "summary": "map/filter/reduce, sort with a comparator, objects and Map.",
+      "prerequisites": [
+        "js-variables",
+        "js-flow"
+      ],
+      "error_categories": [
+        "sort_without_comparator",
+        "mutating_sort",
+        "undefined_property",
+        "or_instead_of_nullish"
+      ]
+    },
+    {
+      "id": "js-scope",
+      "title": "Scope and Closures",
+      "lesson_id": "05-scope",
+      "summary": "Block scope, the temporal dead zone and closure privacy.",
+      "prerequisites": [
+        "js-functions"
+      ],
+      "error_categories": [
+        "var_scope_leak",
+        "temporal_dead_zone",
+        "closure_capture_bug"
+      ]
+    },
+    {
+      "id": "js-errors",
+      "title": "Error Handling",
+      "lesson_id": "06-error-handling",
+      "summary": "Error types, throw/catch/finally, cause and not swallowing.",
+      "prerequisites": [
+        "js-functions",
+        "js-collections"
+      ],
+      "error_categories": [
+        "swallowed_error",
+        "bare_catch",
+        "throwing_non_error"
+      ]
+    },
+    {
+      "id": "js-modules",
+      "title": "Modules",
+      "lesson_id": "07-modules",
+      "summary": "Named and default exports, extension rules and circular imports.",
+      "prerequisites": [
+        "js-functions"
+      ],
+      "error_categories": [
+        "missing_extension",
+        "circular_import",
+        "commonjs_mix"
+      ]
+    },
+    {
+      "id": "js-async",
+      "title": "Asynchronous Fundamentals",
+      "lesson_id": "08-async",
+      "summary": "Event loop, promises, async/await and parallel work.",
+      "prerequisites": [
+        "js-functions",
+        "js-errors"
+      ],
+      "error_categories": [
+        "missing_await",
+        "sequential_await",
+        "blocking_event_loop",
+        "unhandled_rejection"
+      ]
+    }
   ],
   "exercises": [
     {
-      "id": "js-vars-coercion", "concept_id": "js-variables", "lesson_id": "01-variables-and-types",
-      "type": "find-a-bug", "title": "Strict equality",
+      "id": "js-vars-coercion",
+      "concept_id": "js-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "find-a-bug",
+      "title": "Strict equality",
       "prompt": "The comparison fails even though the numbers look the same. Fix it with strict equality so it prints true.",
       "code": "const total = \"5\";\nconsole.log(total === 5);\n",
       "expected_stdout": "true\n",
       "starter_code": "const total = 5;\nconsole.log(total === 5);\n",
-      "tags": ["coercion"]
+      "tags": [
+        "coercion"
+      ]
     },
     {
-      "id": "js-vars-truthy", "concept_id": "js-variables", "lesson_id": "01-variables-and-types",
-      "type": "predict-output", "title": "Surprising truthiness",
+      "id": "js-vars-truthy",
+      "concept_id": "js-variables",
+      "lesson_id": "01-variables-and-types",
+      "type": "predict-output",
+      "title": "Surprising truthiness",
       "prompt": "Predict all three lines exactly. One of them surprises most people.",
       "code": "console.log(Boolean(0));\nconsole.log(Boolean(\"\"));\nconsole.log(Boolean([]));\n",
-      "expected_stdout": "false\nfalse\ntrue\n", "novel": true, "tags": ["truthiness"]
+      "expected_stdout": "false\nfalse\ntrue\n",
+      "novel": true,
+      "tags": [
+        "truthiness"
+      ]
     },
     {
-      "id": "js-flow-forin", "concept_id": "js-flow", "lesson_id": "02-conditions-and-loops",
-      "type": "find-a-bug", "title": "Keys instead of values",
+      "id": "js-flow-forin",
+      "concept_id": "js-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "Keys instead of values",
       "prompt": "The loop prints indices as strings. Make it print the values 10, 20, 30.",
       "code": "const values = [10, 20, 30];\nfor (const item in values) {\n  console.log(item);\n}\n",
       "expected_stdout": "10\n20\n30\n",
       "starter_code": "const values = [10, 20, 30];\nfor (const item of values) {\n  console.log(item);\n}\n",
-      "tags": ["for-in"]
+      "tags": [
+        "for-in"
+      ]
     },
     {
-      "id": "js-flow-closure", "concept_id": "js-flow", "lesson_id": "02-conditions-and-loops",
-      "type": "find-a-bug", "title": "Every closure shares one variable",
+      "id": "js-flow-closure",
+      "concept_id": "js-flow",
+      "lesson_id": "02-conditions-and-loops",
+      "type": "find-a-bug",
+      "title": "Every closure shares one variable",
       "prompt": "This prints 3, 3, 3. Make it print 0, 1, 2.",
       "code": "const fns = [];\nfor (var i = 0; i < 3; i++) {\n  fns.push(() => i);\n}\nfor (const fn of fns) console.log(fn());\n",
       "expected_stdout": "0\n1\n2\n",
       "starter_code": "const fns = [];\nfor (let i = 0; i < 3; i++) {\n  fns.push(() => i);\n}\nfor (const fn of fns) console.log(fn());\n",
-      "novel": true, "tags": ["closure", "var"]
+      "novel": true,
+      "tags": [
+        "closure",
+        "var"
+      ]
     },
     {
-      "id": "js-fn-implicit-return", "concept_id": "js-functions", "lesson_id": "03-functions",
-      "type": "find-a-bug", "title": "Silent undefined",
+      "id": "js-fn-implicit-return",
+      "concept_id": "js-functions",
+      "lesson_id": "03-functions",
+      "type": "find-a-bug",
+      "title": "Silent undefined",
       "prompt": "This prints undefined. Make it print 4.",
       "code": "const double = (x) => { x * 2 };\nconsole.log(double(2));\n",
       "expected_stdout": "4\n",
       "starter_code": "const double = (x) => { return x * 2 };\nconsole.log(double(2));\n",
-      "tags": ["arrow", "return"]
+      "tags": [
+        "arrow",
+        "return"
+      ]
     },
     {
-      "id": "js-coll-sort", "concept_id": "js-collections", "lesson_id": "04-arrays-and-objects",
-      "type": "find-a-bug", "title": "String sort",
+      "id": "js-coll-sort",
+      "concept_id": "js-collections",
+      "lesson_id": "04-arrays-and-objects",
+      "type": "find-a-bug",
+      "title": "String sort",
       "prompt": "It prints 10, 100, 9. Make it print the numbers ascending without changing the original array.",
       "code": "const values = [10, 9, 100];\nconsole.log([...values].sort().join(\",\"));\n",
       "expected_stdout": "9,10,100\n",
       "starter_code": "const values = [10, 9, 100];\nconsole.log([...values].sort((a, b) => a - b).join(\",\"));\n",
-      "tags": ["sort"]
+      "tags": [
+        "sort"
+      ]
     },
     {
-      "id": "js-coll-nullish", "concept_id": "js-collections", "lesson_id": "04-arrays-and-objects",
-      "type": "find-a-bug", "title": "Zero replaced by the fallback",
+      "id": "js-coll-nullish",
+      "concept_id": "js-collections",
+      "lesson_id": "04-arrays-and-objects",
+      "type": "find-a-bug",
+      "title": "Zero replaced by the fallback",
       "prompt": "It prints fallback instead of 0. Make it print 0 while still defaulting a genuine null.",
       "code": "const count = 0;\nconsole.log(count || \"fallback\");\nconsole.log(count ?? \"fallback\");\n",
       "expected_stdout": "fallback\n0\n",
       "starter_code": "const count = 0;\nconsole.log(count || \"fallback\");\nconsole.log(count ?? \"fallback\");\n",
-      "tags": ["nullish"]
+      "tags": [
+        "nullish"
+      ]
     },
     {
-      "id": "js-errors-swallow", "concept_id": "js-errors", "lesson_id": "06-error-handling",
-      "type": "find-a-bug", "title": "The invisible error",
+      "id": "js-errors-swallow",
+      "concept_id": "js-errors",
+      "lesson_id": "06-error-handling",
+      "type": "find-a-bug",
+      "title": "The invisible error",
       "prompt": "Nothing is reported. Make it print 'invalid' for bad input.",
       "code": "function parse(text) {\n  try {\n    return Number(text);\n  } catch {\n  }\n  return null;\n}\n\nconsole.log(parse(\"abc\"));\n",
       "expected_stdout": "invalid\n",
       "starter_code": "function parse(text) {\n  const value = Number(text);\n  if (Number.isNaN(value)) {\n    console.log(\"invalid\");\n    return null;\n  }\n  return value;\n}\n\nconsole.log(parse(\"abc\"));\n",
-      "tags": ["swallowed"]
+      "tags": [
+        "swallowed"
+      ]
     },
     {
-      "id": "js-async-missing-await", "concept_id": "js-async", "lesson_id": "08-async",
-      "type": "find-a-bug", "title": "The catch that never runs",
+      "id": "js-async-missing-await",
+      "concept_id": "js-async",
+      "lesson_id": "08-async",
+      "type": "find-a-bug",
+      "title": "The catch that never runs",
       "prompt": "This prints nothing because the promise was never awaited. Make it print 'caught: boom'.",
       "code": "async function work() {\n  throw new Error(\"boom\");\n}\n\ntry {\n  work();\n} catch (error) {\n  console.log(\"caught:\", error.message);\n}\n",
       "expected_stdout": "caught: boom\n",
       "starter_code": "async function work() {\n  throw new Error(\"boom\");\n}\n\nasync function main() {\n  try {\n    await work();\n  } catch (error) {\n    console.log(\"caught:\", error.message);\n  }\n}\n\nawait main();\n",
-      "novel": true, "tags": ["await", "rejection"]
+      "novel": true,
+      "tags": [
+        "await",
+        "rejection"
+      ]
     },
     {
-      "id": "js-scope-let-deadzone", "concept_id": "js-scope", "lesson_id": "05-scope",
-      "type": "find-a-bug", "title": "Reading before the declaration",
+      "id": "js-scope-let-deadzone",
+      "concept_id": "js-scope",
+      "lesson_id": "05-scope",
+      "type": "find-a-bug",
+      "title": "Reading before the declaration",
       "prompt": "This throws a ReferenceError. Fix it so it prints 99 without touching the binding early.",
       "code": "console.log(later);\nlet later = 99;\n",
       "expected_stdout": "99\n",
       "starter_code": "let later = 99;\nconsole.log(later);\n",
-      "novel": true, "tags": ["tdz"]
+      "novel": true,
+      "tags": [
+        "tdz"
+      ]
     },
     {
-      "id": "js-modules-extension", "concept_id": "js-modules", "lesson_id": "07-modules",
-      "type": "find-a-bug", "title": "The missing extension",
+      "id": "js-modules-extension",
+      "concept_id": "js-modules",
+      "lesson_id": "07-modules",
+      "type": "find-a-bug",
+      "title": "The missing extension",
       "prompt": "ES modules need the full extension on relative imports. Fix it so it prints 6.28.",
       "code": "import { PI } from './constants';\n\nconsole.log(PI.toFixed(2));\n",
       "expected_stdout": "6.28\n",
       "starter_code": "import { PI } from './constants.mjs';\n\nconsole.log(PI.toFixed(2));\n",
-      "tags": ["extensions"]
+      "tags": [
+        "extensions"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "js-quiz-event-emitter",
+      "title": "Interactive Quiz & Custom Event Bus",
+      "purpose": "Master JavaScript closures, higher-order functions, custom EventEmitter, and object literals.",
+      "concepts": [
+        "js-variables",
+        "js-flow",
+        "js-functions",
+        "js-collections"
+      ],
+      "difficulty": "beginner",
+      "milestones": [
+        {
+          "title": "EventEmitter pattern from scratch",
+          "requirements": "Implement an EventEmitter class with on(event, callback), off(event, callback), and emit(event, data).",
+          "acceptance_criteria": [
+            "Multiple listeners can subscribe to the same event",
+            "emit triggers callbacks in registration order with arguments",
+            "off removes the specified callback accurately"
+          ],
+          "hint": "Store listeners as an object mapping event names to arrays of callbacks: this.events[name] = []."
+        },
+        {
+          "title": "Quiz state machine",
+          "requirements": "Build a QuizEngine that holds question models, current question index, score, and emits question:change and quiz:end events.",
+          "acceptance_criteria": [
+            "answer() method validates selected option and updates score",
+            "Advances to next question until all answered",
+            "Emits events to decouple state from UI display"
+          ],
+          "hint": "Check if (currentQuestionIndex >= questions.length) this.emit(\"quiz:end\", this.score)."
+        },
+        {
+          "title": "CLI interaction loop",
+          "requirements": "Wire readline interface or simulated console prompts to quiz events, showing timer and score summary.",
+          "acceptance_criteria": [
+            "Handles invalid option selections gracefully",
+            "Displays formatted percentage and grade upon completion",
+            "Cleanly exits the Node.js event loop on finish"
+          ],
+          "hint": "Use readline.createInterface({ input: process.stdin, output: process.stdout })."
+        }
+      ],
+      "extensions": [
+        "Add countdown timer per question using setTimeout / clearTimeout",
+        "Support multiple question formats (true/false, multi-select)",
+        "Load questions dynamically from JSON file"
+      ]
+    },
+    {
+      "id": "js-async-weather-aggregator",
+      "title": "Asynchronous Concurrent Data Pipeline",
+      "purpose": "Harness asynchronous JavaScript: Promises, async/await, Promise.allSettled, rate-limiting, and error fallback.",
+      "concepts": [
+        "js-functions",
+        "js-async",
+        "js-collections",
+        "js-errors"
+      ],
+      "difficulty": "intermediate",
+      "milestones": [
+        {
+          "title": "Async API fetch wrapper with retry",
+          "requirements": "Write fetchWithRetry(url, maxRetries, delayMs) using Promise and exponential backoff.",
+          "acceptance_criteria": [
+            "Retries failed requests up to maxRetries times",
+            "Doubles delay interval between attempts",
+            "Rejects with informative error when attempts exhausted"
+          ],
+          "hint": "Use async/await in a for loop and await new Promise(r => setTimeout(r, delay))."
+        },
+        {
+          "title": "Concurrent multi-source aggregator",
+          "requirements": "Fetch data from multiple simulated weather endpoints concurrently using Promise.allSettled.",
+          "acceptance_criteria": [
+            "Does not fail entire batch if one endpoint returns error",
+            "Filters and extracts fulfilled values safely",
+            "Computes average temperature across successful responses"
+          ],
+          "hint": "Iterate through results filtering by r.status === \"fulfilled\"."
+        },
+        {
+          "title": "Data transformation and caching layer",
+          "requirements": "Implement an in-memory TTL Cache with get(key) and set(key, value, ttlSeconds) to avoid duplicate network calls.",
+          "acceptance_criteria": [
+            "Subsequent calls within TTL serve from memory",
+            "Stale data expires and re-fetches cleanly",
+            "Logs cache HIT vs MISS metrics"
+          ],
+          "hint": "Store Map with object { value, expiry: Date.now() + ttl * 1000 }."
+        }
+      ],
+      "extensions": [
+        "Implement concurrency throttler (limit to N parallel requests)",
+        "Write tests mocking fetch with Jest or Node test runner",
+        "Export aggregated weather report to markdown"
+      ]
+    },
+    {
+      "id": "js-reactive-state-store",
+      "title": "Reactive State Store & Virtual Pub/Sub",
+      "purpose": "Master advanced JS: Proxy-based reactivity, deep property observation, batch updating, and immutable history.",
+      "concepts": [
+        "js-collections",
+        "js-functions",
+        "js-scope"
+      ],
+      "difficulty": "advanced",
+      "milestones": [
+        {
+          "title": "Deep reactive Proxy observer",
+          "requirements": "Create createStore(initialState) that wraps objects in Proxy to intercept get and set traps recursively.",
+          "acceptance_criteria": [
+            "Intercepts mutations at any depth level",
+            "Notifies subscribers with old and new values",
+            "Does not trigger notifications if value didn't change (Object.is check)"
+          ],
+          "hint": "In set trap, reflect update and call notifySubscribers(prop, val, oldVal)."
+        },
+        {
+          "title": "Computed properties & dependency tracking",
+          "requirements": "Implement computed(getter) that automatically tracks accessed store properties and caches computed values.",
+          "acceptance_criteria": [
+            "Re-evaluates only when tracked dependencies change",
+            "Caches result for multiple reads without re-computing",
+            "Supports multiple independent computed derivations"
+          ],
+          "hint": "Set an activeEffect pointer during getter execution to register dependencies."
+        },
+        {
+          "title": "Time-travel state history",
+          "requirements": "Implement undo() and redo() mechanics using immutable state snapshots or patch deltas.",
+          "acceptance_criteria": [
+            "Every mutation pushes state snapshot to past stack",
+            "undo() restores previous state and notifies UI",
+            "redo() replays forward history cleanly"
+          ],
+          "hint": "Use structuredClone() to clone snapshots before applying mutations."
+        }
+      ],
+      "extensions": [
+        "Implement action middleware pattern (logging, crash reporting)",
+        "Batch multiple synchronous mutations into a single microtask notify with queueMicrotask",
+        "Serialize and restore entire state store from localStorage"
+      ]
     }
   ]
 }
