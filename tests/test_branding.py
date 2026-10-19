@@ -305,32 +305,159 @@ class TestDesktopEntryIsLaunchable:
 
 
 # ======================================================================
-# Why the icon did not appear at first.
+# Why the installer is shaped the way it is.
 #
-# The install looked correct on disk: eight PNGs in a proper
-# ~/.local/share/icons/hicolor tree, a valid .desktop file naming the icon
-# theme "mentorsmith", and the caches refreshed. The menu still showed a
-# generic terminal icon.
+# Two rounds of breakage, both invisible:
 #
-# Two causes, both silent:
+#   1. It installed icons into the shared hicolor tree and wrote an
+#      index.theme listing only the directories it had created. Every icon
+#      in a directory it did not list became invisible - a GNOME extension,
+#      another app - with nothing on disk changed to show why.
+#   2. It ran `gtk-update-icon-cache -f` against that same shared tree,
+#      rewriting a cache every other icon on the machine depends on.
 #
-#   1. The hicolor directory had no index.theme. The freedesktop icon theme
-#      spec requires one, and a theme directory without it is skipped
-#      entirely - so nothing was ever looked for.
-#   2. Even with one, a theme-name lookup depends on the desktop environment
-#      rescanning ~/.local/share/icons, which on GNOME commonly needs a
-#      log-out. The spec also allows Icon= to be an absolute path, which needs
-#      no cache at all.
+# The fix is structural rather than defensive: the icons now live in a
+# directory this app owns outright, and the desktop entry references them by
+# absolute path, so no theme index is needed and no shared cache is touched.
 #
-# The installed .desktop now uses the absolute path, and the installer writes a
-# valid index.theme. These tests hold both in place.
+# The tests below plant a whole foreign icon tree, install, and assert that
+# not one file outside our own directory changed.
 # ======================================================================
-class TestInstalledIconIsResolvable:
-    """Checks against a real install into a temporary HOME."""
+class TestInstallerWritesOnlyItsOwnDirectory:
+    @pytest.fixture()
+    def world(self, tmp_path, monkeypatch):
+        """A fake HOME containing somebody else's icons and a desktop cache."""
+        import importlib
 
+        fake_home = tmp_path / "home"
+        hicolor = fake_home / ".local" / "share" / "icons" / "hicolor"
+
+        # Another app's icons, in directories of every kind.
+        for rel in ("scalable/apps", "24x24/apps", "256x256/apps"):
+            (hicolor / rel).mkdir(parents=True)
+        (hicolor / "scalable" / "apps" / "org.example.Extension.svg").write_text(
+            "<svg/>", encoding="utf-8"
+        )
+        (hicolor / "256x256" / "apps" / "otherapp.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+        (hicolor / "index.theme").write_text(
+            "[Icon Theme]\nName=Hicolor\nComment=Not ours\n"
+            "Directories=scalable/apps,24x24/apps,256x256/apps\n",
+            encoding="utf-8",
+        )
+
+        # Another app's desktop entry, plus the shared desktop cache.
+        apps = fake_home / ".local" / "share" / "applications"
+        apps.mkdir(parents=True)
+        (apps / "otherapp.desktop").write_text("[Desktop Entry]\n", encoding="utf-8")
+        (apps / "mimeinfo.cache").write_bytes(b"shared cache")
+
+        snapshot = {
+            str(f): (f.stat().st_mtime_ns, f.read_bytes())
+            for f in fake_home.rglob("*") if f.is_file()
+        }
+
+        monkeypatch.setenv("HOME", str(fake_home))
+        sys.path.insert(0, str(ROOT / "tools"))
+        installer = importlib.reload(importlib.import_module("install_desktop"))
+        installer.HOME = fake_home
+        installer.BIN_DIR = fake_home / ".local" / "bin"
+        installer.APPS_DIR = apps
+        installer.ICONS_ROOT = fake_home / ".local" / "share" / "icons" / "mentorsmith"
+
+        return installer, fake_home, snapshot, hicolor, apps
+
+    def test_icons_go_to_a_directory_we_own(self, world) -> None:
+        installer, _home, _snap, _hicolor, _apps = world
+        assert installer.install() == 0
+        assert installer.ICONS_ROOT.name == "mentorsmith"
+        assert installer.ICONS_ROOT.parent.name == "icons"
+        assert installer.ICONS_ROOT.exists()
+        assert list(installer.ICONS_ROOT.rglob("mentorsmith.png")), "no icons installed"
+
+    def test_nothing_outside_our_directory_is_written(self, world) -> None:
+        """The core property: the only files that appear are ours."""
+        installer, home, snapshot, _hicolor, _apps = world
+        assert installer.install() == 0
+
+        after = {
+            str(f): (f.stat().st_mtime_ns, f.read_bytes())
+            for f in home.rglob("*") if f.is_file()
+        }
+        touched = {
+            p for p in set(snapshot) | set(after)
+            if snapshot.get(p) != after.get(p)
+        }
+        allowed_roots = (
+            str(installer.ICONS_ROOT),
+            str(installer.BIN_DIR),
+        )
+        allowed_files = {str(installer.APPS_DIR / "mentorsmith.desktop")}
+        for path in touched:
+            assert path in allowed_files or path.startswith(allowed_roots), (
+                f"the installer modified {path}, which it does not own"
+            )
+
+    def test_the_shared_index_theme_is_untouched(self, world) -> None:
+        installer, _home, _snap, hicolor, _apps = world
+        assert installer.install() == 0
+        index = hicolor / "index.theme"
+        assert index.exists(), "the installer deleted somebody else's index.theme"
+        assert "Not ours" in index.read_text(encoding="utf-8")
+
+    def test_foreign_icons_survive(self, world) -> None:
+        installer, _home, _snap, hicolor, _apps = world
+        assert installer.install() == 0
+        assert (hicolor / "scalable" / "apps" / "org.example.Extension.svg").exists()
+        assert (hicolor / "256x256" / "apps" / "otherapp.png").exists()
+
+    def test_no_icon_is_written_into_hicolor(self, world) -> None:
+        installer, _home, _snap, hicolor, _apps = world
+        assert installer.install() == 0
+        assert not list(hicolor.rglob("mentorsmith.png")), (
+            "icons must not be installed into the shared tree"
+        )
+
+    def test_the_shared_desktop_cache_is_not_rewritten(self, world) -> None:
+        """update-desktop-database rewrites mimeinfo.cache, which every other
+        per-user application shares. Off unless --refresh-caches is passed."""
+        installer, _home, _snap, _hicolor, apps = world
+        cache = apps / "mimeinfo.cache"
+        before = cache.read_bytes()
+        assert installer.install() == 0
+        assert cache.read_bytes() == before
+
+    def test_another_apps_desktop_entry_survives(self, world) -> None:
+        installer, _home, _snap, _hicolor, apps = world
+        assert installer.install() == 0
+        assert (apps / "otherapp.desktop").exists()
+
+    def test_uninstall_restores_the_original_world(self, world) -> None:
+        """Not a single trace left, and nothing of anyone else's gone."""
+        installer, home, snapshot, _hicolor, _apps = world
+        assert installer.install() == 0
+        assert installer.uninstall() == 0
+
+        after = {
+            str(f): (f.stat().st_mtime_ns, f.read_bytes())
+            for f in home.rglob("*") if f.is_file()
+        }
+        # Everything that was there before is still there, unchanged...
+        for path, state in snapshot.items():
+            assert path in after, f"uninstall removed {path}"
+            assert after[path] == state, f"uninstall modified {path}"
+        # ...and everything that appeared is ours, and is now gone.
+        for path in set(after) - set(snapshot):
+            assert path.startswith(str(installer.ICONS_ROOT)), (
+                f"uninstall left behind {path}"
+            )
+
+
+# ======================================================================
+# The installed desktop entry has to actually work
+# ======================================================================
+class TestInstalledEntryWorks:
     @pytest.fixture()
     def installed(self, tmp_path, monkeypatch):
-        """Run the installer against a throwaway HOME and return the paths."""
         import importlib
 
         fake_home = tmp_path / "home"
@@ -338,176 +465,60 @@ class TestInstalledIconIsResolvable:
         monkeypatch.setenv("HOME", str(fake_home))
 
         sys.path.insert(0, str(ROOT / "tools"))
-        installer = importlib.import_module("install_desktop")
-        installer = importlib.reload(installer)
-        # Point the module's constants at the temporary home.
-        installer.HOME = fake_home
-        installer.BIN_DIR = fake_home / ".local" / "bin"
-        installer.APPS_DIR = fake_home / ".local" / "share" / "applications"
-        installer.ICONS_ROOT = fake_home / ".local" / "share" / "icons" / "hicolor"
-
-        assert installer.install() == 0
-        return installer
-
-    def test_the_installed_icon_line_is_an_absolute_existing_path(self, installed) -> None:
-        """An Icon= that points nowhere fails silently; this catches it."""
-        text = (installed.APPS_DIR / "mentorsmith.desktop").read_text(encoding="utf-8")
-        icon_line = next(
-            line for line in text.splitlines() if line.startswith("Icon=")
-        )
-        value = icon_line.split("=", 1)[1].strip()
-        assert value.startswith("/"), (
-            f"Icon={value!r} is a theme name; a per-user install needs an "
-            "absolute path or a desktop-environment rescan"
-        )
-        assert Path(value).exists(), f"Icon={value!r} does not exist"
-
-    def test_the_installed_exec_resolves(self, installed) -> None:
-        import shutil
-
-        text = (installed.APPS_DIR / "mentorsmith.desktop").read_text(encoding="utf-8")
-        command = text.splitlines()
-        exec_line = next(line for line in command if line.startswith("Exec="))
-        binary = exec_line.split("=", 1)[1].strip()
-        assert (installed.BIN_DIR / binary).exists(), (
-            f"Exec={binary!r} does not point at the installed launcher"
-        )
-        assert (installed.BIN_DIR / binary).stat().st_mode & 0o111, "not executable"
-
-    def test_an_index_theme_is_written(self, installed) -> None:
-        """Without index.theme the whole icon directory is ignored."""
-        index = installed.ICONS_ROOT / "index.theme"
-        assert index.exists(), "hicolor has no index.theme, so it is never read"
-        text = index.read_text(encoding="utf-8")
-        assert "[Icon Theme]" in text
-        assert "Directories=" in text
-
-    def test_the_index_theme_lists_the_installed_directories(self, installed) -> None:
-        text = (installed.ICONS_ROOT / "index.theme").read_text(encoding="utf-8")
-        listed = next(
-            line for line in text.splitlines() if line.startswith("Directories=")
-        ).split("=", 1)[1]
-        for size in (16, 48, 256):
-            directory = f"{size}x{size}/apps"
-            assert directory in listed, f"{directory} missing from index.theme"
-            assert (installed.ICONS_ROOT / directory / "mentorsmith.png").exists()
-
-    def test_the_index_theme_does_not_inherit_from_itself(self, installed) -> None:
-        """`Inherits=hicolor` inside hicolor is a self-reference."""
-        text = (installed.ICONS_ROOT / "index.theme").read_text(encoding="utf-8")
-        for line in text.splitlines():
-            if line.startswith("Inherits="):
-                assert "hicolor" not in line.split("=", 1)[1].split(","), (
-                    "the theme inherits from itself"
-                )
-
-    def test_an_existing_index_theme_is_not_clobbered(self, installed) -> None:
-        """The user or another package may own the file."""
-        index = installed.ICONS_ROOT / "index.theme"
-        index.write_text("[Icon Theme]\nName=Custom\n", encoding="utf-8")
-        assert installed.install() == 0
-        assert "Custom" in index.read_text(encoding="utf-8")
-
-    def test_uninstall_removes_everything_it_installed(self, installed) -> None:
-        assert installed.uninstall() == 0
-        assert not (installed.APPS_DIR / "mentorsmith.desktop").exists()
-        assert not (installed.BIN_DIR / "mentorsmith").exists()
-        remaining = list(installed.ICONS_ROOT.rglob("mentorsmith.png"))
-        assert not remaining, f"left behind: {remaining}"
-
-
-# ======================================================================
-# The installer must never damage icons it did not install.
-#
-# This exists because it happened. The first version wrote a fresh index.theme
-# listing only the directories it had created, into a hicolor tree that already
-# held other applications' icons. Every icon in an unlisted directory became
-# invisible - a GNOME extension, another app - with nothing on disk changed to
-# show why. A later version then `rm -f`'d that file outright.
-#
-# So: plant foreign icons, install, and assert they are still listed.
-# ======================================================================
-class TestInstallerLeavesOtherIconsAlone:
-    @pytest.fixture()
-    def tree(self, tmp_path, monkeypatch):
-        """A hicolor tree that already belongs to somebody else."""
-        import importlib
-
-        fake_home = tmp_path / "home"
-        root = fake_home / ".local" / "share" / "icons" / "hicolor"
-        # Someone else's icon: a GNOME extension and an unrelated app.
-        (root / "scalable" / "apps").mkdir(parents=True)
-        (root / "scalable" / "apps" / "org.gnome.Shell.Extensions.GSConnect.svg").write_text(
-            "<svg/>", encoding="utf-8"
-        )
-        (root / "256x256" / "apps").mkdir(parents=True)
-        (root / "256x256" / "apps" / "otherapp.png").write_bytes(b"\x89PNG\r\n\x1a\n")
-        (root / "index.theme").write_text(
-            "[Icon Theme]\nName=Hicolor\nComment=Owned by someone else\n"
-            "Directories=scalable/apps,256x256/apps\n"
-            "Type=Scalable\nMinSize=8\nMaxSize=512\nContext=Applications\n",
-            encoding="utf-8",
-        )
-        monkeypatch.setenv("HOME", str(fake_home))
-
-        sys.path.insert(0, str(ROOT / "tools"))
         installer = importlib.reload(importlib.import_module("install_desktop"))
         installer.HOME = fake_home
         installer.BIN_DIR = fake_home / ".local" / "bin"
         installer.APPS_DIR = fake_home / ".local" / "share" / "applications"
-        installer.ICONS_ROOT = root
+        installer.ICONS_ROOT = fake_home / ".local" / "share" / "icons" / "mentorsmith"
+
+        assert installer.install() == 0
         return installer
 
-    def _listed(self, installer) -> set[str]:
-        index = (installer.ICONS_ROOT / "index.theme").read_text(encoding="utf-8")
-        line = next(
-            l for l in index.splitlines() if l.startswith("Directories=")
+    def test_the_icon_line_points_at_a_file_that_exists(self, installed) -> None:
+        """An Icon= that points nowhere fails silently."""
+        text = (installed.APPS_DIR / "mentorsmith.desktop").read_text(encoding="utf-8")
+        value = next(
+            line for line in text.splitlines() if line.startswith("Icon=")
+        ).split("=", 1)[1].strip()
+        assert value.startswith("/"), f"Icon={value!r} is a theme name"
+        assert Path(value).exists(), f"Icon={value!r} does not exist"
+
+    def test_the_icon_line_points_inside_our_own_directory(self, installed) -> None:
+        text = (installed.APPS_DIR / "mentorsmith.desktop").read_text(encoding="utf-8")
+        value = next(
+            line for line in text.splitlines() if line.startswith("Icon=")
+        ).split("=", 1)[1].strip()
+        assert str(installed.ICONS_ROOT) in value, (
+            "the icon must live in a directory this app owns"
         )
-        return {d.strip() for d in line.split("=", 1)[1].split(",") if d.strip()}
 
-    def test_installing_keeps_foreign_directories(self, tree) -> None:
-        before = self._listed(tree)
-        assert "scalable/apps" in before, "fixture should start with a foreign dir"
-        assert tree.install() == 0
-        after = self._listed(tree)
-        assert "scalable/apps" in after, (
-            "the installer dropped a directory it did not create; every icon in "
-            "it is now invisible"
+    def test_every_installed_size_is_present(self, installed) -> None:
+        for size in (16, 48, 256, 512):
+            path = installed.ICONS_ROOT / f"{size}x{size}" / "mentorsmith.png"
+            assert path.exists(), f"{path} missing"
+
+    def test_the_exec_resolves_to_an_executable(self, installed) -> None:
+        text = (installed.APPS_DIR / "mentorsmith.desktop").read_text(encoding="utf-8")
+        binary = next(
+            line for line in text.splitlines() if line.startswith("Exec=")
+        ).split("=", 1)[1].strip()
+        launcher = installed.BIN_DIR / binary
+        assert launcher.exists(), f"Exec={binary!r} does not exist"
+        assert launcher.stat().st_mode & 0o111, "not executable"
+
+    def test_the_launcher_points_at_this_checkout(self, installed) -> None:
+        """So editing the source and re-running takes effect with no reinstall."""
+        launcher = installed.BIN_DIR / "mentorsmith"
+        assert str(ROOT) in launcher.read_text(encoding="utf-8")
+
+    def test_no_index_theme_is_written_anywhere(self, installed) -> None:
+        """We reference the PNG by absolute path; a theme index is unnecessary,
+        and writing one into a shared tree is what broke the user's icons."""
+        assert not list(installed.HOME.rglob("index.theme")), (
+            "the installer wrote an icon theme index it has no business writing"
         )
 
-    def test_installing_keeps_the_foreign_comment(self, tree) -> None:
-        assert tree.install() == 0
-        text = (tree.ICONS_ROOT / "index.theme").read_text(encoding="utf-8")
-        assert "Owned by someone else" in text, "the index was overwritten"
-
-    def test_installing_keeps_foreign_files_on_disk(self, tree) -> None:
-        assert tree.install() == 0
-        assert (tree.ICONS_ROOT / "scalable" / "apps"
-                / "org.gnome.Shell.Extensions.GSConnect.svg").exists()
-        assert (tree.ICONS_ROOT / "256x256" / "apps" / "otherapp.png").exists()
-
-    def test_our_directories_are_added_to_the_existing_index(self, tree) -> None:
-        assert tree.install() == 0
-        listed = self._listed(tree)
-        assert "scalable/apps" in listed          # theirs, preserved
-        assert "256x256/apps" in listed           # theirs, preserved
-        assert "48x48/apps" in listed             # ours, added
-
-    def test_merging_is_idempotent(self, tree) -> None:
-        assert tree.install() == 0
-        first = self._listed(tree)
-        assert tree.install() == 0
-        assert self._listed(tree) == first, "a second install changed the index"
-
-    def test_uninstall_only_removes_our_own_icons(self, tree) -> None:
-        assert tree.install() == 0
-        assert tree.uninstall() == 0
-        # Ours gone...
-        assert not list(tree.ICONS_ROOT.rglob("mentorsmith.png"))
-        # ...theirs untouched, on disk and still listed.
-        assert (tree.ICONS_ROOT / "scalable" / "apps"
-                / "org.gnome.Shell.Extensions.GSConnect.svg").exists()
-        assert (tree.ICONS_ROOT / "256x256" / "apps" / "otherapp.png").exists()
-        listed = self._listed(tree)
-        assert "scalable/apps" in listed
-        assert "256x256/apps" in listed
+    def test_installing_twice_is_idempotent(self, installed) -> None:
+        icons = sorted(installed.ICONS_ROOT.rglob("mentorsmith.png"))
+        assert installed.install() == 0
+        assert sorted(installed.ICONS_ROOT.rglob("mentorsmith.png")) == icons
