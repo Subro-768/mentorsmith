@@ -35,16 +35,24 @@ python3 tools/install_desktop.py          # per-user install, no sudo needed
 mentorsmith                              # or launch "MentorSmith" from your menu
 ```
 
-That writes three things under `~/.local`, and refreshes the icon and desktop
-caches:
+That writes three things under `~/.local`, and nothing else anywhere:
 
 | Path | What |
 |---|---|
 | `~/.local/bin/mentorsmith` | launcher, pointing at this checkout |
 | `~/.local/share/applications/mentorsmith.desktop` | menu entry |
-| `~/.local/share/icons/hicolor/<n>x<n>/apps/mentorsmith.png` | 8 icon sizes |
+| `~/.local/share/icons/mentorsmith/<n>x<n>/mentorsmith.png` | 8 icon sizes |
 
-`--dry-run` shows what it would do; `--uninstall` removes it.
+The icons go into a directory of their own rather than the shared `hicolor`
+tree, and the desktop entry names the PNG by absolute path — which is what
+actually makes it appear, with no theme index and no cache rebuild involved.
+`hicolor` belongs to every other app on the machine, and an earlier version of
+this installer wrote an `index.theme` there that made unrelated icons vanish.
+
+`--dry-run` shows what it would do; `--uninstall` removes it;
+`--refresh-caches` regenerates the icon and desktop caches if your desktop
+genuinely needs it. Off by default, because those caches are shared with every
+other per-user application.
 
 Editing the source takes effect immediately — the launcher points at the
 checkout rather than copying files, so there is nothing to reinstall.
@@ -71,10 +79,14 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 576 tests
+python3 -m pytest tests/ -q                       # 837 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
+python3 tools/export_theme.py --check             # Android colours current?
 ```
+
+`export_theme.py` generates the Android palette from `mentorsmith/ui/theme.py`,
+so the two apps cannot quietly drift into looking like different products.
 
 A good first tour:
 

@@ -4,9 +4,9 @@
 - Current phase: **All five phases complete**, plus a reliability audit that
   found two real defects (see below). Order was 1 → 2 → **4** → 3 → 5
   (see "Why Phase 4 came before Phase 3" below).
-- Last updated: 2026-10-16
-- Branch / repository status: `master`, four commits, clean tree. No remote.
-- App launch status: **Launches on Fedora 44**, six pages, verified by
+- Last updated: 2026-10-19
+- Branch / repository status: `master`, 13 commits, clean tree. No remote.
+- App launch status: **Launches on Fedora 44**, seven pages, verified by
   constructing the window offscreen (`python3 main.py --check`) and by rendering
   every screen.
 - Android status: **APK builds and runs its unit tests.** No device or emulator
@@ -32,8 +32,29 @@ de-risked it: if the Android toolchain had failed on JDK 25 / AGP, Phases 2 and
 | After Phase 5 | **576** | 3 |
 | After the §9 audit | 602 | **4** |
 | After the §6 offline work | **627** | 4 |
+| After branding, install and Java track | 712 | 4 |
+| After the icon/analytics/theme fixes | **837** | 4 |
 
 All earlier tests still pass unchanged. Android adds **41** JVM unit tests.
+
+### Defects found after Phase 5
+
+Beyond the §9 audit, a further review of the code added during Phase 5 and the
+Java track turned up these, all now fixed:
+
+| Where | Defect | How it survived |
+|---|---|---|
+| `ui/analytics_view.py` | XP comment said 10 per lesson; the line below awarded 20 | The file had no tests at all |
+| `ui/analytics_view.py` | Level bar seeded `setValue(10)` — a fabricated 10% | `refresh()` overwrote it, so every test that did not check passed |
+| `ui/analytics_view.py` | At the top level: "12000 XP (Next level at 10000 XP)" | `_calculate_level` invented `threshold * 2` past the last level |
+| `ui/analytics_view.py` | Heatmap said "LAST 90 DAYS", drew 90–96 | Whole-week column alignment, undocumented |
+| `ui/theme/Theme.kt` | Android shipped VS Code Dark+ under a comment claiming it was the desktop palette | A colour mismatch is not an error |
+| `tools/install_desktop.py` | Wrote an `index.theme` into the user's shared `hicolor`, making unrelated icons invisible | Nothing on disk changed, so nothing showed why |
+
+The recurring lesson is that these are all *silences*: a value that is
+plausible-looking but false, a comment that contradicts the line beneath it, a
+palette that is merely different. None of them raise. Each now has a test that
+fails when the silence comes back.
 
 ## Project purpose
 Linux-first AI programming tutor with an Android learning companion. The goal
