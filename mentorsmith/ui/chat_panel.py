@@ -30,6 +30,7 @@ class ChatPanel(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._provider = None
         self._build_ui()
 
     # ------------------------------------------------------------------
@@ -81,6 +82,35 @@ class ChatPanel(QWidget):
         )
         self.level_combo.setCurrentIndex(1)
         topbar_lay.addWidget(self.level_combo)
+
+        # ── Model picker ──────────────────────────────────────────────
+        # Editable on purpose: the list is fetched from the provider, but a
+        # provider that does not implement /models (or a key that cannot reach
+        # the listing) must not stop somebody typing a model name.
+        model_lbl = QLabel("Model:")
+        model_lbl.setStyleSheet(f"color: {theme.MUTED}; font-size: 12px;")
+        topbar_lay.addWidget(model_lbl)
+
+        self.model_combo = QComboBox()
+        self.model_combo.setEditable(True)
+        self.model_combo.setFixedWidth(220)
+        self.model_combo.setFixedHeight(28)
+        self.model_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.model_combo.setToolTip(
+            "Which model answers this conversation.\n\n"
+            "The list is fetched from your provider. You can also type any "
+            "model name your key can reach - useful for a model that is not "
+            "listed, or when the listing cannot be fetched."
+        )
+        topbar_lay.addWidget(self.model_combo)
+
+        self.refresh_models_button = QPushButton("⟳")
+        self.refresh_models_button.setObjectName("subtle")
+        self.refresh_models_button.setFixedHeight(28)
+        self.refresh_models_button.setFixedWidth(28)
+        self.refresh_models_button.setToolTip("Fetch the model list from the provider.")
+        self.refresh_models_button.clicked.connect(self.refresh_models)
+        topbar_lay.addWidget(self.refresh_models_button)
 
         self.request_hint_button = QPushButton("💡 Hint")
         self.request_hint_button.setObjectName("subtle")
@@ -177,6 +207,75 @@ class ChatPanel(QWidget):
     # ------------------------------------------------------------------
     # Behaviour
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Model selection
+    # ------------------------------------------------------------------
+    def current_model(self) -> str:
+        """The model to use for the next message, or "" to use the default.
+
+        Returns "" rather than the configured default so that "not chosen"
+        stays distinguishable from "chosen, and it happens to be the default".
+        """
+        return self.model_combo.currentText().strip()
+
+    def set_model(self, model: str) -> None:
+        if not model:
+            return
+        self._set_model_text(model)
+
+    def _set_model_text(self, model: str) -> None:
+        """Put ``model`` in the box without triggering a repopulate."""
+        blocked = self.model_combo.blockSignals(True)
+        index = self.model_combo.findText(model)
+        if index >= 0:
+            self.model_combo.setCurrentIndex(index)
+        else:
+            self.model_combo.setEditText(model)
+        self.model_combo.blockSignals(blocked)
+
+    def refresh_models(self, provider=None) -> int:
+        """Fetch the provider's model list into the picker.
+
+        Never raises and never blocks on failure: a provider with no /models
+        endpoint, a bad key, or no network at all just leaves whatever was
+        typed in place. Returns how many models were listed.
+        """
+        if provider is None:
+            provider = getattr(self, "_provider", None)
+        lister = getattr(provider, "list_models", None)
+        if lister is None:
+            return 0
+
+        try:
+            models = lister()
+        except Exception:
+            # A picker is a convenience; it must not be able to break chat.
+            return 0
+        if not models:
+            return 0
+
+        current = self.current_model()
+        blocked = self.model_combo.blockSignals(True)
+        self.model_combo.clear()
+        for model in models:
+            self.model_combo.addItem(model["name"], model["id"])
+        if current:
+            self._set_model_text(current)
+        self.model_combo.blockSignals(blocked)
+        return len(models)
+
+    def set_provider(self, provider) -> int:
+        """Remember the provider so the picker can ask it for models.
+
+        Returns how many models were listed, matching :meth:`refresh_models`
+        so a caller does not have to know which half did the work.
+        """
+        self._provider = provider
+        model = getattr(provider, "model", "")
+        if model:
+            self.set_model(model)
+        return self.refresh_models(provider)
+
     def current_level(self) -> str:
         return str(self.level_combo.currentData() or "guided")
 

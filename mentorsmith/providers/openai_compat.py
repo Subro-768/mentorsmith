@@ -4,9 +4,11 @@ Many hosted models speak this shape, so one adapter covers a wide range
 without hardcoding any particular vendor or model. The base URL, the model
 name and the key all come from configuration.
 
-Credentials are read from the environment variable named by
-``api_key_env`` (default ``MENTORSMITH_API_KEY``) and are never written to
-disk, to the database, or to any log or exception message.
+Credentials are resolved by :meth:`OpenAICompatibleProvider.api_key`: a key
+entered in Settings (stored ``0600``, outside settings.json) takes precedence
+over the ``api_key_env`` environment variable, which is still honoured. A key
+is never written to the database, to a log, or into an exception message -
+``describe()`` reports only *where* the key came from, never the key.
 
 The request is sent with :mod:`urllib` rather than a third-party HTTP client so
 the app has no runtime dependency beyond PyQt6.
@@ -21,7 +23,7 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from ..config import is_truthy
+from ..config import is_truthy, load_api_key, secrets_path
 from .base import (
     CompletionRequest,
     CompletionResponse,
@@ -74,7 +76,7 @@ class OpenAICompatibleProvider(LLMProvider):
     # ------------------------------------------------------------------
     @classmethod
     def from_settings(cls, settings: dict) -> "OpenAICompatibleProvider":
-        """Build a provider from :func:`mentorsmith.config.load_settings`.
+        """Build a provider from the settings dictionary.
 
         Reads the key from the environment at call time rather than caching it,
         so exporting a new key takes effect without restarting the app.
@@ -86,10 +88,35 @@ class OpenAICompatibleProvider(LLMProvider):
         )
 
     def api_key(self) -> str:
-        """Resolve the credential, preferring an explicitly supplied one."""
+        """Resolve the credential.
+
+        Precedence, highest first:
+
+        1. a key passed explicitly to the constructor (tests, one-off use);
+        2. the key typed into Settings, stored ``0600`` outside settings.json;
+        3. the ``MENTORSMITH_API_KEY`` environment variable.
+
+        The environment remains a working fallback so existing command-line
+        setups keep functioning, and so a user who prefers not to have a key on
+        disk still can. Read fresh on every call, so setting or replacing a key
+        takes effect without restarting the app.
+        """
         if self._api_key:
             return self._api_key
+        stored = load_api_key()
+        if stored:
+            return stored
         return os.environ.get(self.api_key_env, "").strip()
+
+    def credential_source(self) -> str:
+        """Where the key came from, for display. Never includes the key."""
+        if self._api_key:
+            return "supplied directly"
+        if load_api_key():
+            return f"Settings (stored in {secrets_path().name})"
+        if os.environ.get(self.api_key_env, "").strip():
+            return f"${self.api_key_env}"
+        return "none"
 
     @property
     def configured(self) -> bool:
@@ -106,7 +133,75 @@ class OpenAICompatibleProvider(LLMProvider):
             if not self.api_key():
                 missing.append(f"API key (env {self.api_key_env})")
             return "Not configured — missing " + ", ".join(missing)
-        return f"{self.base_url} | model {self.model} | key from ${self.api_key_env}"
+        return (
+            f"{self.base_url} | model {self.model} "
+            f"| key from {self.credential_source()}"
+        )
+
+    # ------------------------------------------------------------------
+    # Model discovery
+    # ------------------------------------------------------------------
+    def _models_url(self) -> str:
+        """URL of the ``/models`` listing.
+
+        Mirrors :meth:`_endpoint`: whatever the user typed as a base URL, with
+        ``/v1`` appended if they left it off.
+        """
+        url = (self.base_url or "").rstrip("/")
+        if url.endswith("/models"):
+            return url
+        if not url.endswith("/v1"):
+            url += "/v1"
+        return url + "/models"
+
+    def list_models(self) -> list[dict[str, str]]:
+        """Return ``[{"id", "name"}, ...]`` from ``GET /models``.
+
+        Fetches from the configured endpoint rather than shipping a hardcoded
+        list, because a hardcoded one goes stale silently and is exactly how
+        the two apps drifted apart on colour.
+
+        Returns ``[]`` on any failure. A model picker is a convenience; failing
+        to reach the endpoint must not stop somebody typing a model name by
+        hand, and must not surface a raw HTTP error over a UI that is otherwise
+        working.
+        """
+        if not self.base_url or not self.api_key():
+            return []
+        if not network_allowed():
+            return []
+
+        request = urllib.request.Request(
+            self._models_url(),
+            headers=self._headers(),
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=min(self.timeout, 20)) as resp:
+                payload = json.loads(resp.read().decode("utf-8", "replace"))
+        except (urllib.error.URLError, OSError, ValueError, json.JSONDecodeError):
+            return []
+
+        entries = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(entries, list):
+            return []
+
+        models = []
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            identifier = entry.get("id")
+            if not isinstance(identifier, str) or not identifier.strip():
+                continue
+            label = entry.get("name")
+            models.append({
+                "id": identifier.strip(),
+                # Fall back to the id when the endpoint sends no display name.
+                "name": label.strip() if isinstance(label, str) and label.strip()
+                else identifier.strip(),
+            })
+        models.sort(key=lambda m: m["name"].lower())
+        return models
 
     # ------------------------------------------------------------------
     # Request
@@ -127,7 +222,15 @@ class OpenAICompatibleProvider(LLMProvider):
 
     def _payload(self, request: CompletionRequest) -> dict[str, Any]:
         return {
-            "model": self.model,
+            # A per-request model wins over the configured default, so the
+            # model picker can switch mid-conversation.
+            #
+            # Strip *before* falling back, not after: a model box containing
+            # only whitespace is truthy, so `(a or b).strip()` would send an
+            # empty model and the endpoint would reject it with something
+            # unhelpful. Selecting all and typing a space is an easy thing to
+            # do in an editable combo box.
+            "model": (request.model or "").strip() or self.model.strip(),
             "messages": [
                 {"role": "system", "content": request.system},
                 {"role": "user", "content": request.user},
@@ -165,9 +268,11 @@ class OpenAICompatibleProvider(LLMProvider):
             )
         if not self.api_key():
             raise ProviderNotConfigured(
-                f"No API key found. Export {self.api_key_env} and restart the app, "
-                "for example:\n\n    export "
-                f"{self.api_key_env}=your-key-here"
+                "No API key found.\n\n"
+                "Either paste one into Settings, which stores it in "
+                f"{secrets_path().name} with owner-only permissions, or keep it "
+                "out of the app entirely and export it in the shell:\n\n"
+                f"    export {self.api_key_env}=your-key-here"
             )
 
         # The offline switch is enforced here, at the only place that opens a

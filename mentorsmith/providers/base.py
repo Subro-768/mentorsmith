@@ -71,12 +71,19 @@ class ProviderResponseError(ProviderError):
 
 @dataclass
 class CompletionRequest:
-    """One request to the tutor model."""
+    """One request to the tutor model.
+
+    ``model`` overrides the provider's configured default for this one request.
+    It is optional: leaving it None means "use whatever Settings says", which
+    keeps every existing caller working unchanged while letting the UI let
+    somebody switch model mid-conversation.
+    """
 
     system: str
     user: str
     max_tokens: int = 1200
     temperature: float = 0.4
+    model: str | None = None
 
 
 @dataclass

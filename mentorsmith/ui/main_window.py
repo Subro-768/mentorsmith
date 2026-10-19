@@ -574,6 +574,10 @@ class MainWindow(QMainWindow):
             for chat in self._all_chat_panels():
                 chat.set_provider_ready(True)
                 chat.set_provider_note(self.provider.describe())
+                # Hand the provider over so the panel can list its models.
+                # Fetches /models, which is a network call - it fails quietly
+                # if it cannot be reached, leaving the picker as typed.
+                chat.set_provider(self.provider)
             self.provider_chip.set_state("success", "AI: ready")
         else:
             for chat in self._all_chat_panels():
@@ -611,6 +615,10 @@ class MainWindow(QMainWindow):
         chat.set_sending(True)
         self._pending_rubric_exercise = rubric_exercise
         service = TutorService(provider=self.provider, level=level)
+        # Take the model from the chat panel's picker. Empty means "use
+        # whatever Settings says", so leaving the picker untouched behaves
+        # exactly as before this existed.
+        service.model = chat.current_model()
         self._tutor_worker = TutorWorker(service, context)
         self._tutor_worker.replied.connect(
             lambda reply: self._on_tutor_reply(reply, chat, rubric_exercise)

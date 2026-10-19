@@ -225,14 +225,23 @@ def build_user_prompt(context: TutorContext) -> str:
     return "\n\n".join(sections)
 
 
-def build_request(level: str, context: TutorContext) -> CompletionRequest:
-    """Assemble the full :class:`CompletionRequest` for a turn."""
+def build_request(
+    level: str, context: TutorContext, model: str = ""
+) -> CompletionRequest:
+    """Assemble the full :class:`CompletionRequest` for a turn.
+
+    ``model`` is optional and defaults to empty, which means "use whatever the
+    provider is configured with". The UI passes the chat panel's selection so a
+    conversation can switch model between turns; every other caller is
+    unaffected.
+    """
     return CompletionRequest(
         system=build_system_prompt(level, context),
         user=build_user_prompt(context),
         # Hints need very little; a full explanation needs more room.
         max_tokens=1400 if normalise_level(level) == "full" else 700,
         temperature=0.3 if normalise_level(level) != "full" else 0.2,
+        model=model.strip() or None,
     )
 
 
@@ -305,6 +314,9 @@ class TutorService:
 
     provider: LLMProvider
     level: str = "guided"
+    #: Model for this conversation. Empty means "use the configured default";
+    #: set from the chat panel's model picker.
+    model: str = ""
     #: Set True the moment a request is actually dispatched, so the UI can
     #: show an explicit "this was sent to an external provider" notice.
     last_request_sent: bool = field(default=False, init=False)
@@ -319,7 +331,7 @@ class TutorService:
         Provider errors propagate to the caller; the UI is responsible for
         showing them, because only it knows how to present the settings link.
         """
-        request = build_request(self.level, context)
+        request = build_request(self.level, context, self.model)
         self.last_request_sent = True
         response = self.provider.complete(request)
         return parse_tutor_response(response.text)
