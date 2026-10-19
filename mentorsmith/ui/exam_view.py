@@ -50,6 +50,8 @@ from ..core.exam import (
     PREDICTED_PRACTICE,
     VERIFIED,
     VERIFIED_PYQ,
+    mark_verified,
+    pending_questions,
 )
 from ..services.exam_prep import ExamPrepService, ExamSession
 from . import theme
@@ -57,6 +59,12 @@ from . import theme
 
 def _escape(text: str) -> str:
     return html_module.escape(str(text))
+
+
+def _matches_an_option(answer: str, options: list[str]) -> bool:
+    """Whether an answer is one of the options, ignoring case and spacing."""
+    wanted = " ".join(answer.lower().split())
+    return any(" ".join(option.lower().split()) == wanted for option in options)
 
 
 class ExamPrepView(QWidget):
@@ -71,6 +79,9 @@ class ExamPrepView(QWidget):
         self.course_id = ""
         self.session: ExamSession | None = None
         self._question_ids: list[str] = []
+        #: The review queue and where we are in it.
+        self._review_queue: list = []
+        self._review_index = 0
         self._build_ui()
         self.reload_courses()
 
@@ -164,6 +175,15 @@ class ExamPrepView(QWidget):
         )
         self.mistakes_button.clicked.connect(self.start_mistakes)
         buttons.addWidget(self.mistakes_button)
+
+        self.review_button = QPushButton("Check questions")
+        self.review_button.setObjectName("subtle")
+        self.review_button.setFixedHeight(34)
+        self.review_button.setToolTip(
+            "Read a question against your own paper and mark it verified."
+        )
+        self.review_button.clicked.connect(self.start_review)
+        buttons.addWidget(self.review_button)
         buttons.addStretch(1)
         left_layout.addLayout(buttons)
 
@@ -206,6 +226,47 @@ class ExamPrepView(QWidget):
         self.submit_button.setFixedHeight(36)
         self.submit_button.clicked.connect(self._on_submit)
         right_layout.addWidget(self.submit_button)
+
+        # ── Review panel: the human-check workflow ─────────────────────
+        self.review_panel = QWidget()
+        review_layout = QVBoxLayout(self.review_panel)
+        review_layout.setContentsMargins(0, 0, 0, 0)
+        review_layout.setSpacing(8)
+
+        self.review_answer = QLineEdit()
+        self.review_answer.setPlaceholderText(
+            "The answer from your copy of the paper"
+        )
+        review_layout.addWidget(self.review_answer)
+
+        self.review_explanation = QLineEdit()
+        self.review_explanation.setPlaceholderText(
+            "A short explanation (optional)"
+        )
+        review_layout.addWidget(self.review_explanation)
+
+        self.review_marks = QLineEdit()
+        self.review_marks.setPlaceholderText("Marks (optional)")
+        self.review_marks.setFixedWidth(120)
+        review_layout.addWidget(self.review_marks)
+
+        review_buttons = QHBoxLayout()
+        self.review_save = QPushButton("Mark as checked")
+        self.review_save.setObjectName("primary")
+        self.review_save.setFixedHeight(34)
+        self.review_save.clicked.connect(self._on_review_save)
+        review_buttons.addWidget(self.review_save)
+
+        self.review_skip = QPushButton("Skip")
+        self.review_skip.setObjectName("subtle")
+        self.review_skip.setFixedHeight(34)
+        self.review_skip.clicked.connect(self._on_review_skip)
+        review_buttons.addWidget(self.review_skip)
+        review_buttons.addStretch(1)
+        review_layout.addLayout(review_buttons)
+
+        self.review_panel.setVisible(False)
+        right_layout.addWidget(self.review_panel)
 
         splitter.addWidget(right)
         splitter.setStretchFactor(0, 2)
@@ -392,8 +453,16 @@ class ExamPrepView(QWidget):
     # ------------------------------------------------------------------
     # Sessions
     # ------------------------------------------------------------------
+    def _leave_review_mode(self) -> None:
+        """Put the practice controls back and hide the review ones."""
+        self.review_panel.setVisible(False)
+        self.choice_box.setVisible(True)
+        self.submit_button.setVisible(True)
+        self.next_button.setVisible(True)
+
     def start_practice(self) -> None:
         """Start a session over the questions the filters selected."""
+        self._leave_review_mode()
         questions = self.service.questions(
             self.course_id,
             unit=self.unit_combo.currentData(),
@@ -412,6 +481,7 @@ class ExamPrepView(QWidget):
 
     def start_mistakes(self) -> None:
         """Start a session over the questions actually got wrong."""
+        self._leave_review_mode()
         questions = self.service.mistake_questions(self.course_id)
         if not questions:
             QMessageBox.information(
@@ -425,6 +495,111 @@ class ExamPrepView(QWidget):
             questions, self.course_id, "My mistakes"
         )
         self._show_current()
+
+    # ------------------------------------------------------------------
+    # The human-check workflow
+    # ------------------------------------------------------------------
+    def start_review(self) -> None:
+        """Open the review queue: questions waiting for a human check."""
+        self._review_queue = list(pending_questions(self.course_id))
+        self._review_index = 0
+        self.review_panel.setVisible(True)
+        self.choice_box.setVisible(False)
+        self.submit_button.setVisible(False)
+        self.next_button.setVisible(False)
+        if not self._review_queue:
+            self.session_label.setText("Nothing waiting for a check")
+            self.body.setHtml(
+                "<p><b>Every question in this course has been checked.</b></p>"
+                "<p>Nothing is waiting for a human to compare it against the "
+                "paper.</p>"
+            )
+            return
+        self._show_next_for_review()
+
+    def _show_next_for_review(self) -> None:
+        if self._review_index >= len(self._review_queue):
+            self.session_label.setText("Review finished")
+            self.review_panel.setVisible(False)
+            self.submit_button.setVisible(True)
+            self.next_button.setVisible(True)
+            self.refresh_questions()
+            self.body.setHtml(
+                "<p><b>That is the lot.</b></p>"
+                "<p>Every question you have looked at is now marked as "
+                "checked. The ones you skipped are still waiting.</p>"
+            )
+            return
+
+        question = self._review_queue[self._review_index]
+        self.session_label.setText(
+            f"Checking question {self._review_index + 1} of "
+            f"{len(self._review_queue)}"
+        )
+        self.review_answer.setText(question.answer)
+        self.review_explanation.setText(question.explanation)
+        self.review_marks.setText(str(question.marks or ""))
+        self.body.setHtml(
+            f"<div style='font-family:system-ui,sans-serif;font-size:13px;"
+            f"color:{theme.FOREGROUND};line-height:1.6'>"
+            f"<p style='color:{theme.WARNING};font-weight:700;'>"
+            f"Extracted from your paper - not yet checked.</p>"
+            f"<p style='font-size:15px;font-weight:600'>"
+            f"{_escape(question.question_text)}</p>"
+            f"<p style='color:{theme.MUTED}'>Options as extracted:</p>"
+            + "".join(
+                f"<p style='margin:2px 0'>{chr(ord('a') + i)}. "
+                f"{_escape(option)}</p>"
+                for i, option in enumerate(question.options)
+            )
+            + f"<hr style='border-color:{theme.BORDER}'>"
+            f"<p style='color:{theme.MUTED};font-size:11px'>"
+            f"Source: {_escape(question.source_reference)}</p>"
+            f"<p style='color:{theme.MUTED};font-size:11px'>"
+            f"Check it against that page, then type the answer if the paper "
+            f"gives one. Marking it checked records that you did.</p>"
+            f"</div>"
+        )
+
+    def _on_review_save(self) -> None:
+        """Record the answer and mark the question as checked."""
+        question = self._review_queue[self._review_index]
+        marks = self.review_marks.text().strip()
+        marks_value = int(marks) if marks.isdigit() else None
+        answer = self.review_answer.text().strip()
+        if answer and question.options and not _matches_an_option(answer, question.options):
+            # Say so rather than storing it silently. It usually means the
+            # *extraction* of the options is wrong - two columns read as
+            # one, or a line lost - and the question cannot be graded until
+            # that is put right.
+            QMessageBox.warning(
+                self, "Answer not among the options",
+                "That answer is not one of the options as they were "
+                "extracted.\n\n"
+                "That usually means the options were read wrongly rather "
+                "than that the answer is wrong. The question has still been "
+                "marked as checked, but it cannot be graded automatically "
+                "until the options are put right.",
+            )
+
+        updated = mark_verified(
+            question.id,
+            answer=answer,
+            explanation=self.review_explanation.text(),
+            marks=marks_value,
+        )
+        if updated is None:
+            QMessageBox.warning(
+                self, "Could not save",
+                "That question is no longer in the bank.",
+            )
+            return
+        self._review_index += 1
+        self._show_next_for_review()
+
+    def _on_review_skip(self) -> None:
+        self._review_index += 1
+        self._show_next_for_review()
 
     def _show_current(self) -> None:
         if self.session is None:

@@ -477,6 +477,33 @@ class ExamQuestion:
         return self.verification_status == PENDING_REVIEW
 
     @property
+    def answer_matches_an_option(self) -> bool:
+        """Whether the answer is one of the options as extracted.
+
+        False means the extraction of the options is suspect: a student
+        could not pick it, so the question cannot be graded automatically.
+        """
+        if not self.answer.strip():
+            return False
+        return normalise_text(self.answer) in {
+            normalise_text(option) for option in self.options
+        }
+
+    @property
+    def gradable(self) -> bool:
+        """Whether this question can be marked automatically.
+
+        Needs a key, and - for a multiple-choice question - a key that is
+        one of the options, because a student picks an option and nothing
+        else.
+        """
+        if not self.answer.strip():
+            return False
+        if self.question_type == MCQ:
+            return self.answer_matches_an_option
+        return True
+
+    @property
     def source_reference(self) -> str:
         """A human-readable pointer back to the source.
 
@@ -549,11 +576,11 @@ class ExamQuestion:
                     f"Question '{self.id}' is multiple choice but has fewer "
                     f"than two options."
                 )
-            if self.answer.strip() and self.answer not in self.options:
-                raise ExamDataError(
-                    f"Question '{self.id}' has an answer that is not one of "
-                    f"its options."
-                )
+            # An answer that is not among the extracted options is allowed,
+            # because the *extraction* may be what is wrong: the paper's
+            # options can be garbled, or split across two columns and read
+            # as one. The question is flagged rather than rejected - see
+            # :attr:`gradable`.
             # A missing answer is only allowed while the question is still
             # awaiting review. A paper does not always print a key, and
             # inventing one from a pattern would be worse than having none;
@@ -710,6 +737,68 @@ def merge_questions(new: list[ExamQuestion]) -> dict[str, int]:
     }
 
 
+def set_answer(question_id: str, answer: str) -> ExamQuestion | None:
+    """Record the answer key for a question.
+
+    The papers do not print one, so this is how a question becomes
+    gradable: the student looks it up in their own copy of the paper and
+    types it in.
+    """
+    questions = load_questions()
+    for question in questions:
+        if question.id == question_id:
+            question.answer = answer.strip()
+            question.updated_at = _now()
+            question.version += 1
+            save_questions(questions)
+            return question
+    return None
+
+
+def mark_verified(
+    question_id: str,
+    *,
+    answer: str = "",
+    verified_by: str = "",
+    explanation: str = "",
+    marks: int | None = None,
+) -> ExamQuestion | None:
+    """Promote a question to verified, after a human has checked it.
+
+    This is the only way a question becomes a *verified past question*,
+    and it is deliberately explicit: the caller says who checked it and
+    when. The answer key can be set at the same time, because checking a
+    question against the paper means reading its answer too.
+    """
+    questions = load_questions()
+    for question in questions:
+        if question.id != question_id:
+            continue
+        if answer:
+            question.answer = answer.strip()
+        if explanation:
+            question.explanation = explanation
+        if marks is not None:
+            question.marks = marks
+            question.marks_is_estimate = False
+        question.verification_status = VERIFIED
+        question.verified_by = verified_by or "the learner"
+        question.verified_at = _now()
+        question.updated_at = question.verified_at
+        question.version += 1
+        save_questions(questions)
+        return question
+    return None
+
+
+def pending_questions(course_id: str | None = None) -> list[ExamQuestion]:
+    """The questions still waiting for a human to check them."""
+    return [
+        q for q in load_questions(course_id)
+        if q.verification_status == PENDING_REVIEW
+    ]
+
+
 def review_report() -> dict:
     """A report of what in the bank still needs a human.
 
@@ -724,6 +813,10 @@ def review_report() -> dict:
         and not (q.source_file and q.source_page and q.source_question_number)
     ]
     no_answer = [q for q in questions if not q.answer.strip() and not q.rubric]
+    ungradable = [
+        q for q in questions
+        if q.question_type == MCQ and q.answer.strip() and not q.answer_matches_an_option
+    ]
     seen: dict[str, list[str]] = {}
     for question in questions:
         key = " ".join(question.question_text.lower().split())
@@ -734,5 +827,6 @@ def review_report() -> dict:
         "pending_review": pending,
         "missing_source": missing_source,
         "no_answer": no_answer,
+        "ungradable": ungradable,
         "duplicate_groups": duplicates,
     }

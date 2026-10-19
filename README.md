@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1311 automated tests. It has **not** been
+and its behaviour is covered by 1334 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1311 tests
+python3 -m pytest tests/ -q                       # 1334 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -295,6 +295,19 @@ python3 tools/import_exam_papers.py --report     # what still needs a human
 The importer never modifies the text, never invents an answer key, and
 never marks anything as verified. A scanned paper with no text layer is
 reported as needing OCR rather than silently producing nothing.
+
+### Checking a question against your paper
+
+**Check questions** opens the review queue: every extracted question, with
+the page of your paper to compare it against. You type the answer if the
+paper gives one, and mark it checked. That is the only way a question
+becomes a *verified past question*, and it is recorded as done by you, on
+the day.
+
+If the answer you read is not among the options the importer extracted,
+the app says so — that usually means the *options* were read wrongly, and
+the question cannot be graded automatically until they are put right. It is
+still saved as checked, because you were the one reading the paper.
 
 ### Grading, honestly
 

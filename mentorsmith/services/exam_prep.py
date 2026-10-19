@@ -330,9 +330,16 @@ class ExamPrepService:
         return result
 
     def _grade(self, question: ExamQuestion, chosen: str) -> bool | None:
-        """Compare an answer to the key. None when there is no key."""
+        """Compare an answer to the key. None when there is no key.
+
+        None also when the key is not one of the extracted options: the
+        student could not have picked it, so marking anything here would
+        be marking a question nobody could answer.
+        """
         key = (question.answer or "").strip()
         if not key:
+            return None
+        if question.question_type == "MCQ" and not question.answer_matches_an_option:
             return None
         return normalise_text(chosen) == normalise_text(key)
 

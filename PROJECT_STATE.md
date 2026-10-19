@@ -571,6 +571,15 @@ always be able to tell what a question is.
 - **What was actually extracted:** 356 questions from the two clean-text
   question banks and the CT papers; 132 duplicates skipped; 15 of the 27
   supplied PDFs have no text layer and need OCR.
+- **The human-check workflow exists.** `Check questions` in the Exam Prep
+  screen walks the pending queue, shows the source page, and records the
+  answer and who checked it. That is the only path to
+  `verification_status=VERIFIED`, and therefore the only path to the
+  "Verified past question" label.
+- **A key that is not among the extracted options is flagged, not
+  rejected.** It usually means the options were garbled by the
+  extraction. Such a question is saved as checked but cannot be graded
+  automatically, because a student could not have picked it.
 
 ## Decisions not to silently reverse
 - **Lesson completion is not evidence.** Phase 2 says completing a lesson must

@@ -479,6 +479,8 @@ def main() -> int:
         print(f"  pending human review  : {len(report['pending_review'])}")
         print(f"  missing source detail : {len(report['missing_source'])}")
         print(f"  no answer key         : {len(report['no_answer'])}")
+        print(f"  ungradable (the answer is not one of the extracted options): "
+              f"{len(report.get('ungradable', []))}")
         print(f"  duplicate groups      : {len(report['duplicate_groups'])}")
         for question in report["pending_review"][:10]:
             print(f"    - {question.id}: {question.question_text[:70]}")

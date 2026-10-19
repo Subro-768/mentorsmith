@@ -137,9 +137,29 @@ class TestQuestionValidation:
         with pytest.raises(ExamDataError):
             _question(options=["only one"]).validate()
 
-    def test_an_answer_outside_the_options_is_rejected(self) -> None:
-        with pytest.raises(ExamDataError):
-            _question(answer="not an option").validate()
+    def test_an_answer_outside_the_options_is_allowed_but_flagged(self) -> None:
+        """The reviewer is establishing the truth, not filling in a form.
+
+        An answer that is not among the *extracted* options usually means
+        the extraction garbled the options, not that the answer is wrong.
+        So it is accepted and flagged, and the question cannot be graded
+        until the options are put right.
+        """
+        question = _question(answer="not an option")
+        question.validate()
+        assert question.answer_matches_an_option is False
+        assert question.gradable is False
+
+    def test_an_answer_outside_the_options_still_fails_when_verified(self) -> None:
+        """A checked question with a key nobody could pick is not usable."""
+        question = _question(
+            answer="not an option",
+            verification_status=VERIFIED,
+            source_file="CT 1 Set 3.pdf", source_page=1,
+            source_question_number="3",
+        )
+        question.validate()  # allowed, and flagged
+        assert question.gradable is False
 
     def test_a_missing_answer_is_allowed_while_awaiting_review(self) -> None:
         """The papers do not print a key, so this has to be legal."""
