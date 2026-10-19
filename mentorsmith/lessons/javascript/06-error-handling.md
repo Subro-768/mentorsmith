@@ -2,6 +2,7 @@
 id: 06-error-handling
 title: Error Handling
 order: 6
+tier: core
 ---
 
 ## Objectives

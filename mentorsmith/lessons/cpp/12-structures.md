@@ -2,6 +2,7 @@
 id: 12-structures
 title: Structures
 order: 12
+tier: core
 ---
 
 ## Objectives

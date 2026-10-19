@@ -2,6 +2,7 @@
 id: 09-pointers
 title: Pointers
 order: 9
+tier: core
 ---
 
 ## Objectives

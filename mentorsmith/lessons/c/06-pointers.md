@@ -2,6 +2,7 @@
 id: 06-pointers
 title: Pointers
 order: 6
+tier: core
 ---
 
 ## Objectives

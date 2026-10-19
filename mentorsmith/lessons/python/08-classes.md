@@ -2,6 +2,7 @@
 id: 08-classes
 title: Classes and Objects
 order: 8
+tier: core
 ---
 
 ## Objectives

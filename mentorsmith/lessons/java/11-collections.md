@@ -2,6 +2,7 @@
 id: 11-collections
 title: Collections
 order: 11
+tier: core
 ---
 
 ## Objectives

@@ -73,6 +73,62 @@ def _normalise_key(raw: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", raw.strip().lower()).strip("_")
 
 
+#: Progression tiers, in order. The shape is deliberately the one a first-year
+#: computer-science student actually walks: what a semester-one syllabus
+#: covers, then what the rest of a degree builds on, then what a working
+#: programmer needs that a syllabus usually skips.
+#:
+#: This lives in code rather than a data file because the ordering, the labels
+#: and the inference rule are logic. Which lesson sits in which tier stays in
+#: the lesson's own front matter, where an author can state it.
+TIERS: dict[str, dict[str, object]] = {
+    "foundation": {
+        "index": 0,
+        "label": "Foundation",
+        "blurb": "First-semester computer science: values, control flow, "
+                 "functions, and reading code other people wrote.",
+    },
+    "core": {
+        "index": 1,
+        "label": "Core",
+        "blurb": "Data structures, objects, files, errors and testing - the "
+                 "vocabulary every later topic assumes.",
+    },
+    "advanced": {
+        "index": 2,
+        "label": "Advanced",
+        "blurb": "Memory, generics, concurrency, algorithms and design "
+                 "patterns: what separates writing code from engineering it.",
+    },
+}
+
+TIER_ORDER: tuple[str, ...] = ("foundation", "core", "advanced")
+
+#: Where the automatic split falls, as a fraction of the track. A lesson that
+#: does not declare its tier is placed by position, which is the right guess
+#: for a track ordered first-to-last. It is a guess, and the UI says so rather
+#: than presenting it as something the author stated.
+_TIER_SPLIT = (0.45, 0.80)
+
+
+def tier_for_order(order: int, total: int) -> str:
+    """Infer a tier from a lesson's position in its track."""
+    if total <= 1:
+        return TIER_ORDER[0]
+    fraction = (order - 1) / (total - 1)
+    if fraction <= _TIER_SPLIT[0]:
+        return "foundation"
+    if fraction <= _TIER_SPLIT[1]:
+        return "core"
+    return "advanced"
+
+
+def tier_index(tier: str) -> int:
+    """Sort key for a tier name; anything unrecognised sorts last."""
+    entry = TIERS.get(tier)
+    return int(entry["index"]) if entry else len(TIER_ORDER)
+
+
 @dataclass
 class Lesson:
     """A single curriculum entry."""
@@ -88,6 +144,23 @@ class Lesson:
     #: Language this lesson belongs to. Defaults to ``cpp`` so Phase 1 and 2
     #: call sites that never knew about languages keep working.
     language: str = "cpp"
+    #: Progression tier: ``foundation`` | ``core`` | ``advanced``. Declared in
+    #: the lesson's front matter, or inferred from position when absent.
+    tier: str = "foundation"
+
+    @property
+    def tier_label(self) -> str:
+        entry = TIERS.get(self.tier)
+        return str(entry["label"]) if entry else self.tier
+
+    @property
+    def tier_blurb(self) -> str:
+        entry = TIERS.get(self.tier)
+        return str(entry["blurb"]) if entry else ""
+
+    @property
+    def tier_rank(self) -> int:
+        return tier_index(self.tier)
 
     @property
     def key(self) -> str:
@@ -212,10 +285,14 @@ def parse_lesson(path: Path, language: str = "cpp") -> Lesson:
         order = 0
 
     exercise = sections.get("exercise", "")
+    # Recorded verbatim here; validated and filled in by load_lessons, which
+    # knows how many lessons the track has and can therefore infer a tier.
+    declared = (meta.get("tier") or "").strip().lower()
     return Lesson(
         id=lesson_id,
         title=title,
         order=order,
+        tier=declared if declared in TIERS else "",
         sections=sections,
         example_code=_extract_fenced_code(sections.get("example", ""), "cpp"),
         starter_code=_extract_fenced_code(exercise, "cpp"),
@@ -258,6 +335,14 @@ def load_lessons(
     if not lessons:
         raise CurriculumError(f"No lessons found in {root}")
     lessons.sort(key=lambda item: (item.order, item.title))
+
+    # Anything that did not declare a valid tier gets one from its position in
+    # the now-sorted track. After sorting, so the inference sees real order
+    # rather than filename order.
+    total = len(lessons)
+    for lesson in lessons:
+        if lesson.tier not in TIERS:
+            lesson.tier = tier_for_order(lesson.order, total)
     return lessons
 
 

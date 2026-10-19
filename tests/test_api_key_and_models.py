@@ -586,3 +586,62 @@ class TestKeyStatusIsLive:
         dialog._on_save()
         assert config.load_api_key() == ""
         assert not config.secrets_path().exists()
+
+
+# ======================================================================
+# Tests must never touch the real credential
+# ======================================================================
+class TestTestsCannotReachTheRealKey:
+    """A regression guard for a fault that actually happened.
+
+    ``mentorsmith.config`` resolves its data directory from XDG_DATA_HOME,
+    which defaults to the real ``~/.local/share/mentorsmith``. Before the
+    autouse fixtures in conftest.py redirected it, tests asking for "the
+    stored API key" read the user's actual credential, and tests that removed
+    MENTORSMITH_API_KEY from the environment still found the stored key and
+    concluded the provider was configured.
+
+    The second half is the dangerous half: a test that believed it had no
+    credentials could make a real network request carrying a real key.
+    """
+
+    def test_the_data_home_is_redirected(self) -> None:
+        import os
+        import tempfile
+
+        import mentorsmith.config as config
+
+        data = config.data_dir()
+        assert str(tempfile.gettempdir()) in str(data) or "/tmp" in str(data), (
+            f"tests are using the real data directory: {data}"
+        )
+        assert os.environ["XDG_DATA_HOME"] != str(Path.home() / ".local" / "share")
+
+    def test_no_key_is_visible_by_default(self) -> None:
+        import os
+
+        import mentorsmith.config as config
+
+        assert config.load_api_key() == "", (
+            "a test can see a stored API key; the data directory is not isolated"
+        )
+        assert "MENTORSMITH_API_KEY" not in os.environ
+
+    def test_the_provider_is_not_configured_by_default(self) -> None:
+        from mentorsmith.providers.openai_compat import OpenAICompatibleProvider
+
+        provider = OpenAICompatibleProvider(
+            base_url="https://x.test/v1", model="m"
+        )
+        assert not provider.configured
+        assert provider.api_key() == ""
+
+    def test_a_test_can_still_create_its_own_key(self) -> None:
+        """Isolation must not make credential handling untestable."""
+        import importlib
+
+        import mentorsmith.config as config
+
+        importlib.reload(config)
+        config.save_api_key("sk-made-by-this-test")
+        assert config.load_api_key() == "sk-made-by-this-test"

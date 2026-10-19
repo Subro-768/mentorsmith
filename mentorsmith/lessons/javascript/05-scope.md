@@ -2,6 +2,7 @@
 id: 05-scope
 title: Scope and Closures
 order: 5
+tier: core
 ---
 
 ## Objectives

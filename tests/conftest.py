@@ -26,6 +26,39 @@ from mentorsmith.providers.base import (  # noqa: E402
 )
 
 
+@pytest.fixture(autouse=True)
+def isolated_data_home(tmp_path, monkeypatch):
+    """Point every test at a throwaway data directory.
+
+    Autouse and non-negotiable. ``mentorsmith.config`` resolves its data
+    directory from ``XDG_DATA_HOME``, which otherwise points at the real
+    ``~/.local/share/mentorsmith`` - so a test that asked for the stored API key
+    would read the user's actual credential, and a test that deleted
+    ``MENTORSMITH_API_KEY`` from the environment would still find the stored
+    one and believe the provider was configured.
+
+    That is not hypothetical: five provider and offline tests failed for
+    exactly this reason once keys could be saved in the app, and the same fault
+    would let a test make a real network request carrying a real key.
+    """
+    home = tmp_path / "xdg"
+    home.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("XDG_DATA_HOME", str(home))
+    return home
+
+
+@pytest.fixture(autouse=True)
+def no_ambient_api_key(monkeypatch):
+    """Ensure no test can inherit a key from the environment.
+
+    Combined with :func:`isolated_data_home` this means the only credential a
+    test can see is one the test itself created.
+    """
+    monkeypatch.delenv("MENTORSMITH_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+
 @pytest.fixture()
 def database() -> Database:
     """A fresh in-memory database with the schema applied."""

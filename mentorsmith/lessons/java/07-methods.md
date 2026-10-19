@@ -2,6 +2,7 @@
 id: 07-methods
 title: Methods
 order: 7
+tier: foundation
 ---
 
 ## Objectives

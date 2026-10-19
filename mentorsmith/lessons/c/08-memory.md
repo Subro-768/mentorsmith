@@ -2,6 +2,7 @@
 id: 08-memory
 title: Memory Management
 order: 8
+tier: advanced
 ---
 
 ## Objectives

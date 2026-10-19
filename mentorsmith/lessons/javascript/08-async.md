@@ -2,6 +2,7 @@
 id: 08-async
 title: Asynchronous Fundamentals
 order: 8
+tier: advanced
 ---
 
 ## Objectives

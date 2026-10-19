@@ -2,6 +2,7 @@
 id: 09-testing
 title: Testing
 order: 9
+tier: core
 ---
 
 ## Objectives

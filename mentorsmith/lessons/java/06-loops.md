@@ -2,6 +2,7 @@
 id: 06-loops
 title: Loops
 order: 6
+tier: foundation
 ---
 
 ## Objectives

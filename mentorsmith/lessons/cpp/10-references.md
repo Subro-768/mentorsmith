@@ -2,6 +2,7 @@
 id: 10-references
 title: References
 order: 10
+tier: core
 ---
 
 ## Objectives

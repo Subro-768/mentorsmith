@@ -2,6 +2,7 @@
 id: 16-exceptions-and-error-handling
 title: Exceptions and Error Handling
 order: 16
+tier: core
 ---
 
 ## Objectives

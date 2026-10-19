@@ -2,6 +2,7 @@
 id: 09-classes-and-objects
 title: Classes and Objects
 order: 9
+tier: core
 ---
 
 ## Objectives

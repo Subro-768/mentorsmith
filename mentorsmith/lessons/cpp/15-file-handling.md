@@ -2,6 +2,7 @@
 id: 15-file-handling
 title: File Handling
 order: 15
+tier: core
 ---
 
 ## Objectives

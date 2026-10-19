@@ -2,6 +2,7 @@
 id: 10-encapsulation
 title: Encapsulation
 order: 10
+tier: core
 ---
 
 ## Objectives

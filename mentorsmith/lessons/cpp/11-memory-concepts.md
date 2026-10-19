@@ -2,6 +2,7 @@
 id: 11-memory-concepts
 title: Basic Memory Concepts
 order: 11
+tier: core
 ---
 
 ## Objectives

@@ -2,6 +2,7 @@
 id: 07-structures
 title: Structures
 order: 7
+tier: core
 ---
 
 ## Objectives

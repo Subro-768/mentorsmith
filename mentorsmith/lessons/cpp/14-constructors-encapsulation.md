@@ -2,6 +2,7 @@
 id: 14-constructors-encapsulation
 title: Constructors and Encapsulation
 order: 14
+tier: core
 ---
 
 ## Objectives
