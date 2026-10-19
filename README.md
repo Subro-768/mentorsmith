@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 837 tests
+python3 -m pytest tests/ -q                       # 944 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -274,29 +274,36 @@ MentorSmith 0.1.0
 
 ## Configuring the AI tutor
 
-Everything else works without the AI. To enable the tutor you need three
-things.
+Everything else works without the AI. To enable the tutor: open **Settings →
+AI Provider**, paste your key, and press **Detect**.
 
-**1. Export your API key.** Keys are read from the environment and are never
-written to the settings file, the database, or a log:
+**The key.** Paste it into the masked field and press **Save**. It is written
+to `~/.local/share/mentorsmith/secrets.json` with mode `0600` — deliberately a
+*different file* from `settings.json`, so sharing or diffing your settings
+cannot leak it. It is never written to the database, to a log, or into an
+error message.
 
-```bash
-export MENTORSMITH_API_KEY="your-key-here"
-```
+If you would rather not keep a key on disk, leave the field empty and export
+`MENTORSMITH_API_KEY` in your shell instead. Both work, the stored key wins,
+and **Forget stored key** removes it again.
 
-Restart the app after exporting.
+**The provider is worked out from the key.** A key beginning `sk-or-v1-` is
+OpenRouter's alone, so the endpoint fills itself in; `gsk_` and `AIza` work the
+same way. Detection is local string inspection and **sends the key nowhere**.
 
-**2. Enter the endpoint and model** in **Settings**:
+Most prefixes are *not* unique — `sk-` is issued by OpenAI, OpenRouter's
+legacy keys, DeepSeek and Together. Guessing between them decides which company
+receives your credential, so an ambiguous key lists the candidates and asks you
+once instead of picking silently. Pick from **Provider** or type the endpoint
+yourself if you would rather not.
 
-- **Base URL** — the API root. Most providers want something ending in `/v1`,
-  for example `https://your-provider.example/v1`.
-- **Model** — the exact model name your account can use.
+**The model.** A dropdown in the chat topbar, filled from your provider's own
+`/models` listing — so it is never a stale hardcoded list. It stays editable,
+because a provider without that endpoint should not stop you typing a name.
+The selection is per conversation, and you can switch model between turns.
 
-No provider or model is hardcoded, and nothing assumes free or unlimited
-access.
-
-**3. Press "Test connection".** This sends one small real request and reports
-what came back, so you find out now rather than mid-lesson.
+**Test connection** sends one small real request and reports what came back, so
+you find out now rather than mid-lesson.
 
 The app speaks the widely used `POST /chat/completions` shape, so one adapter
 covers most hosted models.

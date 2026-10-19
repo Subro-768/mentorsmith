@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import html
+from pathlib import Path
+
 from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
@@ -29,6 +32,7 @@ class TheoryView(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.load_warning = None
         self.current_language: str = "cpp"
         self._chapters: list[theory.TheoryChapter] = []
         self._current_chapter: theory.TheoryChapter | None = None
@@ -173,8 +177,43 @@ class TheoryView(QWidget):
     def refresh(self) -> None:
         self._chapters = theory.load_chapters(self.current_language)
         self._populate_list(self._chapters)
+        self._refresh_load_warning()
         if self._chapters:
             self.chapter_list.setCurrentRow(0)
+
+    def _refresh_load_warning(self) -> None:
+        """Say so when a chapter file could not be read.
+
+        A chapter that fails to parse used to disappear behind a ``print`` that
+        a GUI application never shows. The chapter was then simply missing, and
+        a missing chapter looks exactly like one that was never written - so a
+        broken data file read as incomplete content rather than as an error.
+        """
+        failures = theory.load_failures(self.current_language)
+        if not failures:
+            if self.load_warning is not None:
+                self.load_warning.setVisible(False)
+            return
+
+        if self.load_warning is None:
+            self.load_warning = QLabel()
+            self.load_warning.setWordWrap(True)
+            self.load_warning.setStyleSheet(
+                f"background-color: {theme.WARNING_BG}; color: {theme.WARNING}; "
+                f"border: 1px solid {theme.BORDER}; border-radius: 6px; "
+                f"padding: 8px; font-size: 11px;"
+            )
+            # Above the reader, where it cannot be scrolled past.
+            self.layout().insertWidget(1, self.load_warning)
+
+        names = ", ".join(Path(path).name for path, _msg in failures)
+        detail = failures[0][1]
+        self.load_warning.setText(
+            f"⚠ {len(failures)} chapter file(s) could not be read, so they are "
+            f"missing from the list: <b>{html.escape(names)}</b><br>"
+            f"<span style='opacity:0.8'>{html.escape(detail)}</span>"
+        )
+        self.load_warning.setVisible(True)
 
     def _populate_list(self, chapters: list[theory.TheoryChapter]) -> None:
         """Fill the list with plain text items — no custom widgets, no rendering issues."""

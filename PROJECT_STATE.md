@@ -33,7 +33,8 @@ de-risked it: if the Android toolchain had failed on JDK 25 / AGP, Phases 2 and
 | After the §9 audit | 602 | **4** |
 | After the §6 offline work | **627** | 4 |
 | After branding, install and Java track | 712 | 4 |
-| After the icon/analytics/theme fixes | **837** | 4 |
+| After the icon/analytics/theme fixes | 837 | 4 |
+| After the AI key, model picker, dialog and theory work | **944** | 4 |
 
 All earlier tests still pass unchanged. Android adds **41** JVM unit tests.
 
@@ -50,6 +51,11 @@ Java track turned up these, all now fixed:
 | `ui/analytics_view.py` | Heatmap said "LAST 90 DAYS", drew 90–96 | Whole-week column alignment, undocumented |
 | `ui/theme/Theme.kt` | Android shipped VS Code Dark+ under a comment claiming it was the desktop palette | A colour mismatch is not an error |
 | `tools/install_desktop.py` | Wrote an `index.theme` into the user's shared `hicolor`, making unrelated icons invisible | Nothing on disk changed, so nothing showed why |
+| `execution/java.py` | Claimed "the JVM provides its own memory isolation" — it does not; a runaway exercise got 4 GB of heap | `limit_memory=False` is necessary (RLIMIT_AS kills a JVM), so nothing was bounding it |
+| `execution/java.py` | `java -version` on Java 8 gives `1.8.0_x`; the parser emitted `--release 1`, which javac rejects | Only manifests on a JDK this machine does not have |
+| `core/theory.py` | `lru_cache` returned a mutable list shared by every caller | Nothing mutated it yet — which is the reason to close it |
+| `core/theory.py` | A chapter that failed to parse vanished behind a `print` a GUI never shows | A missing chapter looks exactly like one never written |
+| `ui/settings_dialog.py` | Grew taller than the screen; Save/Cancel below the fold, no scroll, no resize | Only visible by opening it on a real display |
 
 The recurring lesson is that these are all *silences*: a value that is
 plausible-looking but false, a comment that contradicts the line beneath it, a

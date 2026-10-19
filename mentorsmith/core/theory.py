@@ -1,7 +1,8 @@
 """Theory book core module.
 
-Loads, indexes, searches, and caches comprehensive conceptual reference
-chapters for all programming languages supported in MentorSmith.
+Loads, indexes, searches, and caches conceptual reference chapters for every
+language MentorSmith supports. The chapters themselves are Markdown files under
+``mentorsmith/data/theory/<language>/`` - content lives in data, not here.
 """
 
 from __future__ import annotations
@@ -97,23 +98,54 @@ def _parse_chapter_file(path: Path, language: str) -> TheoryChapter:
     )
 
 
+#: Chapters that failed to parse, as ``(path, message)``.
+#:
+#: Populated by :func:`load_chapters` and cleared by :func:`clear_cache`. A
+#: chapter that cannot be parsed used to be skipped with a bare ``print``,
+#: which is invisible in a GUI application: the chapter simply was not there,
+#: with nothing on screen or in the logs explaining why. A missing chapter is
+#: indistinguishable from one that was never written, so the failure is
+#: recorded where the UI can show it.
+_LOAD_FAILURES: list[tuple[str, str]] = []
+
+
+def load_failures(language: str | None = None) -> list[tuple[str, str]]:
+    """Chapters that failed to parse.
+
+    Pass a language to see only its failures.
+    """
+    if language is None:
+        return list(_LOAD_FAILURES)
+    prefix = str(THEORY_DIR / language) + "/"
+    return [(p, m) for p, m in _LOAD_FAILURES if p.startswith(prefix)]
+
+
 @lru_cache(maxsize=None)
-def load_chapters(language: str) -> list[TheoryChapter]:
-    """Load and cache all chapters for a language in canonical order."""
+def load_chapters(language: str) -> tuple[TheoryChapter, ...]:
+    """Load and cache all chapters for a language in canonical order.
+
+    Returns a **tuple**, not a list. This result is cached and shared by every
+    caller, so a list handed out here is a list any caller can mutate: one
+    ``.append()`` or ``.sort()`` silently rewrites the cache for the whole
+    session. Nothing does that today, which is exactly why it is worth closing
+    rather than leaving to chance.
+    """
     lang_dir = THEORY_DIR / language
     if not lang_dir.exists():
-        return []
+        return ()
 
     chapters: list[TheoryChapter] = []
     for path in sorted(lang_dir.glob("*.md")):
         try:
-            ch = _parse_chapter_file(path, language)
-            chapters.append(ch)
-        except Exception as exc:
-            print(f"Warning: failed to load theory chapter {path}: {exc}")
+            chapters.append(_parse_chapter_file(path, language))
+        except Exception as exc:  # noqa: BLE001 - one bad file must not hide the rest
+            message = f"{type(exc).__name__}: {exc}"
+            _LOAD_FAILURES.append((str(path), message))
+            # Also to stderr, so it is visible when launched from a terminal.
+            print(f"Warning: failed to load theory chapter {path}: {message}")
 
     chapters.sort(key=lambda c: (c.order, c.title))
-    return chapters
+    return tuple(chapters)
 
 
 def get_chapter(language: str, chapter_id: str) -> TheoryChapter | None:
@@ -151,5 +183,6 @@ def search_theory(language: str, query: str) -> list[TheorySearchResult]:
 
 
 def clear_cache() -> None:
-    """Clear memory cache for reload."""
+    """Clear the memory cache and the recorded failures, for a reload."""
     load_chapters.cache_clear()
+    _LOAD_FAILURES.clear()
