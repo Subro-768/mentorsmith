@@ -134,7 +134,9 @@ class TheoryChapter:
             return ""
         bits = []
         if self.source_book:
-            bits.append(f"*{self.source_book}*")
+            # No markdown asterisks: this line goes into a plain-text label,
+            # where they would be shown rather than interpreted.
+            bits.append(self.source_book)
             if self.source_author:
                 bits.append(f"({self.source_author})")
         if self.source_chapter:
