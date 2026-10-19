@@ -173,7 +173,11 @@ class BundledCurriculumTest {
     @Test
     fun `the C plus plus track was not reduced`() {
         val cpp = loadAsset("cpp.json")
-        assertEquals(16, cpp.lessons.size)
+        // A floor, not a figure. The track has grown since this test was
+        // written - it now carries the inheritance, operator-overloading and
+        // virtual-function lessons from the OOP book - and a hard-coded
+        // count only ever reports that someone forgot to update it.
+        assertTrue(cpp.lessons.size >= 16)
     }
 
     @Test

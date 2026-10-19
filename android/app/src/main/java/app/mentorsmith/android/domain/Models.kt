@@ -37,6 +37,14 @@ data class Lesson(
     val id: String,
     val title: String,
     val order: Int,
+    /**
+     * Progression tier: "foundation", "core" or "advanced".
+     *
+     * Empty when the export does not say, which is the case for a curriculum
+     * exported before tiers existed. The screen shows nothing in that case
+     * rather than guessing.
+     */
+    val tier: String,
     val sections: Map<String, String>,
     val exampleCode: String,
     val starterCode: String,
@@ -47,6 +55,15 @@ data class Lesson(
 
     /** "3. Input and Output" */
     val displayTitle: String get() = "$order. $title"
+
+    /** "Foundation", "Core" or "Advanced" - empty when unknown. */
+    val tierLabel: String
+        get() = when (tier) {
+            "foundation" -> "Foundation"
+            "core" -> "Core"
+            "advanced" -> "Advanced"
+            else -> ""
+        }
 }
 
 data class Concept(
@@ -191,6 +208,7 @@ object CurriculumParser {
         id = json.getString("id"),
         title = json.getString("title"),
         order = json.optInt("order", 0),
+        tier = json.optString("tier"),
         sections = json.optJSONObject("sections").toStringMap(),
         exampleCode = json.optString("example_code"),
         starterCode = json.optString("starter_code"),

@@ -24,7 +24,7 @@ Top level (one file per language, named ``<language>.json``)::
 
 Lesson::
 
-    { "id", "title", "order", "sections": {name: markdown},
+    { "id", "title", "order", "tier", "sections": {name: markdown},
       "example_code", "starter_code", "checks": [{"question", "answer"}] }
 
 Concept::
@@ -81,6 +81,10 @@ def export_language(language: str) -> dict:
             "id": lesson.id,
             "title": lesson.title,
             "order": lesson.order,
+            # Which progression tier the lesson sits in: foundation, core or
+            # advanced. The Android app shows the same badge the desktop
+            # one does, so the two agree on where a learner is.
+            "tier": lesson.tier,
             "sections": dict(lesson.sections),
             "example_code": lesson.example_code,
             "starter_code": lesson.starter_code,

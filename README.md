@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1186 automated tests. It has **not** been
+and its behaviour is covered by 1204 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1186 tests
+python3 -m pytest tests/ -q                       # 1204 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -600,6 +600,13 @@ cd android
 It carries the same curriculum, the same mastery rules and the same output
 comparison, so both devices agree about what was learned. Progress is written
 locally first and only marked *synced* once a server confirms it.
+
+The curriculum is exported, not copied by hand: `tools/export_curriculum.py`
+writes it into the app's assets, and `--check` reports any file that has
+fallen behind. A test runs that check, so a lesson written on the desktop
+cannot quietly fail to reach the Android app. The exported lessons carry
+their progression tier, so the companion shows the same Foundation / Core /
+Advanced badge the desktop app does.
 
 **Tutor chat is disabled on Android, on purpose.** An APK is not a secret: a key
 compiled into it can be extracted by anyone who downloads it. Chat is served by

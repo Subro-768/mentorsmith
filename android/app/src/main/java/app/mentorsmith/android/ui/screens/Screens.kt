@@ -122,6 +122,22 @@ fun LessonScreen(viewModel: MentorViewModel) {
         ) {
             item { Text(lesson.displayTitle, style = MaterialTheme.typography.headlineSmall) }
 
+            // The tier badge, so the Android app says the same thing about
+            // where the learner is as the desktop one does.
+            if (lesson.tierLabel.isNotEmpty()) {
+                item {
+                    Text(
+                        lesson.tierLabel.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = when (lesson.tier) {
+                            "advanced" -> MentorColors.accent
+                            "core" -> MentorColors.info
+                            else -> MentorColors.muted
+                        },
+                    )
+                }
+            }
+
             listOf(
                 "objectives" to "Objectives",
                 "explanation" to "Explanation",

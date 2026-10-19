@@ -8,6 +8,7 @@
       "id": "01-program-structure",
       "title": "Program Structure",
       "order": 1,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Recognise the required parts of a C++ program.\n- Explain what `main` does and what its return value means.\n- Compile and run a minimal program from the terminal.\n- Read a compiler error message and locate the offending line.",
         "explanation": "A C++ program is compiled from one or more *translation units* into an\nexecutable. The entry point is `main`, which the operating system calls when\nthe program starts. Execution begins at the first statement inside `main` and\nstops when `main` returns.\n\nEvery `main` must return an `int`:\n\n```cpp\nint main() {\n    return 0;\n}\n```\n\nThe value is an *exit status*. By convention `0` means success and any\nnon-zero value signals failure. A `main` that falls off the end without an\nexplicit `return` also returns `0`, but writing it explicitly is clearer.\n\nStatements end with a semicolon. That is the single most common cause of a\ncompile error in a first program.\n\nAnatomy of a small program:\n\n```cpp\n#include <iostream>   // 1. declaration: bring in the stream library\n\nint main() {           // 2. entry point\n    std::cout << \"Hello\\n\";  // 3. statement\n    return 0;          // 4. success\n}\n```\n\nThe `#include` line is a *preprocessor directive*. It tells the compiler to\npaste the contents of `<iostream>` in before compiling, which is what makes\n`std::cout` available. `<iostream>` is a standard header shipped with the\ncompiler — it is not a file in your project.\n\n`std::` is a *namespace qualifier*. It says \"look inside the namespace called\n`std`\", which keeps your names from colliding with the standard library's.",
@@ -38,6 +39,7 @@
       "id": "02-variables-and-types",
       "title": "Variables and Types",
       "order": 2,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Declare variables with meaningful names.\n- Choose between the common built-in types.\n- Explain what \"scope\" is and why a variable stops existing.\n- Read an initialisation and understand why initialisation matters.",
         "explanation": "A variable is a named piece of memory with a type. The type decides three\nthings: how many bytes are reserved, how the bits are interpreted, and which\noperations are legal on the value.\n\nThe core built-in types:\n\n| Type | Typical size | Use it for |\n|---|---|---|\n| `int` | 4 bytes | Whole numbers, counts, indexes |\n| `double` | 8 bytes | Fractional numbers, measurements |\n| `char` | 1 byte | A single character, or a small integer |\n| `bool` | 1 byte | `true` or `false` |\n| `long long` | 8 bytes | Whole numbers too large for `int` |\n\nDeclare and initialise in one step. This is preferred over separating the two:\n\n```cpp\nint age = 30;            // good\nint height;              // fine when you assign later\nint width = 100, depth = 50;  // two variables, one line\n```\n\n`const` marks a value that must never change after initialisation. Use it by\ndefault for anything that is logically fixed — it turns a silent bug into a\ncompile error:\n\n```cpp\nconst double pi = 3.14159265358979;\n// pi = 3.0;   // error: assignment of read-only variable\n```\n\n**Scope** is the region of code where a name is visible. A variable declared\ninside a function exists only until that function returns. Declaring variables\nclose to first use keeps scope small, which prevents accidental access to a\nvalue that belongs somewhere else.\n\n```cpp\nint global = 5;          // visible everywhere - avoid unless necessary\n\nint main() {\n    int local = 10;      // visible only inside main\n    {\n        int inner = 20;  // visible only inside these braces\n    }\n    // inner is not accessible here\n}\n```\n\nName variables after what they mean, not their type. `total_price` beats\n`int_d`; `student_count` beats `i2`.",
@@ -68,6 +70,7 @@
       "id": "03-input-output",
       "title": "Input and Output",
       "order": 3,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Read values from standard input with `std::cin`.\n- Write values with `std::cout` and format them.\n- Explain why input can fail and how to detect it.\n- Avoid the classic `cin`/`cout` flushing bug.",
         "explanation": "Standard input and output are *streams*. `std::cout` writes to the terminal,\n`std::cin` reads from the keyboard.\n\n```cpp\n#include <iostream>\n#include <string>\n\nint main() {\n    std::string name;\n    std::cout << \"What is your name? \";\n    std::cin >> name;                      // reads one whitespace-delimited word\n    std::cout << \"Hello, \" << name << '\\n';\n    return 0;\n}\n```\n\n`>>` reads up to the next whitespace. To read a whole line including spaces,\nuse `std::getline`.\n\n**The classic bug.** `std::cin >>` leaves the newline in the stream. So if you\nmix the two, `getline` reads that leftover newline and returns an empty string:\n\n```cpp\nint age;\nstd::cin >> age;      // user types \"20\" then Enter\nstd::cin.ignore();    // discard the leftover newline\nstd::string rest;\nstd::getline(std::cin, rest);   // now this reads the real remainder\n```\n\nA more robust alternative, which discards all whitespace:\n\n```cpp\nstd::cin >> std::ws;   // skip any pending whitespace before getline\nstd::getline(std::cin, rest);\n```\n\n**Always check whether input succeeded.** If the user types letters where a\nnumber is expected, `>>` fails, puts `std::cin` into a bad state, and every\nlater read silently returns nothing — a common source of \"my program does\nnothing\" bugs.\n\n```cpp\nint age;\nif (!(std::cin >> age)) {\n    std::cout << \"That was not a number.\\n\";\n    return 1;\n}\n```\n\n**Formatting.** `std::cout` handles the common numeric types directly:\n\n```cpp\ndouble price = 19.5;\nstd::cout << price              << '\\n';   // 19.5\nstd::cout << std::fixed\n          << std::setprecision(2)\n          << price              << '\\n';   // 19.50\n```",
@@ -98,6 +101,7 @@
       "id": "04-operators",
       "title": "Operators",
       "order": 4,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Use arithmetic, comparison and logical operators correctly.\n- Predict the result of mixed-type expressions.\n- Explain integer division, modulo and truncation.\n- Use parentheses to control evaluation order explicitly.",
         "explanation": "**Arithmetic:** `+  -  *  /  %`\n\n`%` is modulo — the remainder after integer division. It only works on integer\noperands; `7.5 % 2` is a compile error.\n\n**The division trap.** When both operands are integers, `/` does integer\ndivision and throws away the fractional part. This is the single most common\nwrong answer in beginner C++:\n\n```cpp\n5 / 2      // 2    (two ints)\n5.0 / 2    // 2.5  (one is a double)\n5 / 2.0    // 2.5\n(int)5 / 2 // 2    (cast applied first, still two ints)\n```\n\n**Comparison:** `==  !=  <  >  <=  >=`\n\n`=` assigns. `==` compares. Writing `=` where you meant `==` is a mistake the\ncompiler usually catches for you.\n\n**Logical:** `&&  ||  !`\n\nThese short-circuit, which is the safe way to guard a second condition:\n\n```cpp\nif (count != 0 && total / count > 10)   // safe: / count never runs when count == 0\n```\n\nWithout `&&` short-circuiting, `count != 0 & total / count > 10` would divide by\nzero regardless of the first test.\n\n**Compound assignment:** `+=  -=  *=  /=  %=`\n\n```cpp\nscore += 10;      // same as: score = score + 10;\n```\n\n**Increment:** `++` and `--`. In C++ `i++` returns the value *before*\nincrementing while `++i` returns the value *after*. For a standalone statement\n`i++;` and `++i;` are identical — the distinction only matters when the result\nis used in an expression, which is a good reason to avoid it there.\n\n**Precedence:** `*  /  %` bind tighter than `+  -`, which bind tighter than\ncomparisons, which bind tighter than `&&`, which binds tighter than `||`.\n\nDo not memorise the whole table. Use parentheses when the intent is not\nobvious. They cost nothing and remove all doubt.",
@@ -128,6 +132,7 @@
       "id": "05-conditions",
       "title": "Conditions",
       "order": 5,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Write `if`, `else if` and `else` chains.\n- Use `switch` where it genuinely fits.\n- Avoid the classic assignment-in-condition bug.\n- Structure branches so that the first true case wins.",
         "explanation": "An `if` runs a block only when its condition is true. Anything non-zero is\ntrue; zero is false.\n\n```cpp\nif (score >= 90) {\n    grade = 'A';\n} else if (score >= 80) {\n    grade = 'B';\n} else if (score >= 70) {\n    grade = 'C';\n} else {\n    grade = 'F';\n}\n```\n\nOrder matters enormously. In this chain a score of 95 matches the *first* test\nand never reaches the others. If you reversed the chain to start at\n`score >= 70`, everything would become an A. Always order from most specific\nto least.\n\nA common bug is a single `=` instead of `==`:\n\n```cpp\nif (x = 5) { ... }    // assigns 5 to x, and 5 is truthy - always runs\nif (x == 5) { ... }   // correct\n```\n\nModern compilers warn about this (`-Wall` gives *suggest parentheses around\nassignment used as truth value*), which is one more reason to compile with\nwarnings on.\n\nWhen comparing floating-point values, do not test for exact equality.\n`0.1 + 0.2 == 0.3` is **false** in binary floating point, because neither\n`0.1` nor `0.2` is exactly representable. Compare with a tolerance:\n\n```cpp\nif (std::abs(a - b) < 1e-9) { ... }\n```\n\n**`switch`** suits matching one value against a fixed list of constants:\n\n```cpp\nswitch (choice) {\n    case 1: std::cout << \"New game\\n\";   break;\n    case 2: std::cout << \"Load game\\n\";   break;\n    case 3: std::cout << \"Quit\\n\";        break;\n    default: std::cout << \"Invalid\\n\";    break;\n}\n```\n\n`break` is required. Without it, execution *falls through* into the next case,\nwhich is occasionally intentional and usually a bug.\n\nNote that `switch` only works on integral and enum types — not `double` and\nnot `std::string`.",
@@ -162,6 +167,7 @@
       "id": "06-loops",
       "title": "Loops",
       "order": 6,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Use `while`, `do while` and `for` appropriately.\n- Predict how many times each loop body runs.\n- Avoid infinite loops and off-by-one errors.\n- Use `break`, `continue` and range-based `for` correctly.",
         "explanation": "C++ has three loops. Pick the one that matches the loop's purpose.\n\n**`while` — repeat while a condition holds.** Use when the number of\niterations is not known in advance.\n\n```cpp\nint n;\nstd::cout << \"Enter a positive number: \";\nstd::cin >> n;\nwhile (n > 0) {\n    std::cout << n << ' ';\n    --n;                     // without this, the loop never ends\n}\n```\n\nThat missing decrement is the classic infinite loop. Any `while` must make\nprogress toward its exit condition on every pass.\n\n**`do while` — run once, then repeat.** Use when the body must run at least\nonce, such as menu-driven input validation.\n\n```cpp\nchar choice;\ndo {\n    std::cout << \"Enter A or B: \";\n    std::cin >> choice;\n} while (choice != 'A' && choice != 'B');\n```\n\nNote the semicolon after the closing `while ( ... )`.\n\n**`for` — count.** Use when you know the number of iterations.\n\n```cpp\nfor (int i = 0; i < 5; ++i) {\n    std::cout << i << ' ';\n}\n```\n\nThe three parts are: initialise once, test before each iteration, then update.\n`i < 5` runs five times with `i` equal to 0, 1, 2, 3 and 4. Writing `i <= 5`\nwould run six times — the **off-by-one error**.\n\n**Range-based `for`** walks a container and is the clearest way to iterate\nanything iterable:\n\n```cpp\nstd::vector<int> scores = {80, 90, 75};\nfor (int score : scores) {\n    std::cout << score << ' ';\n}\n```\n\nUse `const auto&` when you only need to read:\n\n```cpp\nfor (const auto& item : items) {   // no copy, cannot modify\n    std::cout << item << '\\n';\n}\n```\n\n**`break`** leaves the loop immediately. **`continue`** skips to the next\niteration. Both are easy to overuse — a loop with several `break`s is often\nclearer as two simpler loops.\n\n**Watch your loop variable's type.** With `int i` and a limit of `scores.size()`\n(which returns `std::size_t`), comparing a signed `int` against an unsigned\nvalue triggers a compiler warning, and `i = -1` would never satisfy the test.",
@@ -196,6 +202,7 @@
       "id": "07-functions",
       "title": "Functions",
       "order": 7,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Declare and define a function.\n- Pass arguments by value and by reference, and explain the difference.\n- Use return values and default arguments.\n- Choose sensible parameter and return types.",
         "explanation": "A function packages a piece of behaviour behind a name so it can be called\nrepeatedly and tested on its own.\n\n```cpp\nreturn_type name(parameters) {\n    // body\n}\n```\n\n```cpp\nint add(int a, int b) {\n    return a + b;\n}\n```\n\nEvery `return` must produce a value matching the return type — or nothing at\nall, for `void` functions.\n\n**Passing by value** copies the argument. The function cannot change the\ncaller's variable:\n\n```cpp\nvoid by_value(int x) {\n    x = 99;            // only changes the local copy\n}\n```\n\n**Passing by reference** (`int&`) gives the function access to the caller's\nvariable:\n\n```cpp\nvoid by_reference(int& x) {\n    x = 99;            // really changes the caller's variable\n}\n```\n\n`const int&` is the idiomatic way to pass a large object read-only: no copy is\nmade, but the function cannot modify it. This is the form you will want for\nstrings and vectors in almost every case.\n\n```cpp\nstd::size_t count_words(const std::string& text);   // no copy, read-only\n```\n\n**Default arguments** must be the *trailing* parameters:\n\n```cpp\ndouble power(double base, int exponent = 2);   // power(2.0) == power(2.0, 2)\n```\n\n**Deciding what to return.** Returning a value is preferable when the caller\nneeds it. Do not rely on side effects on arguments when a return value would\nbe clearer — returning is easier to test.\n\n**Declarations vs definitions.** If you define a function after the code that\ncalls it, the compiler needs to know it exists first. Either define functions\nbefore use, or declare them at the top:\n\n```cpp\nint add(int a, int b);       // declaration - no body\n\nint main() { return add(1, 2); }\n\nint add(int a, int b) {      // definition - with body\n    return a + b;\n}\n```",
@@ -230,6 +237,7 @@
       "id": "08-arrays-and-strings",
       "title": "Arrays and Strings",
       "order": 8,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Declare and use a fixed-size C-style array.\n- Understand the relationship between `std::array` and C arrays.\n- Use `std::string` for text and `std::vector` for growable sequences.\n- Avoid buffer overflows and off-by-one indexing.",
         "explanation": "An array stores a fixed number of elements of one type, contiguously in memory.\nThe size must be a compile-time constant:\n\n```cpp\nint scores[5];                       // 5 uninitialised ints - garbage values\nint totals[3] = {10, 20, 30};        // initialised\nstd::string names[2] = {\"Ada\", \"Alan\"};\n```\n\nC++11 introduced `std::array`, which behaves like a C array but knows its own\nsize and supports range-based iteration. Prefer it:\n\n```cpp\n#include <array>\n\nstd::array<int, 5> scores{};\nscores[0] = 90;                        // zero-initialised, unlike a raw array\nstd::cout << scores.size();            // 5, no sizeof division needed\nfor (int s : scores) std::cout << s << ' ';\n```\n\n**Indexing starts at 0.** For a 5-element array the valid indexes are 0 to 4.\n`scores[5]` is out of bounds — it reads or writes memory that is not yours.\nC++ does *not* check array bounds at runtime, so this is a real source of\ncrashes and security bugs, not just a compile warning. Use `.at(i)` on\n`std::vector` or `std::array` when you want a bounds check that throws.\n\n**`std::string`** handles text safely and manages its own memory:\n\n```cpp\n#include <string>\n\nstd::string name = \"Ada\";\nname += \" Lovelace\";              // concatenate\nname.size();                      // length as std::size_t\nname[0];                          // 'A' - unchecked, may be out of range\nname.at(0);                       // 'A' - checked, throws if out of range\nbool empty = name.empty();\n```\n\nNote the size difference: `s.size()` returns `std::size_t`, an *unsigned* type.\nComparing `int i < s.size()` produces a signed/unsigned warning and is a bug\nwaiting to happen. Either declare `i` as `std::size_t` or cast explicitly.\n\n**`std::vector`** is the growable array. Use this whenever the size is not known\nwhen you write the code:\n\n```cpp\n#include <vector>\n\nstd::vector<int> scores{80, 90, 75};\nscores.push_back(92);             // grow by one\nscores.at(0) = 81;                // checked access\nfor (std::size_t i = 0; i < scores.size(); ++i) {\n    std::cout << i << \": \" << scores.at(i) << '\\n';\n}\n```",
@@ -264,6 +272,7 @@
       "id": "09-pointers",
       "title": "Pointers",
       "order": 9,
+      "tier": "core",
       "sections": {
         "objectives": "- Explain what a pointer is and what `&` and `*` do.\n- Declare and initialise pointers safely.\n- Dereference a pointer to read and write through it.\n- Initialise to `nullptr` and avoid dereferencing it.",
         "explanation": "A pointer is a variable that stores a memory address. Two operators matter:\n\n- `&value` — the **address-of** operator. Gives the address where a value lives.\n- `*pointer` — the **dereference** operator. Gives the value stored at that address.\n\n```cpp\nint number = 42;\nint* address_of_number = &number;   // address of number\n\nstd::cout << number          << '\\n';   // 42\nstd::cout << address_of_number << '\\n'; // some address, e.g. 0x7ffd...\nstd::cout << *address_of_number << '\\n'; // 42 again, read through the pointer\n```\n\nDereferencing lets you modify the original variable, because the pointer and\nthe variable refer to the same memory:\n\n```cpp\n*address_of_number = 99;\nstd::cout << number;    // 99 - the original changed\n```\n\n**Always initialise a pointer.** An uninitialised pointer contains whatever\nbytes happened to be in that memory — often garbage. Dereferencing it may\ncrash or corrupt unrelated data.\n\n```cpp\nint* p = &number;    // good - points at a real object\nint* q;              // BAD - uninitialised\nint* r = nullptr;    // good - explicitly points at nothing\n```\n\nModern C++ prefers `nullptr` over the old `NULL` or `0`, because neither can\nact as a \"real\" pointer and `nullptr` has its own type.\n\n**Always check before dereferencing:**\n\n```cpp\nif (r != nullptr) {\n    std::cout << *r << '\\n';\n}\n```\n\nDereferencing `nullptr` is undefined behaviour and usually a segmentation\nfault. `&value == nullptr` is *always false* — an address of a real object can\nnever be null, so that test is a common logical error worth recognising.\n\n**`const` with pointers.** Position matters and changes the meaning:\n\n```cpp\nconst int* p1 = &number;   // pointer to const int - cannot change the value\nint* const p2 = &number;   // const pointer to int - cannot be repointed\nconst int* const p3 = &number;  // neither may change\n```\n\nIn practice `const T*` is what you want most of the time: read through the\npointer, but do not modify the pointee.\n\n**Passing a pointer to a function** gives the function the ability to modify\nthe caller's variable without copying it:\n\n```cpp\nvoid swap_values(int* a, int* b) {\n    const int temp = *a;\n    *a = *b;\n    *b = temp;\n}\n\nint x = 1, y = 2;\nswap_values(&x, &y);    // x == 2, y == 1\n```\n\nThis is what `std::swap` does, and it explains why the standard library's\nswap-like functions take references rather than pointers.",
@@ -298,6 +307,7 @@
       "id": "10-references",
       "title": "References",
       "order": 10,
+      "tier": "core",
       "sections": {
         "objectives": "- Declare a reference with `&` and initialise it at declaration.\n- Explain why a reference must be initialised and cannot be reseated.\n- Pass arguments by reference to avoid copying and allow modification.\n- Choose between pointers and references correctly.",
         "explanation": "A reference is an *alias* — a second name for an existing object. Once bound,\nit stays bound forever.\n\n```cpp\nint number = 42;\nint& alias = number;     // alias IS number, not a copy\n\nalias = 99;\nstd::cout << number;     // 99 - the original changed\n```\n\nThree rules distinguish references from pointers:\n\n1. **A reference must be initialised when declared.** `int& r;` does not compile.\n2. **A reference cannot be reseated.** `r = someOtherVar;` assigns *through* `r`, it does not make `r` refer to `something else`. There is no equivalent of pointer arithmetic or reassignment.\n3. **A reference cannot be null.** Every reference must bind to a real object.\n\nThe third rule is the important safety difference: because a reference cannot\nbe \"empty\", code using one does not need null checks.\n\n**References as function parameters** are the idiomatic way to avoid copying\nand optionally to allow modification:\n\n```cpp\nvoid increment(int& target) { ++target; }              // modifies the caller\nint  count_digits(int number) { ... }                  // takes a copy; number is small\n\nstd::size_t length_of(const std::string& text) {       // the best common form\n    return text.size();                                // no copy, read-only\n}\n```\n\n`const T&` deserves special mention. For a large type such as\n`std::vector` or `std::string`, passing by value copies the whole object on\nevery call. `const T&` passes a reference the callee cannot modify — fast and\nsafe. This is the default parameter form for anything non-trivial.\n\nReturning references is possible but risky: a reference to a local variable\nbecomes dangling the moment the function returns.\n\n```cpp\nconst std::string& bad() {\n    std::string local = \"gone\";\n    return local;       // DANGLING - local is destroyed on return\n}\n```\n\n**Which should I use?**\n\n| Situation | Use |\n|---|---|\n| Parameter should read a value without copying | `const T&` |\n| Parameter should modify the caller's variable | `T&` |\n| Parameter may legitimately be \"nothing\" | `T*` (check for `nullptr`) |\n| Reassign or point into an array | `T*` |\n| Local alias inside a function | `T&` |\n\nIn short: prefer references by default, and reach for a pointer when you need\noptionality, reseating, or array traversal.",
@@ -332,6 +342,7 @@
       "id": "11-memory-concepts",
       "title": "Basic Memory Concepts",
       "order": 11,
+      "tier": "core",
       "sections": {
         "objectives": "- Describe the stack, the heap and static storage.\n- Explain how automatic variables are created and destroyed.\n- Use `new` and `delete` correctly and understand the pitfalls.\n- Recognise leaks, dangling pointers and double frees.",
         "explanation": "C++ stores objects in three main regions.\n\n**Stack.** Local variables and function parameters live here. Memory is\nallocated automatically when a function is called and reclaimed when it\nreturns. It is fast and orderly, but bounded — a huge local array can\noverflow it.\n\n```cpp\nvoid demo() {\n    int local = 42;      // stack - created on entry, destroyed on return\n}                       // local no longer exists here\n```\n\n**Heap.** Memory requested explicitly with `new` and released with `delete`. It\nis larger and outlives the function, at the cost of manual management.\n\n```cpp\nint* value = new int(42);   // heap\ndelete value;               // release it\nvalue = nullptr;            // good hygiene afterwards\n```\n\n**Static storage.** Globals, `static` locals and string literals live for the\nwhole program.\n\n**Raw `new`/`delete` rules.** These matter enough that modern C++ prefers to\navoid them:\n\n- Every `new` needs exactly one matching `delete`. A missing delete is a\n  **memory leak**; a second delete is a **double free**, which is undefined\n  behaviour and often a crash.\n- Never `delete` the same pointer twice.\n- Never `delete` memory you did not allocate with `new`.\n- If you allocate an array with `new[]`, release it with `delete[]`. Mixing\n  them is undefined behaviour.\n- A `delete` on a `nullptr` is safe and does nothing.\n- Never delete a pointer that points to an automatic variable.\n\n**Dangling pointers** point at memory that has been freed. The pointer value\nstill looks valid, which is what makes the bug so hard to find — the memory\nmay now belong to something else entirely.\n\nPrefer **`std::unique_ptr`**, which releases memory automatically when it goes\nout of scope:\n\n```cpp\n#include <memory>\n\nauto value = std::make_unique<int>(42);   // heap int, freed automatically\nstd::cout << *value << '\\n';\n// no delete needed - the memory is reclaimed when `value` goes out of scope\n```\n\n`std::make_unique` is preferred over `new` because it cannot leak: if\nconstruction fails, the allocation is freed for you.\n\n**Containers manage their own memory.** `std::vector`, `std::string` and\n`std::map` allocate on the heap internally and release it in their\ndestructors. In practice, using a container instead of a raw `new`-ed array\nremoves almost every leak from a program.\n\n```cpp\nstd::vector<int> numbers(1000);   // heap-allocated, freed automatically\n```",
@@ -366,6 +377,7 @@
       "id": "12-structures",
       "title": "Structures",
       "order": 12,
+      "tier": "core",
       "sections": {
         "objectives": "- Declare and use a `struct` to group related data.\n- Access members with `.` and `->`.\n- Initialise structs safely and pass them correctly to functions.\n- Know when to move on to classes.",
         "explanation": "A `struct` groups related variables under one name. It is a simple way to model\nan entity made of several values.\n\n```cpp\nstruct Point {\n    int x;\n    int y;\n};\n```\n\nDefine it, then create a variable:\n\n```cpp\nPoint origin{0, 0};                 // brace initialisation - preferred\nPoint unit{1, 1};\nPoint partial{};                    // zero-initialised, then set later\npartial.x = 5;\n```\n\nPrefer braces over the older parenthesised form. `Point p{1, 2};` is checked at\ncompile time, whereas `Point p(1, 2);` can silently do something unexpected\nwhen the constructor takes a different shape.\n\n**Accessing members.** Use `.` when you have the object itself, and `->` when\nyou have a pointer to it:\n\n```cpp\nPoint p{3, 4};\np.x = 10;                 // dot on an object\n\nPoint* pointer = &p;\npointer->x = 20;          // arrow on a pointer  (same as (*pointer).x)\n```\n\nThe `->` operator exists precisely because `(*pointer).x` is unreadable.\n\n**A struct has no private section** by default — every member is public.\nStructs are meant for plain data bundles. That is the practical difference\nfrom a class, which is about *behaviour plus controlled access* (covered in\nlessons 13 and 14).\n\n**Passing structs.** For a small struct, pass by value:\n\n```cpp\nvoid move_point(Point& p, int dx, int dy) {\n    p.x += dx;\n    p.y += dy;\n}\n```\n\nFor a larger struct, pass by `const` reference to avoid copying:\n\n```cpp\ndouble distance_squared(const Point& a, const Point& b);\n```\n\n**Returning** a small struct by value is fine and often clearer than filling\nan output parameter:\n\n```cpp\nPoint make_point(int x, int y) {\n    return Point{x, y};\n}\n```\n\n**Nested structs** are allowed and useful for grouping.\n\n```cpp\nstruct Line {\n    Point start;\n    Point end;\n};\n```\n\nOne practical note: `std::cout << point;` does not compile, because the stream\noperators know nothing about your type. Write a member function if you want to\nprint it, and teach `std::cout` about your type only when you genuinely need\nit:\n\n```cpp\n#include <ostream>\n\nstd::ostream& operator<<(std::ostream& os, const Point& p) {\n    return os << '(' << p.x << \", \" << p.y << ')';\n}\n```",
@@ -400,6 +412,7 @@
       "id": "13-classes-and-objects",
       "title": "Classes and Objects",
       "order": 13,
+      "tier": "core",
       "sections": {
         "objectives": "- Define a class and distinguish a class from an object.\n- Write member functions, including ones defined inside and outside the body.\n- Use access specifiers correctly.\n- Follow the principle that data should be private with public behaviour.",
         "explanation": "A **class** is a blueprint; an **object** is one instance built from it. The\nclass describes what an object *knows* (data members) and what it can *do*\n(member functions).\n\n```cpp\nclass Counter {\npublic:\n    void increment();     // behaviour - public\nprivate:\n    int value = 0;        // state - private\n};\n```\n\nTwo forms of member function definition:\n\n```cpp\nclass Counter {\npublic:\n    void increment() { ++value; }          // inside the body: implicit inline\n\n    void reset();                          // declared here\nprivate:\n    int value = 0;\n};\n\nvoid Counter::reset() {                    // outside: use Class::function\n    value = 0;\n}\n```\n\nShort functions defined inside the class body are treated as `inline`. Define\nlonger ones outside the class so the class stays readable.\n\n**Access specifiers.**\n\n| Specifier | Meaning |\n|---|---|\n| `public` | Accessible from anywhere |\n| `private` | Accessible only within the class (default for `class`) |\n| `protected` | Accessible within the class and derived classes (default for `struct`) |\n\nThe important design habit: **keep data private and expose behaviour**. This\nlets you change the internal representation later without breaking callers,\nand it means invalid states cannot be created from outside.\n\n```cpp\nclass Temperature {\npublic:\n    double celsius() const { return celsius_; }\n    void set_celsius(double value);        // validates before storing\nprivate:\n    double celsius_ = 0.0;\n};\n```\n\nTrailing underscores on member names (`celsius_`) are a common convention that\ndistinguishes members from parameters with the same name.\n\n**`const` on a member function** means it will not modify the object:\n\n```cpp\ndouble celsius() const { return celsius_; }\n```\n\nAdd `const` wherever possible. It documents intent and lets the compiler catch\nmistakes.\n\n**The `this` pointer** inside a method refers to the current object. You rarely\nneed it explicitly, but it is what makes chaining possible:\n\n```cpp\nCounter& bump() { ++value; return *this; }\n\ncounter.bump().bump().bump();      // value increased by 3\n```\n\nReturning `*this` by reference is what enables the fluent style used by\nstream operators and many modern APIs.\n\n**Each object has its own data.** Two `Counter` objects do not share `value`.",
@@ -434,6 +447,7 @@
       "id": "14-constructors-encapsulation",
       "title": "Constructors and Encapsulation",
       "order": 14,
+      "tier": "core",
       "sections": {
         "objectives": "- Write default, parameterised, copy and move constructors.\n- Follow the rule of zero, three or five.\n- Encapsulate data behind a controlled interface.\n- Return a usable object from every constructor.",
         "explanation": "A constructor initialises an object when it is created. C++ distinguishes\nseveral kinds.\n\n**Default constructor** takes no arguments:\n\n```cpp\nclass Counter {\npublic:\n    Counter() : value_(0) {}                 // always leave it in a valid state\nprivate:\n    int value_ = 0;\n};\n```\n\n**Parameterised constructor** takes arguments. Prefer a *member initialisation\nlist* over assigning in the body:\n\n```cpp\nclass Rectangle {\npublic:\n    Rectangle(double width, double height)\n        : width_(width), height_(height) {}   // initialises directly\nprivate:\n    double width_;\n    double height_;\n};\n```\n\n```cpp\nRectangle bad(3.0, 4.0) {\n    width_ = 3.0;       // width_ was default-constructed first,\n    height_ = 4.0;      // then overwritten - wasteful, and wrong for\n}                       // types that cannot be default-constructed\n```\n\n**Default arguments** can stand in for an overloaded constructor:\n\n```cpp\nclass Temperature {\npublic:\n    explicit Temperature(double celsius = 20.0);\n    //             ^ explicit stops an implicit double -> Temperature conversion\n};\n```\n\nPrefer `explicit` on single-argument constructors. Without it, a plain `double`\ncan silently become a `Temperature`, hiding bugs.\n\n**Copy constructor** builds a new object from an existing one. The compiler\ngenerates one if you do not write it, but write it explicitly if the class owns\na raw pointer or a resource:\n\n```cpp\nRectangle(const Rectangle& other) = default;   // often this is correct\n```\n\n**Move constructor** transfers ownership instead of copying:\n\n```cpp\nRectangle(Rectangle&& other) noexcept;         // rvalue reference\n```\n\n**Destructor** releases resources:\n\n```cpp\n~Rectangle() { /* clean up */ }\n```\n\nPrefer `= default` over writing a copy or move constructor by hand unless you\ngenuinely need custom behaviour. A hand-written copy constructor that forgets\nthe copy assignment operator causes *partial copying*: copy construction works,\nbut assignment leaves the two objects sharing state.\n\n**The rule of zero / three / five.** If you declare any of destructor, copy\nconstructor, copy assignment or move operations, you are likely managing a raw\nresource and should declare the rest. The far better answer is the **rule of\nzero**: hold no raw resources at all.\n\n```cpp\nclass Report {                 // rule of zero - nothing to declare\n    std::string title_;\n    std::vector<int> data_;    // these manage themselves\n};\n```\n\n**Encapsulation** means keeping the internal representation private and\npublishing an interface that protects it. Add a setter with validation and the\nfield can later change type without touching callers:\n\n```cpp\nclass BankAccount {\npublic:\n    bool deposit(double amount) {                 // validates\n        if (amount <= 0.0) return false;\n        balance_ += amount;\n        return true;\n    }\n    bool withdraw(double amount) {\n        if (amount <= 0.0 || amount > balance_) return false;   // prevents overdraft\n        balance_ -= amount;\n        return true;\n    }\n    double balance() const { return balance_; }\nprivate:\n    double balance_ = 0.0;\n};\n```",
@@ -472,6 +486,7 @@
       "id": "15-file-handling",
       "title": "File Handling",
       "order": 15,
+      "tier": "core",
       "sections": {
         "objectives": "- Read from and write to files using `<fstream>`.\n- Distinguish input, output and bidirectional streams.\n- Check for errors instead of assuming success.\n- Parse simple structured text safely.",
         "explanation": "`<fstream>` provides three stream classes:\n\n| Class | Purpose |\n|---|---|\n| `std::ifstream` | Read from a file |\n| `std::ofstream` | Write to a file (truncates any existing content) |\n| `std::fstream` | Read and write |\n\nThe usual pattern is: open, check, use, close.\n\n```cpp\n#include <fstream>\n#include <iostream>\n#include <string>\n\nint main() {\n    std::ifstream input(\"notes.txt\");\n    if (!input) {                                  // ALWAYS check\n        std::cout << \"Could not open notes.txt\\n\";\n        return 1;\n    }\n\n    std::string line;\n    while (std::getline(input, line)) {\n        std::cout << line << '\\n';\n    }\n    if (!input.eof()) {                            // read failed part-way\n        std::cout << \"Error while reading\\n\";\n    }\n    input.close();\n    return 0;\n}\n```\n\n**Check the stream immediately after opening.** This is the single most\nimportant habit here — an unchecked `ifstream` on a missing file silently\nproduces no data, and the bug surfaces much later in a confusing place.\n\n**Writing** works the same way:\n\n```cpp\nstd::ofstream output(\"notes.txt\");           // creates, or truncates\nif (!output) {\n    std::cout << \"Could not write notes.txt\\n\";\n    return 1;\n}\noutput << \"first line\\n\";\noutput << \"value = \" << 42 << '\\n';\noutput.close();\n```\n\nTo append rather than overwrite, use the `std::ios::app` mode:\n\n```cpp\nstd::ofstream output(\"notes.txt\", std::ios::app);\n```\n\n**Open modes** combine with `|` when you need more than one:\n\n```cpp\nstd::fstream file(\"data.txt\", std::ios::in | std::ios::out);\n```\n\n**Reading numbers.** `>>` on a stream that has run out of data leaves the\nstream in a failed state. Check `while (input >> value)` rather than trusting\nthe input:\n\n```cpp\nint value;\nwhile (input >> value) {\n    std::cout << value << '\\n';        // stops cleanly at end of file\n}\n```\n\nThis is the idiomatic way to read a list of numbers of unknown length.\n\n**File paths.** Use `std::filesystem` for anything non-trivial:\n\n```cpp\n#include <filesystem>\n\nconst std::filesystem::path path = \"data/notes.txt\";\nif (!path.parent_path().empty()) {\n    std::filesystem::create_directories(path.parent_path());\n}\n```\n\n**A note on parsing.** Splitting a line with `std::stringstream` is a safe,\nreadable way to parse a simple delimited format:\n\n```cpp\nstd::istringstream parser(line);\nstd::string name;\nint mark;\nif (parser >> name >> mark) { /* use them */ }\n```\n\nReach for `std::regex` only when regular expressions genuinely help; prefer\nsimple parsing for simple formats.",
@@ -506,6 +521,7 @@
       "id": "16-exceptions-and-error-handling",
       "title": "Exceptions and Error Handling",
       "order": 16,
+      "tier": "core",
       "sections": {
         "objectives": "- Throw and catch exceptions.\n- Use custom exception types that carry useful information.\n- Apply RAII so cleanup happens during unwinding.\n- Choose between exceptions and returning an error value.",
         "explanation": "C++ reports runtime errors by *throwing* an exception. A `throw` transfers\ncontrol to a matching `catch` somewhere up the call stack, skipping the rest\nof the intervening code.\n\n```cpp\n#include <iostream>\n#include <stdexcept>\n#include <string>\n\nint main() {\n    try {\n        std::string input = \"not a number\";\n        int value = std::stoi(input);       // throws std::invalid_argument\n        std::cout << value << '\\n';\n    } catch (const std::exception& error) {\n        std::cout << \"Failed: \" << error.what() << '\\n';\n        return 1;\n    }\n    return 0;\n}\n```\n\n**Exception types** in `<stdexcept>`:\n\n| Type | Raised for |\n|---|---|\n| `std::runtime_error` | General runtime problems |\n| `std::invalid_argument` | Bad arguments to a function |\n| `std::out_of_range` | Index or iterator out of bounds |\n| `std::length_error` | Size exceeds an implementation limit |\n| `std::overflow_error` | Value too large for the target type |\n\nAll derive from `std::exception`, which provides `what()` returning a\nhuman-readable description.\n\n**Custom exceptions** are worth it when the caller needs specific detail:\n\n```cpp\nclass InsufficientFunds : public std::runtime_error {\npublic:\n    InsufficientFunds(double requested, double available)\n        : std::runtime_error(\"insufficient funds\"),\n          requested_(requested),\n          available_(available) {}\n\n    double requested() const { return requested_; }\n    double available() const { return available_; }\n\nprivate:\n    double requested_;\n    double available_;\n};\n```\n\n**`catch` ordering matters.** Handlers are tried in order, so catch derived\ntypes first:\n\n```cpp\ntry {\n    // ...\n} catch (const InsufficientFunds& error) {   // specific first\n    // ...\n} catch (const std::runtime_error& error) {  // then broader\n    // ...\n} catch (const std::exception& error) {      // then broadest\n    // ...\n}\n```\n\nA handler written before the broader ones makes the broader ones unreachable,\nand the compiler warns about this.\n\n**RAII during unwinding.** When an exception propagates, local objects are\nstill destroyed properly — that is the single biggest advantage of C++ over\nlanguages without destructors. So resources should be owned by objects:\n\n```cpp\nvoid process() {\n    std::ofstream file(\"data.txt\");\n    if (!file) throw std::runtime_error(\"cannot open data.txt\");\n\n    risky_operation();       // if this throws, `file` is still closed\n\n    if (!file) throw std::runtime_error(\"write failed\");\n}\n```\n\nYou do not need `catch (...)` and a manual `close()` — the destructor handles\nit. Reserve `catch (...)` for logging at a genuine boundary; it hides real\nerrors.\n\n**Exceptions vs error codes.** Throwing is right for conditions the caller\ncannot easily be expected to handle inline. Returning `bool` or an optional\nis often clearer for expected outcomes, such as \"user entered an invalid\nvalue\". Avoid throwing across a `noexcept` function, and never throw from a\ndestructor.\n\nThe key insight: exceptions separate *what went wrong* from *what to do about\nit*, so the reporting layer stays separate from the decision layer.",
@@ -533,6 +549,135 @@
         {
           "question": "What happens to local objects when an exception propagates?",
           "answer": "Their destructors are called in reverse order of construction, during stack unwinding, so RAII resources are released correctly."
+        }
+      ]
+    },
+    {
+      "id": "17-inheritance",
+      "title": "Inheritance and Derived Classes",
+      "order": 17,
+      "tier": "core",
+      "sections": {
+        "objectives": "- Derive a class with `public Base`.\n- Pass what the base needs through the constructor's initialiser list.\n- Say which base members a derived class can reach.\n- Name the five shapes of inheritance and the diamond problem.",
+        "explanation": "Inheritance reuses a class by deriving a new one from it.\n\n```cpp\nclass Animal {\nprotected:\n    std::string name;\npublic:\n    explicit Animal(std::string n) : name(std::move(n)) {}\n    virtual void speak() const { std::cout << \"...\\n\"; }\n    virtual ~Animal() = default;\n};\n\nclass Dog : public Animal {\npublic:\n    explicit Dog(std::string n) : Animal(std::move(n)) {}\n    void speak() const override { std::cout << name << \" says woof\\n\"; }\n};\n```\n\n- The base is constructed **before** the derived constructor's body runs, and the derived destructor runs **before** the base's.\n- `private` base members are not visible to the derived class; `protected` ones are.\n- The shapes are single, multilevel, multiple, hierarchical and hybrid.\n- The diamond problem: two paths to one base construct it twice and make the base ambiguous. `virtual` inheritance fixes it.",
+        "example": "```cpp\n#include <iostream>\n#include <string>\n\nclass Printable    { public: virtual void print() const = 0; };\nclass Serializable { public: virtual std::string serialise() const = 0; };\n\nclass Report : public Printable, public Serializable {\npublic:\n    void print() const override { std::cout << \"report\\n\"; }\n    std::string serialise() const override { return \"{}\"; }\n};\n\nint main() {\n    Report r;\n    r.print();\n    std::cout << r.serialise() << \"\\n\";\n}\n```",
+        "knowledge_checks": "Q: In what order are the base and derived constructors run?\nA: The base first, always. The destructors run in the opposite order.\nQ: Why is a base member often `protected` rather than `public`?\nA: So only the class and its derived classes can reach it, not the whole program.\nQ: Which access specifier hides a member from derived classes entirely?\nA: `private`.\nQ: What is the diamond problem?\nA: A class derived from two classes that share a base gets that base constructed twice, and referring to its members is ambiguous.\nQ: How do you fix the diamond problem?\nA: Derive the intermediate classes from the shared base virtually - `class D1 : virtual public B`.\nQ: Why must the base destructor be virtual?\nA: So deleting through a base pointer still runs the derived destructor.",
+        "exercise": "Write `Shape` with a `virtual area()` and a `virtual` destructor. Derive `Circle` and `Rectangle` from it, each storing what it needs and overriding `area()`. Put `Circle*` and `Rectangle*` into a `std::vector<Shape*>`, delete through the vector, and print something from each destructor to prove the derived destructors ran.\n\n```cpp starter\n#include <iostream>\n#include <memory>\n#include <vector>\n\nint main() {\n    // Define Shape, Circle and Rectangle, then delete them through a vector.\n}\n```",
+        "common_mistakes": "- Forgetting `virtual` on the base destructor, and leaking the derived object's members.\n- Omitting the base from the initialiser list when the base has no default constructor.\n- Reaching for a `private` base member from a derived class - it is not inherited.",
+        "recap": "- `class D : public B` derives; the initialiser list feeds the base.\n- Base first, derived second - and the reverse for destruction.\n- `virtual` inheritance removes the diamond."
+      },
+      "example_code": "#include <iostream>\n#include <string>\n\nclass Printable    { public: virtual void print() const = 0; };\nclass Serializable { public: virtual std::string serialise() const = 0; };\n\nclass Report : public Printable, public Serializable {\npublic:\n    void print() const override { std::cout << \"report\\n\"; }\n    std::string serialise() const override { return \"{}\"; }\n};\n\nint main() {\n    Report r;\n    r.print();\n    std::cout << r.serialise() << \"\\n\";\n}",
+      "starter_code": "#include <iostream>\n#include <memory>\n#include <vector>\n\nint main() {\n    // Define Shape, Circle and Rectangle, then delete them through a vector.\n}",
+      "checks": [
+        {
+          "question": "In what order are the base and derived constructors run?",
+          "answer": "The base first, always. The destructors run in the opposite order."
+        },
+        {
+          "question": "Why is a base member often `protected` rather than `public`?",
+          "answer": "So only the class and its derived classes can reach it, not the whole program."
+        },
+        {
+          "question": "Which access specifier hides a member from derived classes entirely?",
+          "answer": "`private`."
+        },
+        {
+          "question": "What is the diamond problem?",
+          "answer": "A class derived from two classes that share a base gets that base constructed twice, and referring to its members is ambiguous."
+        },
+        {
+          "question": "How do you fix the diamond problem?",
+          "answer": "Derive the intermediate classes from the shared base virtually - `class D1 : virtual public B`."
+        },
+        {
+          "question": "Why must the base destructor be virtual?",
+          "answer": "So deleting through a base pointer still runs the derived destructor."
+        }
+      ]
+    },
+    {
+      "id": "18-operator-overloading",
+      "title": "Operator Overloading",
+      "order": 18,
+      "tier": "advanced",
+      "sections": {
+        "objectives": "- Overload a binary operator as a member function.\n- Write a unary operator, and tell pre-increment from post-increment.\n- Choose between a member overload and a free function.\n- Explain the copy-assignment pitfall.",
+        "explanation": "C++ lets a class decide what `+` means for it. The overload is a function\nnamed `operator` followed by the symbol.\n\n```cpp\nclass Vec2 {\n    double x{}, y{};\npublic:\n    Vec2(double x, double y) : x(x), y(y) {}\n    Vec2 operator+(const Vec2& other) const {\n        return Vec2(x + other.x, y + other.y);\n    }\n};\n```\n\n- A member overload has the left operand as `*this`, so only the right operand converts implicitly. A free function takes both, so either side can.\n- `operator++()` returns a reference to the modified object; `operator++(int)` returns a copy of the old value. Getting them the wrong way round is a real bug.\n- An operator that takes its parameter by value and returns by value copies the object twice, and `operator=` can end up calling itself. Take the parameter by const reference and return `*this` by reference.\n- `explicit operator double()` is better than an implicit one, which quietly creates ambiguous overload sets.",
+        "example": "```cpp\n#include <iostream>\n\nclass Vec2 {\n    double x_, y_;\npublic:\n    Vec2(double x, double y) : x_(x), y_(y) {}\n    double x() const { return x_; }\n    double y() const { return y_; }\n    Vec2 operator+(const Vec2& other) const {\n        return Vec2(x_ + other.x_, y_ + other.y_);\n    }\n    void print() const { std::cout << x_ << \",\" << y_ << \"\\n\"; }\n};\n\nVec2 operator*(double k, const Vec2& v) {   // free: 2 * v works\n    return Vec2(v.x() * k, v.y() * k);\n}\n\nint main() {\n    Vec2 a{1, 2}, b{3, 4};\n    Vec2 c = a + b;\n    c.print();\n    (2 * a).print();\n}\n```",
+        "knowledge_checks": "Q: How does the compiler pick between two `operator+` overloads?\nA: By the types of the operands, applying implicit conversions where needed.\nQ: When is a free-function overload better than a member one?\nA: When symmetry matters - so the left-hand operand can also convert.\nQ: What must post-increment return, and what must pre-increment return?\nA: Post-increment returns a copy of the old value; pre-increment returns a reference to the modified object.\nQ: Why take the parameter by const reference?\nA: To avoid copying the object, and to stop the operator modifying it.\nQ: What is wrong with `Vec2& operator=(const Vec2& o) { x = o.x; y = o.y; return *this; }`?\nA: Nothing - that is the correct form. The wrong form returns by value and takes by value.\nQ: Which operators cannot be overloaded?\nA: `&&`, `||`, `,` and `.`.",
+        "exercise": "Write a `Complex` class with `+`, `-`, `operator*` for complex times complex, `operator==` and `operator<<` for printing. Then add a free function so that `2 * c` compiles, and explain why that needs to be a free function.\n\n```cpp starter\n#include <iostream>\n\nclass Complex {\n    // Real and imaginary parts, the operators above, and a print helper.\n};\n\nint main() {\n    // Complex a(1, 2), b(3, 4); print a + b and 2 * a\n}\n```",
+        "common_mistakes": "- Forgetting `const` on the parameters, so the operator cannot be used with a const object.\n- Returning a reference to a local temporary.\n- Mixing up pre- and post-increment.\n- Writing `operator=` when the compiler's own was already correct.",
+        "recap": "- An overload is a function with a special name.\n- Member or free: the free form allows conversion on the left.\n- `const` reference in, `*this` by reference out."
+      },
+      "example_code": "#include <iostream>\n\nclass Vec2 {\n    double x_, y_;\npublic:\n    Vec2(double x, double y) : x_(x), y_(y) {}\n    double x() const { return x_; }\n    double y() const { return y_; }\n    Vec2 operator+(const Vec2& other) const {\n        return Vec2(x_ + other.x_, y_ + other.y_);\n    }\n    void print() const { std::cout << x_ << \",\" << y_ << \"\\n\"; }\n};\n\nVec2 operator*(double k, const Vec2& v) {   // free: 2 * v works\n    return Vec2(v.x() * k, v.y() * k);\n}\n\nint main() {\n    Vec2 a{1, 2}, b{3, 4};\n    Vec2 c = a + b;\n    c.print();\n    (2 * a).print();\n}",
+      "starter_code": "#include <iostream>\n\nclass Complex {\n    // Real and imaginary parts, the operators above, and a print helper.\n};\n\nint main() {\n    // Complex a(1, 2), b(3, 4); print a + b and 2 * a\n}",
+      "checks": [
+        {
+          "question": "How does the compiler pick between two `operator+` overloads?",
+          "answer": "By the types of the operands, applying implicit conversions where needed."
+        },
+        {
+          "question": "When is a free-function overload better than a member one?",
+          "answer": "When symmetry matters - so the left-hand operand can also convert."
+        },
+        {
+          "question": "What must post-increment return, and what must pre-increment return?",
+          "answer": "Post-increment returns a copy of the old value; pre-increment returns a reference to the modified object."
+        },
+        {
+          "question": "Why take the parameter by const reference?",
+          "answer": "To avoid copying the object, and to stop the operator modifying it."
+        },
+        {
+          "question": "What is wrong with `Vec2& operator=(const Vec2& o) { x = o.x; y = o.y; return *this; }`?",
+          "answer": "Nothing - that is the correct form. The wrong form returns by value and takes by value."
+        },
+        {
+          "question": "Which operators cannot be overloaded?",
+          "answer": "`&&`, `||`, `,` and `.`."
+        }
+      ]
+    },
+    {
+      "id": "19-virtual-functions",
+      "title": "Virtual Functions and Abstract Classes",
+      "order": 19,
+      "tier": "advanced",
+      "sections": {
+        "objectives": "- Explain what `virtual` changes about how a call is resolved.\n- Say what happens when a virtual function is called from a constructor.\n- Write a pure virtual function and an abstract class.\n- Use the template-method shape: a fixed algorithm with a replaceable step.",
+        "explanation": "A non-virtual function is chosen by the compiler from the static type of the\nexpression. A virtual function is chosen at run time from the object's real\ntype. That is dynamic dispatch.\n\n```cpp\nBase& ref = Derived{};\nref.speak();   // the derived version, if speak() is virtual\nref.fixed();   // the base version - not virtual\n```\n\n- The class with virtual functions gets a vtable; every object of it carries a pointer to that table. A virtual call reads the object's table, not the class's.\n- During construction and destruction, the version belonging to the class currently being built or destroyed is used - so a virtual call from a constructor does **not** reach the derived class.\n- `virtual double area() const = 0;` is a pure virtual function. A class with one is abstract and cannot be instantiated; a derived class that leaves one unimplemented is abstract too.\n- An abstract class can still hold data and ordinary methods, so it is where a fixed algorithm lives while the steps vary.",
+        "example": "```cpp\n#include <iostream>\n\nclass Shape {\npublic:\n    void draw() const {                       // fixed algorithm\n        std::cout << \"area = \" << area() << \"\\n\";   // replaceable step\n    }\n    virtual double area() const = 0;          // pure virtual\n    virtual ~Shape() = default;\n};\n\nclass Square : public Shape {\n    double side_;\npublic:\n    explicit Square(double side) : side_(side) {}\n    double area() const override { return side_ * side_; }\n};\n\nint main() {\n    Square s{3};\n    s.draw();          // \"area = 9\"\n}\n```",
+        "knowledge_checks": "Q: What does `virtual` change?\nA: Which body runs - the one belonging to the object's real type, decided at run time, rather than the one the compiler picks from the reference's type.\nQ: Why does a virtual call from a constructor not reach the derived version?\nA: During construction the object is not yet a derived object, so the class currently being constructed decides.\nQ: What is a vtable?\nA: A table of function pointers per class, with each object holding a pointer to it.\nQ: What does `= 0` declare?\nA: A pure virtual function, which makes the class abstract.\nQ: Can an abstract class have data members?\nA: Yes. It can hold state and ordinary methods; it just cannot be instantiated.\nQ: How do you declare a destructor virtual?\nA: `virtual ~Base() = default;` - and it is needed whenever objects are deleted through a base pointer.",
+        "exercise": "Build an abstract `Playable` with a pure virtual `play()` and a concrete `describe()` that calls `play()`. Derive `Song` and `Podcast` from it. Store them in a `std::vector<std::unique_ptr<Playable>>` and call `describe()` on each. Then make `play()` non-virtual in the base and observe what changes.\n\n```cpp starter\n#include <iostream>\n#include <memory>\n#include <vector>\n\nint main() {\n    // Define Playable, Song and Podcast, then describe() each one.\n}\n```",
+        "common_mistakes": "- Forgetting `virtual` on the base function and wondering why the derived version is ignored.\n- Forgetting `virtual` on the base destructor, and leaking.\n- Overriding with a different signature, which creates an overload and leaves the base's version in place.\n- Hiding a base function with the same name but different parameters.",
+        "recap": "- `virtual` moves the decision from compile time to run time.\n- A pure virtual function makes the class abstract.\n- The base fixes the algorithm; the derived classes supply the steps."
+      },
+      "example_code": "#include <iostream>\n\nclass Shape {\npublic:\n    void draw() const {                       // fixed algorithm\n        std::cout << \"area = \" << area() << \"\\n\";   // replaceable step\n    }\n    virtual double area() const = 0;          // pure virtual\n    virtual ~Shape() = default;\n};\n\nclass Square : public Shape {\n    double side_;\npublic:\n    explicit Square(double side) : side_(side) {}\n    double area() const override { return side_ * side_; }\n};\n\nint main() {\n    Square s{3};\n    s.draw();          // \"area = 9\"\n}",
+      "starter_code": "#include <iostream>\n#include <memory>\n#include <vector>\n\nint main() {\n    // Define Playable, Song and Podcast, then describe() each one.\n}",
+      "checks": [
+        {
+          "question": "What does `virtual` change?",
+          "answer": "Which body runs - the one belonging to the object's real type, decided at run time, rather than the one the compiler picks from the reference's type."
+        },
+        {
+          "question": "Why does a virtual call from a constructor not reach the derived version?",
+          "answer": "During construction the object is not yet a derived object, so the class currently being constructed decides."
+        },
+        {
+          "question": "What is a vtable?",
+          "answer": "A table of function pointers per class, with each object holding a pointer to it."
+        },
+        {
+          "question": "What does `= 0` declare?",
+          "answer": "A pure virtual function, which makes the class abstract."
+        },
+        {
+          "question": "Can an abstract class have data members?",
+          "answer": "Yes. It can hold state and ordinary methods; it just cannot be instantiated."
+        },
+        {
+          "question": "How do you declare a destructor virtual?",
+          "answer": "`virtual ~Base() = default;` - and it is needed whenever objects are deleted through a base pointer."
         }
       ]
     }
@@ -792,6 +937,46 @@
         "catch_order",
         "swallowed_exception",
         "invalid_state"
+      ]
+    },
+    {
+      "id": "inheritance",
+      "title": "Inheritance and Derived Classes",
+      "lesson_id": "17-inheritance",
+      "summary": "Deriving a class, constructor order, access under inheritance, and the diamond problem.",
+      "prerequisites": [
+        "classes"
+      ],
+      "error_categories": [
+        "missing_base_init",
+        "ambiguous_base"
+      ]
+    },
+    {
+      "id": "operator-overloading",
+      "title": "Operator Overloading",
+      "lesson_id": "18-operator-overloading",
+      "summary": "Giving an operator a meaning for your own type, as a member or a free function.",
+      "prerequisites": [
+        "classes",
+        "functions"
+      ],
+      "error_categories": [
+        "missing_const",
+        "wrong_increment_semantics"
+      ]
+    },
+    {
+      "id": "virtual-functions",
+      "title": "Virtual Functions and Abstract Classes",
+      "lesson_id": "19-virtual-functions",
+      "summary": "Choosing the body at run time, and building an abstract class from pure virtual functions.",
+      "prerequisites": [
+        "inheritance"
+      ],
+      "error_categories": [
+        "missing_virtual",
+        "non_virtual_destructor"
       ]
     }
   ],
@@ -1778,6 +1963,63 @@
       ],
       "novel": false,
       "tags": [],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "cpp-inheritance-find-missing-base",
+      "concept_id": "inheritance",
+      "lesson_id": "17-inheritance",
+      "type": "find-a-bug",
+      "title": "The base is never constructed",
+      "prompt": "This program does not compile. Read the error, then fix it so that the base class is constructed properly.",
+      "code": "#include <iostream>\n\nclass Animal {\n    std::string name;\npublic:\n    explicit Animal(std::string n) : name(n) {}\n    void print() const { std::cout << name << \"\\n\"; }\n};\n\nclass Dog : public Animal {\npublic:\n    explicit Dog(std::string n) { }\n};\n\nint main() {\n    Dog d(\"Rex\");\n    d.print();\n}\n",
+      "starter_code": "#include <iostream>\n\nclass Animal {\n    std::string name;\npublic:\n    explicit Animal(std::string n) : name(n) {}\n    void print() const { std::cout << name << \"\\n\"; }\n};\n\nclass Dog : public Animal {\npublic:\n    // The base must be initialised.\n    explicit Dog(std::string n) { }\n};\n\nint main() {\n    Dog d(\"Rex\");\n    d.print();\n}\n",
+      "expected_stdout": "Rex\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "inheritance",
+        "initialiser-list"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "cpp-op-overload-find-by-value",
+      "concept_id": "operator-overloading",
+      "lesson_id": "18-operator-overloading",
+      "type": "find-a-bug",
+      "title": "Two copies too many",
+      "prompt": "This operator copies the object twice and cannot be used on a const object. Fix it.",
+      "code": "#include <iostream>\n\nclass Vec2 {\n    double x, y;\npublic:\n    Vec2(double x, double y) : x(x), y(y) {}\n    Vec2 operator+(Vec2 other) { return Vec2(x + other.x, y + other.y); }\n    void print() const { std::cout << x << \",\" << y << \"\\n\"; }\n};\n\nint main() {\n    const Vec2 a{1, 2}, b{3, 4};\n    Vec2 c = a + b;\n    c.print();\n}\n",
+      "starter_code": "#include <iostream>\n\nclass Vec2 {\n    double x, y;\npublic:\n    Vec2(double x, double y) : x(x), y(y) {}\n    // Take the parameter by const reference, and mark the method const.\n    Vec2 operator+(Vec2 other) { return Vec2(x + other.x, y + other.y); }\n    void print() const { std::cout << x << \",\" << y << \"\\n\"; }\n};\n\nint main() {\n    const Vec2 a{1, 2}, b{3, 4};\n    Vec2 c = a + b;\n    c.print();\n}\n",
+      "expected_stdout": "4,6\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "operators",
+        "const"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "cpp-virtual-predict-dispatch",
+      "concept_id": "virtual-functions",
+      "lesson_id": "19-virtual-functions",
+      "type": "predict-output",
+      "title": "Static or dynamic?",
+      "prompt": "Predict what this prints, and say which call is resolved at run time.",
+      "code": "#include <iostream>\n\nclass Base {\npublic:\n    virtual void speak() const { std::cout << \"base\\n\"; }\n    void fixed() const { std::cout << \"base\\n\"; }\n};\n\nclass Derived : public Base {\npublic:\n    void speak() const override { std::cout << \"derived\\n\"; }\n    void fixed() const { std::cout << \"derived\\n\"; }\n};\n\nint main() {\n    Base& ref = Derived{};\n    ref.speak();\n    ref.fixed();\n}\n",
+      "starter_code": "#include <iostream>\n\nclass Base {\npublic:\n    virtual void speak() const { std::cout << \"base\\n\"; }\n    void fixed() const { std::cout << \"base\\n\"; }\n};\n\nclass Derived : public Base {\npublic:\n    void speak() const override { std::cout << \"derived\\n\"; }\n    void fixed() const { std::cout << \"derived\\n\"; }\n};\n\nint main() {\n    // Which is chosen by the object, and which by the reference?\n}\n",
+      "expected_stdout": "derived\nbase\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "virtual",
+        "dynamic-binding"
+      ],
       "graded_by": "deterministic"
     }
   ],

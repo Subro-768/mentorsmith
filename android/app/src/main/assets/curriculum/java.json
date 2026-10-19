@@ -8,6 +8,7 @@
       "id": "01-program-structure",
       "title": "Program Structure",
       "order": 1,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Understand the basic structure of a Java application.\n- Learn the purpose of public class Main and the main method.\n- Output text using System.out.println.",
         "explanation": "In Java, every line of executable code must be inside a class. By convention and toolchain requirement, if your file is named `Main.java`, it contains `public class Main`.\n\nThe execution starts at the `main` method with the exact signature:\n`public static void main(String[] args)`\n\n- `public`: Accessible from anywhere by the JVM.\n- `static`: Can be invoked without creating an instance of the class.\n- `void`: Does not return any exit code; termination is controlled by exiting or exceptions.\n- `String[] args`: Command-line arguments.\n\nTo print output to standard out, Java provides `System.out.println()`.",
@@ -38,6 +39,7 @@
       "id": "02-variables-and-types",
       "title": "Variables and Types",
       "order": 2,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Declare primitive and reference variables.\n- Learn int, double, boolean, char, and String.\n- Understand the `final` keyword and type casting.",
         "explanation": "Java is strongly typed. Primitive types include `int` (32-bit integer), `double` (64-bit floating point), `boolean` (`true` or `false`), and `char` (single Unicode character in single quotes).\n\n`String` is a reference type representing immutable text.\n\nUse `final` before a variable type to make it an immutable constant:\n`final double PI = 3.14159;`\n\nType casting allows converting between types:\n- Widening (automatic): `int` to `double`\n- Narrowing (explicit cast): `(int) 3.99` evaluates to `3`",
@@ -68,6 +70,7 @@
       "id": "03-input-output",
       "title": "Input and Output",
       "order": 3,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Read input from standard input using `java.util.Scanner`.\n- Format output with `System.out.printf`.",
         "explanation": "To read input, create a `Scanner` object wrapping `System.in`:\n```java\nimport java.util.Scanner;\n\nScanner scanner = new Scanner(System.in);\nString line = scanner.nextLine();\nint number = scanner.nextInt();\n```\n\nFor formatted output, `System.out.printf` supports format specifiers like `%s` (string), `%d` (integer), and `%.2f` (floating point to 2 decimals).",
@@ -98,6 +101,7 @@
       "id": "04-operators",
       "title": "Operators",
       "order": 4,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Work with arithmetic, relational, and logical operators.\n- Understand integer division versus floating point division.\n- Use ternary operators.",
         "explanation": "Java supports standard arithmetic operators: `+`, `-`, `*`, `/`, `%` (modulo).\n\n**Integer division:**\nDividing two integers truncates the decimal: `7 / 2` is `3`. To get `3.5`, at least one operand must be a floating-point number: `7.0 / 2` or `(double) 7 / 2`.\n\n**Logical Operators:**\n- `&&`: Logical AND (short-circuiting)\n- `||`: Logical OR (short-circuiting)\n- `!`: Logical NOT\n\n**Ternary Operator:**\n`condition ? valueIfTrue : valueIfFalse`",
@@ -128,6 +132,7 @@
       "id": "05-conditions",
       "title": "Conditions",
       "order": 5,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Branch execution using `if`, `else if`, and `else`.\n- Switch statements.\n- Compare Strings safely using `.equals()`.",
         "explanation": "Control flow allows executing code based on boolean expressions:\n```java\nif (score >= 90) {\n    grade = \"A\";\n} else if (score >= 80) {\n    grade = \"B\";\n} else {\n    grade = \"C\";\n}\n```\n\n**Crucial rule for Strings:**\nNever use `==` to compare String contents! `==` tests object reference identity (memory address). Always use `.equals()`:\n`if (name.equals(\"Alice\")) { ... }`\n\n`switch` matches discrete values (int, char, String, enums).",
@@ -158,6 +163,7 @@
       "id": "06-loops",
       "title": "Loops",
       "order": 6,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Master `for`, `while`, and `do-while` loops.\n- Use `break` and `continue`.\n- Understand enhanced for-each loops.",
         "explanation": "Loops repeat execution while a condition is true:\n\n```java\n// Traditional for loop\nfor (int i = 0; i < 5; i++) {\n    System.out.println(i);\n}\n\n// While loop\nwhile (condition) {\n    // runs while true\n}\n\n// Do-while loop\ndo {\n    // runs at least once\n} while (condition);\n```\n\n- `break` exits the loop immediately.\n- `continue` skips the remainder of the current iteration.",
@@ -188,6 +194,7 @@
       "id": "07-methods",
       "title": "Methods",
       "order": 7,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Define reusable static methods.\n- Pass parameters and return values.\n- Method overloading.",
         "explanation": "Methods group reusable logic under a name:\n```java\npublic static int square(int x) {\n    return x * x;\n}\n```\n\n- If a method returns no value, its return type is `void`.\n- Primitive parameters in Java are passed **by value** (a copy is passed).\n- **Method Overloading**: You can define multiple methods with the same name if their parameter lists differ in type or count.",
@@ -218,6 +225,7 @@
       "id": "08-arrays-and-strings",
       "title": "Arrays and Strings",
       "order": 8,
+      "tier": "foundation",
       "sections": {
         "objectives": "- Declare, allocate, and index fixed-size arrays.\n- Inspect array `.length`.\n- Utilize common String manipulation methods.",
         "explanation": "Arrays are fixed-length sequences of elements of the same type:\n```java\nint[] numbers = new int[5]; // default initialized to 0\nint[] primes = {2, 3, 5, 7, 11};\nSystem.out.println(primes[0]); // 2\nSystem.out.println(primes.length); // 5\n```\n\nAccessing indices outside `0` to `length - 1` throws `ArrayIndexOutOfBoundsException`.\n\nStrings provide rich inspection methods:\n- `.length()`: number of characters\n- `.charAt(index)`: character at index\n- `.substring(start, end)`: sliced substring\n- `.contains(seq)`, `.toUpperCase()`, `.toLowerCase()`",
@@ -248,6 +256,7 @@
       "id": "09-classes-and-objects",
       "title": "Classes and Objects",
       "order": 9,
+      "tier": "core",
       "sections": {
         "objectives": "- Define classes with fields and constructors.\n- Instantiate objects using `new`.\n- Override the `toString()` method.",
         "explanation": "A class is a blueprint for objects:\n```java\nclass Student {\n    String name;\n    int age;\n\n    // Constructor\n    Student(String name, int age) {\n        this.name = name;\n        this.age = age;\n    }\n\n    @Override\n    public String toString() {\n        return name + \" (\" + age + \")\";\n    }\n}\n```\n\n- `this` refers to the current instance.\n- Constructors initialize fields when `new Student(...)` is invoked.\n- `toString()` formats the object when printed.",
@@ -278,6 +287,7 @@
       "id": "10-encapsulation",
       "title": "Encapsulation",
       "order": 10,
+      "tier": "core",
       "sections": {
         "objectives": "- Protect object integrity using `private` fields.\n- Provide controlled access with getters and setters.\n- Understand visibility modifiers.",
         "explanation": "Encapsulation bundles data with the methods that operate on it and hides internal state:\n- `private`: Accessible only within the declaring class.\n- `public`: Accessible from any class.\n- (default/package-private): Accessible within the same package.\n- `protected`: Accessible within the package and subclasses.\n\nSetters can enforce data validation rules before updating fields:\n```java\npublic void setAge(int age) {\n    if (age >= 0) {\n        this.age = age;\n    }\n}\n```",
@@ -308,6 +318,7 @@
       "id": "11-collections",
       "title": "Collections",
       "order": 11,
+      "tier": "core",
       "sections": {
         "objectives": "- Use dynamic lists with `java.util.ArrayList`.\n- Store key-value mappings with `java.util.HashMap`.\n- Iterate through collections.",
         "explanation": "Java provides collections that resize dynamically:\n\n**ArrayList<E>**:\n```java\nimport java.util.ArrayList;\n\nArrayList<String> fruits = new ArrayList<>();\nfruits.add(\"Apple\");\nfruits.add(\"Banana\");\nSystem.out.println(fruits.get(0)); // Apple\nSystem.out.println(fruits.size()); // 2\n```\n\n**HashMap<K, V>**:\n```java\nimport java.util.HashMap;\n\nHashMap<String, Integer> ages = new HashMap<>();\nages.put(\"Alice\", 25);\nint age = ages.get(\"Alice\"); // 25\nboolean hasBob = ages.containsKey(\"Bob\");\n```",
@@ -338,6 +349,7 @@
       "id": "12-exceptions",
       "title": "Exceptions and Error Handling",
       "order": 12,
+      "tier": "core",
       "sections": {
         "objectives": "- Handle errors with `try`, `catch`, and `finally`.\n- Throw exceptions with `throw`.\n- Distinguish checked vs unchecked exceptions.",
         "explanation": "Exceptions represent runtime error conditions:\n```java\ntry {\n    int result = 10 / 0;\n} catch (ArithmeticException e) {\n    System.out.println(\"Cannot divide by zero: \" + e.getMessage());\n} finally {\n    System.out.println(\"Always runs\");\n}\n```\n\n- **Checked exceptions**: Inherit from `Exception` (excluding `RuntimeException`). Must be caught or declared in method signature with `throws`.\n- **Unchecked exceptions**: Inherit from `RuntimeException` (e.g. `NullPointerException`, `IndexOutOfBoundsException`).",
@@ -361,6 +373,236 @@
         {
           "question": "What keyword is used to explicitly raise an exception?",
           "answer": "throw."
+        }
+      ]
+    },
+    {
+      "id": "13-inheritance",
+      "title": "Inheritance and Method Overriding",
+      "order": 13,
+      "tier": "core",
+      "sections": {
+        "objectives": "- Derive a class from another with `extends`.\n- Call the parent's constructor with `super`.\n- Override a method and explain how the right version is chosen at run time.\n- Tell an override apart from an overload.",
+        "explanation": "A subclass inherits the parent's fields and methods and can add or replace them.\n\n```java\nclass Animal {\n    String name;\n    Animal(String name) { this.name = name; }\n    void speak() { System.out.println(\"...\"); }\n}\n\nclass Dog extends Animal {\n    Dog(String name) { super(name); }     // parent constructor runs first\n    @Override\n    void speak() { System.out.println(name + \" says woof\"); }\n}\n```\n\n- `super(...)` must be the first statement of a subclass constructor. The parent is always constructed first.\n- An override must match the parent's signature exactly. A different parameter list is an **overload**, and the parent's method still exists.\n- `static` methods are chosen by the type of the reference at compile time; instance methods are chosen by the actual object at run time. That is why `Animal a = new Dog(); a.speak();` prints \"woof\".\n- Java allows one superclass but many interfaces - see the next lesson.",
+        "example": "```java\npublic class Main {\n    public static void main(String[] args) {\n        Animal[] animals = { new Dog(\"Rex\"), new Cat(\"Mia\") };\n        for (Animal a : animals) {\n            a.speak();     // each object picks its own version\n        }\n    }\n}\n```",
+        "knowledge_checks": "Q: What must be the first statement in a subclass constructor?\nA: A call to the superclass constructor, `super(...)`, if one is needed at all.\nQ: A subclass declares `void speak(String to)` while the parent has `void speak()`. Is it an override?\nA: No. It is an overload - the signatures differ - so the parent's `speak()` still exists separately.\nQ: Which version of a method runs when the reference is of the parent's type but the object is of the child's type?\nA: For an instance method, the child's version. For a `static` method, the parent's version, because static methods are bound at compile time.\nQ: Why can a class extend only one class but implement many interfaces?\nA: Extending brings data along, and inheriting data from two parents is ambiguous. Interfaces carry no state, so several of them cause no conflict.",
+        "exercise": "Create a class `Shape` with a `name` field and a method `describe()` that prints the name. Create a subclass `Circle` that adds a `radius` and overrides `describe()` to also print the radius. Create a second subclass `Square` the same way. Store a `Shape`, a `Circle` and a `Square` in an array and call `describe()` on each.\n\n```java starter\npublic class Main {\n    // Define Shape, then Circle and Square as subclasses of it.\n\n    public static void main(String[] args) {\n        // Put one of each into a Shape[] and call describe() on each.\n    }\n}\n```",
+        "common_mistakes": "- Forgetting `super()` when the parent has no no-argument constructor - it will not compile.\n- Calling an overridable method from a constructor: the child's version runs before the child's fields are set, so it sees zeros.\n- Assuming a field is polymorphic. Fields always come from the type of the reference.",
+        "recap": "- `extends` inherits; `super` reaches the parent.\n- An override matches the signature exactly; an overload does not.\n- Instance methods dispatch on the object, `static` methods on the reference."
+      },
+      "example_code": "public class Main {\n    public static void main(String[] args) {\n        Animal[] animals = { new Dog(\"Rex\"), new Cat(\"Mia\") };\n        for (Animal a : animals) {\n            a.speak();     // each object picks its own version\n        }\n    }\n}",
+      "starter_code": "public class Main {\n    // Define Shape, then Circle and Square as subclasses of it.\n\n    public static void main(String[] args) {\n        // Put one of each into a Shape[] and call describe() on each.\n    }\n}",
+      "checks": [
+        {
+          "question": "What must be the first statement in a subclass constructor?",
+          "answer": "A call to the superclass constructor, `super(...)`, if one is needed at all."
+        },
+        {
+          "question": "A subclass declares `void speak(String to)` while the parent has `void speak()`. Is it an override?",
+          "answer": "No. It is an overload - the signatures differ - so the parent's `speak()` still exists separately."
+        },
+        {
+          "question": "Which version of a method runs when the reference is of the parent's type but the object is of the child's type?",
+          "answer": "For an instance method, the child's version. For a `static` method, the parent's version, because static methods are bound at compile time."
+        },
+        {
+          "question": "Why can a class extend only one class but implement many interfaces?",
+          "answer": "Extending brings data along, and inheriting data from two parents is ambiguous. Interfaces carry no state, so several of them cause no conflict."
+        }
+      ]
+    },
+    {
+      "id": "14-interfaces",
+      "title": "Interfaces and Multiple Inheritance",
+      "order": 14,
+      "tier": "core",
+      "sections": {
+        "objectives": "- Declare an interface and implement it.\n- Explain how an interface provides multiple inheritance without shared state.\n- Use a `default` method and resolve a clash between two of them.\n- Use the pattern form of `instanceof`.",
+        "explanation": "An interface is a promise: \"a class of this kind can do this\". It holds no\ndata, so a class can implement several of them.\n\n```java\ninterface Printable {\n    void print();\n    default String label() { return \"printable\"; }\n}\n\nclass Invoice implements Printable {\n    @Override public void print() { System.out.println(\"Invoice\"); }\n}\n```\n\n- Interface methods are `public` and `abstract` unless given a body. Fields in an interface are `public static final` constants.\n- A `default` method lets several implementors share an implementation. If two interfaces offer the same `default`, the class must resolve it - by overriding it, or with `Named.super.label()`.\n- `static` methods in an interface are not inherited; they are called as `InterfaceName.method()`.\n- `if (obj instanceof Printable p) { p.print(); }` binds the pattern in the same statement, so no separate cast is needed.",
+        "example": "```java\ninterface Named  { default String label() { return \"item\"; } }\ninterface Priced { default String label() { return \"priced item\"; } }\n\nclass Product implements Named, Priced {\n    @Override public String label() { return Named.super.label(); }\n}\n```",
+        "knowledge_checks": "Q: Why can a class implement several interfaces when it can extend only one class?\nA: Interfaces carry no data, so there is no state to inherit ambiguously. A class supplies the implementation instead.\nQ: What are the access modifiers on a method declared in an interface?\nA: Public and abstract, unless the method has a body (`default` or `static`).\nQ: A class implements two interfaces that both define `default String label()`. What must it do?\nA: Resolve the conflict - override `label()`, or name the one it wants with `InterfaceName.super.label()`.\nQ: What is the difference between a `default` method and a `static` method in an interface?\nA: A `default` method is inherited by every implementor and can be overridden; a `static` method is not inherited and is called through the interface name.\nQ: Can an interface hold a field that each implementing object can change?\nA: No. Its fields are `public static final` constants shared by every implementor.",
+        "exercise": "Define an interface `Playable` with a `play()` method and a `default` method `describe()` returning \"playing a track\". Implement it in a class `Song`. Then define an interface `Recordable` with its own `describe()` default, implement both in `StudioTrack`, and resolve the conflict using `InterfaceName.super.method()`.\n\n```java starter\npublic class Main {\n    // Define Playable and Recordable, then StudioTrack implementing both.\n\n    public static void main(String[] args) {\n        // Create a StudioTrack and print its describe()\n    }\n}\n```",
+        "common_mistakes": "- Forgetting `public` on the implementing method - it does not widen automatically, and the class will not compile.\n- Expecting an interface to carry per-object state.\n- Assuming a `default` method can be added to an interface without any implementor having to think about the clash.",
+        "recap": "- Interfaces promise behaviour and hold no data.\n- A class can implement many of them; that is Java's form of multiple inheritance.\n- `default` methods share code; a clash must be resolved by the class."
+      },
+      "example_code": "interface Named  { default String label() { return \"item\"; } }\ninterface Priced { default String label() { return \"priced item\"; } }\n\nclass Product implements Named, Priced {\n    @Override public String label() { return Named.super.label(); }\n}",
+      "starter_code": "public class Main {\n    // Define Playable and Recordable, then StudioTrack implementing both.\n\n    public static void main(String[] args) {\n        // Create a StudioTrack and print its describe()\n    }\n}",
+      "checks": [
+        {
+          "question": "Why can a class implement several interfaces when it can extend only one class?",
+          "answer": "Interfaces carry no data, so there is no state to inherit ambiguously. A class supplies the implementation instead."
+        },
+        {
+          "question": "What are the access modifiers on a method declared in an interface?",
+          "answer": "Public and abstract, unless the method has a body (`default` or `static`)."
+        },
+        {
+          "question": "A class implements two interfaces that both define `default String label()`. What must it do?",
+          "answer": "Resolve the conflict - override `label()`, or name the one it wants with `InterfaceName.super.label()`."
+        },
+        {
+          "question": "What is the difference between a `default` method and a `static` method in an interface?",
+          "answer": "A `default` method is inherited by every implementor and can be overridden; a `static` method is not inherited and is called through the interface name."
+        },
+        {
+          "question": "Can an interface hold a field that each implementing object can change?",
+          "answer": "No. Its fields are `public static final` constants shared by every implementor."
+        }
+      ]
+    },
+    {
+      "id": "15-packages",
+      "title": "Packages and Imports",
+      "order": 15,
+      "tier": "core",
+      "sections": {
+        "objectives": "- Declare a package and match it to a folder layout.\n- Import a class, a whole package, or a single static member.\n- Name the standard library packages worth knowing.\n- Resolve two imported types with the same simple name.",
+        "explanation": "A package is a namespace. It keeps two classes with the same name apart and\ngives the project a directory structure that matches its code.\n\n```java\npackage com.example.billing;\n\npublic class Invoice { }\n```\n\n- The package name maps to folders: `com/example/billing/Invoice.class`.\n- The convention is the reverse of a web address - `com.example.billing` - so it reads from general to specific.\n- `import java.util.List;` imports one type, `import java.util.*;` imports a package, `import static java.lang.Math.max;` imports one static member.\n- `java.lang` is imported automatically; `java.util` is not.\n\nIf two imported packages both contain a `List`, using the name unqualified is\na compile error - Java will not guess. Qualify it (`java.util.List`).",
+        "example": "```java\npackage com.example.app;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Main {\n    public static void main(String[] args) {\n        List<String> names = new ArrayList<>();\n        names.add(\"Ada\");\n        System.out.println(names);\n    }\n}\n```",
+        "knowledge_checks": "Q: Which package is imported automatically?\nA: `java.lang` - it holds `String`, `Object`, `Integer`, `System` and the rest of the core.\nQ: Does `import java.util.*;` make the program slower at run time?\nA: No. The class files are already fully qualified; an import only changes which name you may type.\nQ: What happens if two imported packages both contain a type called `List`?\nA: Using `List` unqualified is a compile error until you qualify it or import one specific type.\nQ: Why is the package name written backwards compared to a domain name?\nA: So it reads from the most general part to the most specific, and so it can be derived from a domain the organisation owns.\nQ: Name three standard library packages.\nA: Any three of `java.lang`, `java.util`, `java.io`, `java.net`, `java.time`, `java.util.function`, `java.util.stream`.",
+        "exercise": "Create a package `com.example.geometry` containing a class `Rectangle` with a `width`, a `height` and an `area()` method. Create a second package `com.example.app` containing a `Main` that uses it. Compile with `javac -d out com/example/geometry/Rectangle.java com/example/app/Main.java` and run it from the `out` directory.\n\n```java starter\npackage com.example.app;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Use com.example.geometry.Rectangle\n    }\n}\n```",
+        "common_mistakes": "- Declaring `package com.example.tools;` in a file that lives somewhere else - the compiler says the class should be in a file of a matching name.\n- Forgetting the `package` line in a file inside a package folder.\n- Importing `java.awt.*` and `java.util.*` together, which makes `List` ambiguous.",
+        "recap": "- A package is a namespace and a folder.\n- The folder layout must match the package name.\n- `java.lang` is automatic; everything else is imported."
+      },
+      "example_code": "package com.example.app;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Main {\n    public static void main(String[] args) {\n        List<String> names = new ArrayList<>();\n        names.add(\"Ada\");\n        System.out.println(names);\n    }\n}",
+      "starter_code": "package com.example.app;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Use com.example.geometry.Rectangle\n    }\n}",
+      "checks": [
+        {
+          "question": "Which package is imported automatically?",
+          "answer": "`java.lang` - it holds `String`, `Object`, `Integer`, `System` and the rest of the core."
+        },
+        {
+          "question": "Does `import java.util.*;` make the program slower at run time?",
+          "answer": "No. The class files are already fully qualified; an import only changes which name you may type."
+        },
+        {
+          "question": "What happens if two imported packages both contain a type called `List`?",
+          "answer": "Using `List` unqualified is a compile error until you qualify it or import one specific type."
+        },
+        {
+          "question": "Why is the package name written backwards compared to a domain name?",
+          "answer": "So it reads from the most general part to the most specific, and so it can be derived from a domain the organisation owns."
+        },
+        {
+          "question": "Name three standard library packages.",
+          "answer": "Any three of `java.lang`, `java.util`, `java.io`, `java.net`, `java.time`, `java.util.function`, `java.util.stream`."
+        }
+      ]
+    },
+    {
+      "id": "16-file-io",
+      "title": "File Input and Output",
+      "order": 16,
+      "tier": "core",
+      "sections": {
+        "objectives": "- Tell a byte stream apart from a character stream.\n- Read a text file line by line with `BufferedReader`.\n- Use try-with-resources so files are always closed.\n- Write to a file and append to it.",
+        "explanation": "Java has two I/O hierarchies. **Streams** work in bytes; **readers and\nwriters** work in characters. For text, use a character stream - a byte\nstream can split a multi-byte character in half.\n\n```java\ntry (BufferedReader reader = new BufferedReader(new FileReader(\"notes.txt\"))) {\n    String line;\n    while ((line = reader.readLine()) != null) {\n        System.out.println(line);\n    }\n}\n```\n\n- `try (...)` closes every resource when the block ends, even if it ended with an exception. The hand-written version needs a `finally`, and forgetting the `close()` there is a classic leak.\n- `BufferedReader` buffers, which is what makes line-by-line reading fast.\n- `new FileWriter(path)` truncates; `new FileWriter(path, true)` appends.\n- The newer `java.nio.file` API is shorter: `Files.readAllLines(path)` and `Files.write(path, lines)`.",
+        "example": "```java\ntry (BufferedWriter writer = new BufferedWriter(new FileWriter(\"out.txt\"))) {\n    writer.write(\"first line\");\n    writer.newLine();\n    writer.write(\"second line\");\n}\n```",
+        "knowledge_checks": "Q: When do you need a character stream rather than a byte stream?\nA: For text. A byte stream can split a multi-byte character between two reads.\nQ: What does try-with-resources guarantee that a `finally` block does not?\nA: It closes the resources for you, including when the body throws.\nQ: Why wrap a reader in a `BufferedReader`?\nA: Buffering cuts the number of reads from the underlying stream, which is much faster.\nQ: What is the difference between `new FileWriter(f)` and `new FileWriter(f, true)`?\nA: The second appends; the first truncates the file to empty first.\nQ: When would `Files.readAllLines` be a worse choice than a `BufferedReader`?\nA: For a file too large to fit in memory - it loads the whole thing at once.",
+        "exercise": "Write a program that reads `numbers.txt` (one integer per line), doubles each number and writes the results to `doubled.txt`. Then change it to append rather than overwrite, and to skip any line that is not a number without ending the program.\n\n```java starter\npublic class Main {\n    public static void main(String[] args) {\n        // Read numbers.txt, double each number, write doubled.txt\n    }\n}\n```",
+        "common_mistakes": "- Forgetting to close the stream, so the last lines are never flushed.\n- Relying on the platform default character set, so a file written on one machine is unreadable on another.\n- Using `FileWriter` on a file with content you meant to keep.",
+        "recap": "- Bytes for bytes, characters for text.\n- try-with-resources closes what it opens.\n- `java.nio.file` is the shorter path for new code."
+      },
+      "example_code": "try (BufferedWriter writer = new BufferedWriter(new FileWriter(\"out.txt\"))) {\n    writer.write(\"first line\");\n    writer.newLine();\n    writer.write(\"second line\");\n}",
+      "starter_code": "public class Main {\n    public static void main(String[] args) {\n        // Read numbers.txt, double each number, write doubled.txt\n    }\n}",
+      "checks": [
+        {
+          "question": "When do you need a character stream rather than a byte stream?",
+          "answer": "For text. A byte stream can split a multi-byte character between two reads."
+        },
+        {
+          "question": "What does try-with-resources guarantee that a `finally` block does not?",
+          "answer": "It closes the resources for you, including when the body throws."
+        },
+        {
+          "question": "Why wrap a reader in a `BufferedReader`?",
+          "answer": "Buffering cuts the number of reads from the underlying stream, which is much faster."
+        },
+        {
+          "question": "What is the difference between `new FileWriter(f)` and `new FileWriter(f, true)`?",
+          "answer": "The second appends; the first truncates the file to empty first."
+        },
+        {
+          "question": "When would `Files.readAllLines` be a worse choice than a `BufferedReader`?",
+          "answer": "For a file too large to fit in memory - it loads the whole thing at once."
+        }
+      ]
+    },
+    {
+      "id": "17-multithreading",
+      "title": "Threads and Synchronisation",
+      "order": 17,
+      "tier": "advanced",
+      "sections": {
+        "objectives": "- Start a thread with `Runnable`.\n- Explain what `start()` does that `run()` does not.\n- Protect shared state with `synchronized`.\n- Say what `volatile` does and does not guarantee.",
+        "explanation": "A thread is an independent path of execution. The JVM gives you at least\none; `main` runs on it.\n\n```java\nclass Worker implements Runnable {\n    public void run() {\n        for (int i = 0; i < 5; i++) System.out.println(\"work \" + i);\n    }\n}\n\nnew Thread(new Worker()).start();\n```\n\n- Implement `Runnable` rather than extending `Thread`: a class can then extend something else as well, and the same task can be given to several threads.\n- `start()` asks the scheduler to run the task on another thread. Calling `run()` yourself runs it inline, on the current thread, with no concurrency at all.\n- `synchronized` locks the object's monitor, so only one thread at a time is inside the method. `synchronized (lock) { ... }` locks an object you choose, which is better when several fields must change together.\n- `volatile` guarantees a thread sees the latest value, but it does **not** make `count++` atomic - that is still read, add, store. Use `AtomicInteger` or `synchronized`.",
+        "example": "```java\nclass Counter {\n    private int count = 0;\n    synchronized void increment() { count++; }\n    int value() { return count; }\n}\n```",
+        "knowledge_checks": "Q: What is the difference between `run()` and `start()`?\nA: `start()` hands the task to a new thread; `run()` executes it immediately on the calling thread, so nothing is concurrent.\nQ: Why is implementing `Runnable` usually better than extending `Thread`?\nA: A class can do both, and one `Runnable` can be shared by several threads.\nQ: Why can two threads lose an increment?\nA: `count++` is three separate operations, and the threads can interleave between them.\nQ: What does `volatile` guarantee?\nA: That a thread always reads the current value rather than a cached one. It does not make compound operations atomic.\nQ: What is the difference between a `BLOCKED` and a `WAITING` thread?\nA: `BLOCKED` means waiting for a monitor to be released; `WAITING` means waiting for something else to happen, such as `sleep`, `join` or `wait`.",
+        "exercise": "Write a `Counter` class with a `synchronized` increment method and a plain one. Start four threads that each increment it a thousand times - once using the synchronized version, once not - and print the final count in both cases. Explain the difference in the two results.\n\n```java starter\npublic class Main {\n    // Define Counter with a synchronized and an unsynchronized increment.\n\n    public static void main(String[] args) {\n        // Run both versions and print the final counts\n    }\n}\n```",
+        "common_mistakes": "- Synchronizing on a `String` literal or a boxed `Integer` - the value is shared across the whole program, so unrelated code can lock the same object.\n- Assuming `volatile` makes a counter safe.\n- Holding a lock while doing slow work.",
+        "recap": "- `Runnable` plus `start()` is the way to run work on another thread.\n- `synchronized` protects shared state; `volatile` only guarantees visibility."
+      },
+      "example_code": "class Counter {\n    private int count = 0;\n    synchronized void increment() { count++; }\n    int value() { return count; }\n}",
+      "starter_code": "public class Main {\n    // Define Counter with a synchronized and an unsynchronized increment.\n\n    public static void main(String[] args) {\n        // Run both versions and print the final counts\n    }\n}",
+      "checks": [
+        {
+          "question": "What is the difference between `run()` and `start()`?",
+          "answer": "`start()` hands the task to a new thread; `run()` executes it immediately on the calling thread, so nothing is concurrent."
+        },
+        {
+          "question": "Why is implementing `Runnable` usually better than extending `Thread`?",
+          "answer": "A class can do both, and one `Runnable` can be shared by several threads."
+        },
+        {
+          "question": "Why can two threads lose an increment?",
+          "answer": "`count++` is three separate operations, and the threads can interleave between them."
+        },
+        {
+          "question": "What does `volatile` guarantee?",
+          "answer": "That a thread always reads the current value rather than a cached one. It does not make compound operations atomic."
+        },
+        {
+          "question": "What is the difference between a `BLOCKED` and a `WAITING` thread?",
+          "answer": "`BLOCKED` means waiting for a monitor to be released; `WAITING` means waiting for something else to happen, such as `sleep`, `join` or `wait`."
+        }
+      ]
+    },
+    {
+      "id": "18-assertions",
+      "title": "Assertions and Design by Contract",
+      "order": 18,
+      "tier": "advanced",
+      "sections": {
+        "objectives": "- Write an assertion and enable it.\n- Say why an assertion is not input validation.\n- State a precondition, a postcondition and an invariant.\n- Choose between an assertion and an exception.",
+        "explanation": "An assertion states something that must be true at that point. If it is\nfalse the program stops with an `AssertionError`.\n\n```java\nassert age >= 0 : \"age cannot be negative\";\n```\n\n- Assertions are **disabled by default**. Run with `java -ea` to enable them, `java -da` to disable them explicitly.\n- An assertion is removed entirely when disabled, so nothing the program relies on may live inside one.\n- `assert x = 5;` is legal Java and does something else entirely from what it looks like.\n\nDesign by contract gives a method three kinds of statement:\n- a **precondition** - what the caller must guarantee,\n- a **postcondition** - what the method guarantees on return,\n- an **invariant** - what must hold between calls.\n\nUse an exception for anything that can legitimately be wrong at runtime\n(user input, a network reply). Use an assertion for the programmer's own\nassumptions.",
+        "example": "```java\ndouble withdraw(double amount) {\n    assert amount > 0 : \"amount must be positive\";\n    assert balance - amount >= 0 : \"would overdraw\";\n    balance -= amount;\n    assert balance >= 0 : \"postcondition: balance went negative\";\n    return balance;\n}\n```",
+        "knowledge_checks": "Q: Are assertions enabled by default?\nA: No. They are enabled with `-ea` and disabled with `-da`.\nQ: Why is an assertion the wrong tool for validating user input?\nA: It disappears when assertions are off, so the bad value would go unchecked in production.\nQ: What is the difference between a precondition and a postcondition?\nA: A precondition is what the caller must ensure before the call; a postcondition is what the method guarantees after it.\nQ: What does `assert x = 5;` do?\nA: It assigns 5 to x and asserts the (non-boolean) value, which is a bug rather than a check.\nQ: When would you use an exception instead of an assertion?\nA: When the condition can genuinely be wrong at run time - bad input, a missing file, a failed network call.",
+        "exercise": "Write a class `BankAccount` with a `withdraw` method. Add an assertion for the precondition (a positive amount), one for the account (sufficient balance) and one for the postcondition (the balance is still non-negative). Run the program once with `java -ea` and once without, and explain the difference in what you observe.\n\n```java starter\npublic class Main {\n    // Define BankAccount with withdraw() and its three assertions.\n\n    public static void main(String[] args) {\n        // Try to withdraw an invalid amount\n    }\n}\n```",
+        "common_mistakes": "- Putting an input check inside an `assert`, so it vanishes in production.\n- Assuming a bug cannot reach production because it was tested - it was tested with assertions on.\n- Asserting on a value that is also being assigned.",
+        "recap": "- Assertions are off unless you turn them on.\n- They document and check the programmer's contract.\n- They are not validation; exceptions are."
+      },
+      "example_code": "double withdraw(double amount) {\n    assert amount > 0 : \"amount must be positive\";\n    assert balance - amount >= 0 : \"would overdraw\";\n    balance -= amount;\n    assert balance >= 0 : \"postcondition: balance went negative\";\n    return balance;\n}",
+      "starter_code": "public class Main {\n    // Define BankAccount with withdraw() and its three assertions.\n\n    public static void main(String[] args) {\n        // Try to withdraw an invalid amount\n    }\n}",
+      "checks": [
+        {
+          "question": "Are assertions enabled by default?",
+          "answer": "No. They are enabled with `-ea` and disabled with `-da`."
+        },
+        {
+          "question": "Why is an assertion the wrong tool for validating user input?",
+          "answer": "It disappears when assertions are off, so the bad value would go unchecked in production."
+        },
+        {
+          "question": "What is the difference between a precondition and a postcondition?",
+          "answer": "A precondition is what the caller must ensure before the call; a postcondition is what the method guarantees after it."
+        },
+        {
+          "question": "What does `assert x = 5;` do?",
+          "answer": "It assigns 5 to x and asserts the (non-boolean) value, which is a bug rather than a check."
+        },
+        {
+          "question": "When would you use an exception instead of an assertion?",
+          "answer": "When the condition can genuinely be wrong at run time - bad input, a missing file, a failed network call."
         }
       ]
     }
@@ -531,6 +773,84 @@
         "swallowed_exception",
         "wrong_exception_type",
         "unchecked_not_declared"
+      ]
+    },
+    {
+      "id": "java-inheritance",
+      "title": "Inheritance and Overriding",
+      "lesson_id": "13-inheritance",
+      "summary": "extends, super, method overriding, and the difference between static hiding and dynamic binding.",
+      "prerequisites": [
+        "java-classes"
+      ],
+      "error_categories": [
+        "missing_super",
+        "wrong_override_signature"
+      ]
+    },
+    {
+      "id": "java-interfaces",
+      "title": "Interfaces",
+      "lesson_id": "14-interfaces",
+      "summary": "Promises without state, default methods, and resolving a clash between two of them.",
+      "prerequisites": [
+        "java-classes"
+      ],
+      "error_categories": [
+        "missing_public",
+        "unresolved_default"
+      ]
+    },
+    {
+      "id": "java-packages",
+      "title": "Packages and Imports",
+      "lesson_id": "15-packages",
+      "summary": "Namespaces, the folder layout a package implies, and import rules.",
+      "prerequisites": [
+        "java-structure"
+      ],
+      "error_categories": [
+        "package_mismatch",
+        "ambiguous_import"
+      ]
+    },
+    {
+      "id": "java-file-io",
+      "title": "File Input and Output",
+      "lesson_id": "16-file-io",
+      "summary": "Byte streams against character streams, buffered reading, and try-with-resources.",
+      "prerequisites": [
+        "java-io"
+      ],
+      "error_categories": [
+        "unclosed_stream",
+        "wrong_charset"
+      ]
+    },
+    {
+      "id": "java-threads",
+      "title": "Threads and Synchronisation",
+      "lesson_id": "17-multithreading",
+      "summary": "Running work on another thread and protecting the state it shares.",
+      "prerequisites": [
+        "java-classes"
+      ],
+      "error_categories": [
+        "run_instead_of_start",
+        "shared_state_race"
+      ]
+    },
+    {
+      "id": "java-assertions",
+      "title": "Assertions and Contracts",
+      "lesson_id": "18-assertions",
+      "summary": "Stating what must be true, and knowing when an assertion is the wrong tool.",
+      "prerequisites": [
+        "java-exceptions"
+      ],
+      "error_categories": [
+        "assert_used_for_validation",
+        "assertion_assigned"
       ]
     }
   ],
@@ -818,6 +1138,142 @@
         "private"
       ],
       "graded_by": "deterministic"
+    },
+    {
+      "id": "java-inheritance-find-missing-super",
+      "concept_id": "java-inheritance",
+      "lesson_id": "13-inheritance",
+      "type": "find-a-bug",
+      "title": "The parent constructor never runs",
+      "prompt": "This program is supposed to print the animal's name, but it prints 'null'. Find the bug and fix it.",
+      "code": "class Animal {\n    String name;\n    Animal(String name) { this.name = name; }\n}\n\nclass Dog extends Animal {\n    Dog(String name) {\n        this.name = name;\n    }\n    void print() { System.out.println(name); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        new Dog(\"Rex\").print();\n    }\n}\n",
+      "starter_code": "class Animal {\n    String name;\n    Animal(String name) { this.name = name; }\n}\n\nclass Dog extends Animal {\n    Dog(String name) {\n        // The parent's constructor must run first.\n        this.name = name;\n    }\n    void print() { System.out.println(name); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        new Dog(\"Rex\").print();\n    }\n}\n",
+      "expected_stdout": "Rex\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "inheritance",
+        "super"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-inheritance-predict-override",
+      "concept_id": "java-inheritance",
+      "lesson_id": "13-inheritance",
+      "type": "predict-output",
+      "title": "Which version runs?",
+      "prompt": "Predict what this prints, then say why.",
+      "code": "class Animal {\n    static void kind() { System.out.println(\"animal\"); }\n    void speak() { System.out.println(\"...\"); }\n}\n\nclass Dog extends Animal {\n    static void kind() { System.out.println(\"dog\"); }\n    void speak() { System.out.println(\"woof\"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Animal a = new Dog();\n        a.speak();\n        a.kind();\n    }\n}\n",
+      "starter_code": "class Animal {\n    static void kind() { System.out.println(\"animal\"); }\n    void speak() { System.out.println(\"...\"); }\n}\n\nclass Dog extends Animal {\n    static void kind() { System.out.println(\"dog\"); }\n    void speak() { System.out.println(\"woof\"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        // Predict: which speak(), which kind()?\n    }\n}\n",
+      "expected_stdout": "woof\nanimal\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "inheritance",
+        "dynamic-binding"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-interfaces-explain-why-no-state",
+      "concept_id": "java-interfaces",
+      "lesson_id": "14-interfaces",
+      "type": "explain-code",
+      "title": "Why can a class implement several interfaces?",
+      "prompt": "In your own words, explain why Java allows a class to implement many interfaces but extend only one class. Say what interfaces do not have, and why that matters.",
+      "code": "interface Printable { void print(); }\ninterface Serializable { void serialise(); }\n\nclass Invoice implements Printable, Serializable {\n    public void print() { }\n    public void serialise() { }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "",
+      "stdin": "",
+      "rubric": [
+        "mentions interfaces hold no instance state",
+        "mentions inheriting state from two parents would be ambiguous",
+        "mentions the class supplies the implementation instead"
+      ],
+      "novel": false,
+      "tags": [],
+      "graded_by": "interpretive"
+    },
+    {
+      "id": "java-file-io-explain-truncate",
+      "concept_id": "java-file-io",
+      "lesson_id": "16-file-io",
+      "type": "explain-code",
+      "title": "Overwrite or append?",
+      "prompt": "The file notes.txt already contains one line. This program opens it with a FileWriter and writes one line. Explain what happens to the file's original content, and what argument would change that.",
+      "code": "import java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        try (FileWriter w = new FileWriter(\"notes.txt\")) {\n            w.write(\"second line\\n\");\n        }\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "",
+      "stdin": "",
+      "rubric": [
+        "mentions the original content is truncated, not appended to",
+        "mentions the two-argument constructor with true appends instead",
+        "mentions try-with-resources closes the writer so the data is flushed"
+      ],
+      "novel": false,
+      "tags": [],
+      "graded_by": "interpretive"
+    },
+    {
+      "id": "java-threads-find-run-not-start",
+      "concept_id": "java-threads",
+      "lesson_id": "17-multithreading",
+      "type": "find-a-bug",
+      "title": "Nothing is concurrent",
+      "prompt": "This program was meant to run the task on another thread, but it does not. Find the bug and fix it.",
+      "code": "class Worker implements Runnable {\n    public void run() { System.out.println(\"work\"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Thread t = new Thread(new Worker());\n        t.run();\n    }\n}\n",
+      "starter_code": "class Worker implements Runnable {\n    public void run() { System.out.println(\"work\"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Thread t = new Thread(new Worker());\n        // start() asks for another thread; run() just runs it here.\n        t.run();\n    }\n}\n",
+      "expected_stdout": "work\n",
+      "stdin": "",
+      "rubric": [],
+      "novel": false,
+      "tags": [
+        "threads"
+      ],
+      "graded_by": "deterministic"
+    },
+    {
+      "id": "java-assertions-explain-when-not-to",
+      "concept_id": "java-assertions",
+      "lesson_id": "18-assertions",
+      "type": "explain-code",
+      "title": "The check that disappears",
+      "prompt": "Explain what is wrong with validating user input with an assertion, and say what should be used instead.",
+      "code": "public class Main {\n    public static void main(String[] args) {\n        int age = Integer.parseInt(args[0]);\n        assert age >= 0 : \"negative age\";\n        System.out.println(age);\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "",
+      "stdin": "",
+      "rubric": [
+        "mentions assertions are disabled by default",
+        "mentions the statement is removed entirely when disabled",
+        "mentions an exception or an explicit check for user input"
+      ],
+      "novel": false,
+      "tags": [],
+      "graded_by": "interpretive"
+    },
+    {
+      "id": "java-packages-explain-import",
+      "concept_id": "java-packages",
+      "lesson_id": "15-packages",
+      "type": "explain-code",
+      "title": "What does the import do?",
+      "prompt": "Explain what `import java.util.List;` actually does at run time, and what happens if you remove it and write `java.util.List` in full instead.",
+      "code": "package com.example.app;\n\nimport java.util.List;\n\npublic class Main {\n    public static void main(String[] args) {\n        List<String> names = new java.util.ArrayList<>();\n        System.out.println(names);\n    }\n}\n",
+      "starter_code": "",
+      "expected_stdout": "",
+      "stdin": "",
+      "rubric": [
+        "mentions the import only shortens the name you type",
+        "mentions the class is still fully qualified at run time",
+        "mentions the compiled class file names the type in full"
+      ],
+      "novel": false,
+      "tags": [],
+      "graded_by": "interpretive"
     }
   ],
   "projects": [
