@@ -280,11 +280,46 @@ class TestModelListingIsCached:
         provider.list_models()
         assert len(calls) == 1, "an empty listing should be cached too"
 
-    def test_the_listing_timeout_is_short(self) -> None:
-        """A dropdown is not worth a generation's worth of waiting."""
-        import inspect
+    def test_the_listing_timeout_is_short(self, tmp_path, monkeypatch) -> None:
+        """A dropdown is not worth a generation's worth of waiting.
+
+        Asserted on the value actually passed to urlopen rather than on the
+        source text: a test that greps its own source breaks the moment the
+        file is edited, which is a good way to make a test cry wolf.
+        """
+        import json
+        import urllib.request
+
+        monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+        monkeypatch.setenv("MENTORSMITH_API_KEY", "sk-test")
+        import importlib
+
+        import mentorsmith.config as config
+
+        importlib.reload(config)
 
         from mentorsmith.providers.openai_compat import OpenAICompatibleProvider
 
-        source = inspect.getsource(OpenAICompatibleProvider.list_models)
-        assert "timeout=8" in source, "the model listing timeout is back up to 20s"
+        seen: list[float] = []
+
+        class Response:
+            def read(self):
+                return json.dumps({"data": [{"id": "a", "name": "A"}]}).encode()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        def fake(url, *args, **kwargs):
+            seen.append(kwargs.get("timeout"))
+            return Response()
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake)
+
+        provider = OpenAICompatibleProvider(base_url="https://x.test/v1", model="m")
+        provider.list_models()
+        assert seen, "no request was made"
+        assert seen[0] is not None
+        assert seen[0] <= 8, f"the model listing timeout is {seen[0]}s"

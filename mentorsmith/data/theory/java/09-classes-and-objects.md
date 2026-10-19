@@ -5,6 +5,10 @@ order: 9
 lesson_id: 09-classes-and-objects
 summary: Object headers, Mark-and-Sweep, generational GC (Eden, Survivor, Tenured), and constructor chaining.
 tags: classes, oop, gc, heap, allocation
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 8
+source_page: 126
 ---
 
 # 9. Object Lifecycle, Heap Allocation & Garbage Collection

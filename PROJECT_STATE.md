@@ -182,7 +182,7 @@ Verified by the test suite and by rendering the UI:
 
 ### Phase 2 (aihandoff_2.md)
 
-- [x] Concept model with 56 concepts and an explicit prerequisite graph,
+- [x] Concept model with 65 concepts and an explicit prerequisite graph,
       stored as validated structured data
 - [x] Exercise history affects recommendations (repair / consolidate /
       extension / review, each with its reason)
@@ -214,7 +214,7 @@ but not auto-graded.
 - [x] Python 9 lessons / 9 concepts / 12 exercises
 - [x] C 9 lessons / 9 concepts / 11 exercises
 - [x] JavaScript 8 lessons / 8 concepts / 11 exercises
-- [x] **54 lessons, 56 concepts, 102 exercises** total
+- [x] **63 lessons, 65 concepts, 111 exercises** total
 - [x] Schema v3 adds `language`; the same lesson id in two languages is two
       achievements, and v1/v2 data survives (tested against a hand-built v2 db)
 - [x] **Mastery never transfers between languages** — a C++ pointer label says
@@ -535,7 +535,7 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
    gates Android tutor chat.
 3. Add a `/v1/tutor` proxy to `sync_server` so Android chat can work without ever
    shipping a key. This is the natural next endpoint and is deliberately absent.
-4. Review lesson content for technical accuracy. 54 lessons have been written and
+4. Review lesson content for technical accuracy. 63 lessons have been written and
    machine-checked for structure, but nobody has read them end to end.
 5. Then Phase 5 (`aihandoff_5.md`): git integration, project workspaces, AI code
    review, test generation, security audit and portfolio docs.

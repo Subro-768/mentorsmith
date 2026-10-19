@@ -5,6 +5,10 @@ order: 4
 lesson_id: 04-operators
 summary: Integer division, binary numeric promotion, bitwise operators, and String concatenation bytecode.
 tags: operators, promotion, modulo, bitwise
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 5
+source_page: 60
 ---
 
 # 4. Operators, Short-Circuit Evaluation & Numeric Promotion

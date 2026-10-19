@@ -34,6 +34,7 @@ from .base import (
     ProviderRateLimited,
     ProviderResponseError,
     ProviderTimeout,
+    TokenUsage,
 )
 
 #: Never echo more than this much of an error body back to the UI, because
@@ -74,6 +75,8 @@ class OpenAICompatibleProvider(LLMProvider):
         #: list is a real answer from an endpoint that publishes no listing,
         #: and is cached too so the picker does not retry on every focus.
         self._models_cache: list[dict[str, str]] | None = None
+        #: The response currently being read, so it can be closed to cancel.
+        self._active_response = None
 
     # ------------------------------------------------------------------
     # Configuration
@@ -218,6 +221,22 @@ class OpenAICompatibleProvider(LLMProvider):
         self._models_cache = models
         return self._models_cache
 
+    def close_active(self) -> bool:
+        """Close the connection of a request that is still in flight.
+
+        Returns True when there was one to close. Closing the response makes
+        a blocked body read fail on the other thread, which is what actually
+        stops the request; the caller then discards whatever comes back.
+        """
+        response = self._active_response
+        if response is None:
+            return False
+        try:
+            response.close()
+        except Exception:  # pragma: no cover - defensive
+            return False
+        return True
+
     # ------------------------------------------------------------------
     # Request
     # ------------------------------------------------------------------
@@ -311,7 +330,14 @@ class OpenAICompatibleProvider(LLMProvider):
 
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as response:
-                raw = response.read().decode("utf-8", errors="replace")
+                # Kept so a cancel can close the connection and unblock the
+                # read below. Without this a request that has already been
+                # sent cannot be stopped at all.
+                self._active_response = response
+                try:
+                    raw = response.read().decode("utf-8", errors="replace")
+                finally:
+                    self._active_response = None
         except urllib.error.HTTPError as exc:
             raise self._map_http_error(exc) from None
         except urllib.error.URLError as exc:
@@ -434,6 +460,7 @@ class OpenAICompatibleProvider(LLMProvider):
             model=str(data.get("model", self.model)),
             provider=self.name,
             truncated=first.get("finish_reason") == "length",
+            usage=TokenUsage.from_payload(data.get("usage")),
             raw=data,
         )
 

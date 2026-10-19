@@ -5,6 +5,10 @@ order: 12
 lesson_id: 12-structures
 summary: Aggregates, struct packing, alignment constraints, and cache alignment.
 tags: structs, padding, alignment, sizeof
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 5
+source_page: 23
 ---
 
 # 12. Structures, Memory Alignment & Padding

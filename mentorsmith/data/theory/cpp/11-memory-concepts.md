@@ -5,6 +5,10 @@ order: 11
 lesson_id: 11-memory-concepts
 summary: Process memory segments, stack allocation, heap allocation, RAII, and smart pointers.
 tags: memory, stack, heap, raii, smart-pointers
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 2.4
+source_page: 4
 ---
 
 # 11. Memory Layout, Stack, Heap & RAII

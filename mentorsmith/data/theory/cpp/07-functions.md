@@ -5,6 +5,10 @@ order: 7
 lesson_id: 07-functions
 summary: Stack frame layout, pass-by-value vs pass-by-reference, inlining, and name mangling.
 tags: functions, stack, calling-conventions, inlining
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 4
+source_page: 16
 ---
 
 # 7. Functions, Call Stacks & Calling Conventions

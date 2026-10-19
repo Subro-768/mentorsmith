@@ -5,6 +5,10 @@ order: 2
 lesson_id: 02-variables-and-types
 summary: Memory representations, signed vs unsigned integer overflow, IEEE 754 floating point, and const correctness.
 tags: types, memory, integers, const, ieee754
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 2
+source_page: 3
 ---
 
 # 2. Fundamental Types, Storage & Value Categories

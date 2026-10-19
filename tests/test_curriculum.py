@@ -43,8 +43,20 @@ def lessons():
 # ----------------------------------------------------------------------
 # The shipped curriculum
 # ----------------------------------------------------------------------
-def test_sixteen_lessons_are_shipped(lessons) -> None:
-    assert len(lessons) == 16
+def test_every_lesson_file_is_shipped(lessons) -> None:
+    """A lesson file with no lesson, or a lesson with no file, is a bug.
+
+    The count is derived rather than written down: it was 16 when this test
+    was made and is different now, and a hard-coded figure only ever
+    reports that someone forgot to update it.
+    """
+    from mentorsmith.core.curriculum import lessons_dir
+
+    files = sorted(lessons_dir("cpp").glob("*.md"))
+    assert len(lessons) == len(files), (
+        f"{len(lessons)} lessons loaded but {len(files)} files on disk"
+    )
+    assert len(lessons) >= 16, "the C++ track has shrunk"
 
 
 def test_every_required_topic_is_present(lessons) -> None:
@@ -56,7 +68,8 @@ def test_every_required_topic_is_present(lessons) -> None:
 def test_lessons_are_in_declared_order(lessons) -> None:
     orders = [lesson.order for lesson in lessons]
     assert orders == sorted(orders)
-    assert orders == list(range(1, 17))
+    # Contiguous from 1, whatever the total is.
+    assert orders == list(range(1, len(orders) + 1))
 
 
 def test_every_lesson_has_every_required_section(lessons) -> None:

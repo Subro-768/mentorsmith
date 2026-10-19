@@ -14,6 +14,84 @@ import re
 
 THEORY_DIR = Path(__file__).resolve().parent.parent / "data" / "theory"
 
+#: The books the theory chapters are written to accompany.
+#:
+#: These are the learner's own copies. The app does not ship them, does not
+#: copy them, and never quotes them at length: each chapter is an original
+#: explanation that follows the book's order, so a learner reading the book
+#: and the app side by side sees the same material in the same sequence.
+#:
+#: The PDF is looked up at runtime rather than stored, because a copy on the
+#: learner's disk is what they own, and the app has no business duplicating
+#: a copyrighted book into its own data directory.
+BOOKS: dict[str, dict[str, str]] = {
+    "java": {
+        "title": "Programming with Java: A Primer",
+        "author": "E. Balagurusamy",
+        "edition": "Third Edition",
+        "publisher": "Tata McGraw-Hill",
+    },
+    "cpp": {
+        "title": "Object Oriented Programming with C++",
+        "author": "Dr. Dhamodharan G, Dr. Balasubramanian, Dr. Priya K",
+        "edition": "First Edition",
+        "publisher": "Emperor Research Foundation (Mayas Publication)",
+    },
+}
+
+#: Where a learner's copy of the book might be, in order of preference.
+#: ``MENTORSMITH_BOOKS_DIR`` wins, then the checkout's ``theory/`` folder,
+#: then the app's own data directory.
+BOOK_SEARCH_PATHS = (
+    "{home}/books/{language}",
+    "{home}/data/mentorsmith/books/{language}",
+)
+
+
+def book_info(language: str) -> dict[str, str]:
+    """Details of the book a language's theory follows. Empty if none."""
+    return dict(BOOKS.get(language, {}))
+
+
+def find_book_pdf(language: str) -> Path | None:
+    """Locate the learner's copy of the book, if they have one on disk.
+
+    Returns None rather than raising: not having the PDF is the normal case
+    for most installs, and the theory chapters are useful without it.
+    """
+    import os
+
+    candidates: list[Path] = []
+
+    override = os.environ.get("MENTORSMITH_BOOKS_DIR", "").strip()
+    if override:
+        candidates.append(Path(override).expanduser() / language)
+
+    # A checkout of the project, which is where the books were put. The
+    # folder is named "C++" for the C++ book, so match case-insensitively
+    # and treat "c++" as another name for "cpp".
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    theory_root = repo_root / "theory"
+    candidates.append(theory_root / language)
+    if theory_root.is_dir():
+        wanted = {language.lower(), "c++" if language == "cpp" else language}
+        for folder in theory_root.iterdir():
+            if folder.is_dir() and folder.name.lower() in wanted:
+                candidates.append(folder)
+
+    data_home = os.environ.get("XDG_DATA_HOME", "").strip()
+    base = Path(data_home) if data_home else Path.home() / ".local" / "share"
+    for template in BOOK_SEARCH_PATHS:
+        candidates.append(Path(template.format(home=base, language=language)))
+
+    for folder in candidates:
+        if not folder.is_dir():
+            continue
+        pdfs = sorted(folder.glob("*.pdf"))
+        if pdfs:
+            return pdfs[0]
+    return None
+
 FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
 
@@ -30,10 +108,40 @@ class TheoryChapter:
     reading_time_mins: int = 5
     tags: list[str] = field(default_factory=list)
     lesson_id: str | None = None
+    #: The book this chapter is written to accompany, if any.
+    source_book: str = ""
+    source_author: str = ""
+    source_chapter: str = ""
+    #: Page in the source book where the matching material starts.
+    source_page: int | None = None
 
     @property
     def display_title(self) -> str:
         return f"{self.order}. {self.title}" if self.order else self.title
+
+    @property
+    def has_source(self) -> bool:
+        return bool(self.source_book or self.source_chapter)
+
+    @property
+    def source_line(self) -> str:
+        """A one-line note saying which book section this follows.
+
+        Empty when the chapter has no book behind it, rather than a
+        placeholder that reads like a missing reference.
+        """
+        if not self.has_source:
+            return ""
+        bits = []
+        if self.source_book:
+            bits.append(f"*{self.source_book}*")
+            if self.source_author:
+                bits.append(f"({self.source_author})")
+        if self.source_chapter:
+            bits.append(f"ch. {self.source_chapter}")
+        if self.source_page:
+            bits.append(f"p. {self.source_page}")
+        return "Companion reading: " + ", ".join(bits)
 
 
 @dataclass
@@ -83,6 +191,17 @@ def _parse_chapter_file(path: Path, language: str) -> TheoryChapter:
     tags_raw = meta.get("tags", "")
     tags = [t.strip() for t in tags_raw.split(",") if t.strip()]
 
+    source_page: int | None = None
+    page_raw = meta.get("source_page", "").strip()
+    if page_raw:
+        try:
+            source_page = int(page_raw)
+        except ValueError:
+            # A page written as "207-209" or "p. 207" is still useful, but it
+            # is not a number and pretending otherwise would put nonsense in
+            # a link. It is kept as text and the numeric field stays empty.
+            source_page = None
+
     reading_time = _estimate_reading_time(body)
 
     return TheoryChapter(
@@ -95,6 +214,10 @@ def _parse_chapter_file(path: Path, language: str) -> TheoryChapter:
         reading_time_mins=reading_time,
         tags=tags,
         lesson_id=lesson_id,
+        source_book=meta.get("source_book", ""),
+        source_author=meta.get("source_author", ""),
+        source_chapter=meta.get("source_chapter", ""),
+        source_page=source_page,
     )
 
 

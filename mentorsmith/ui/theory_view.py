@@ -133,7 +133,24 @@ class TheoryView(QWidget):
         self.reading_estimate_badge = QLabel("⏱ 3 min read")
         self.reading_estimate_badge.setObjectName("badge_muted")
         action_bar.addWidget(self.reading_estimate_badge)
+
+        # Which book section this chapter follows. The learner has their own
+        # copy of the book; telling them the page means the two can be read
+        # side by side instead of one replacing the other.
+        self.source_label = QLabel("")
+        self.source_label.setObjectName("badge_muted")
+        self.source_label.setVisible(False)
+        action_bar.addWidget(self.source_label)
+
         action_bar.addStretch(1)
+
+        # Open the learner's own copy of the book at the matching page.
+        self.btn_open_book = QPushButton("📕 Open in book")
+        self.btn_open_book.setObjectName("subtle")
+        self.btn_open_book.setFixedHeight(34)
+        self.btn_open_book.setVisible(False)
+        self.btn_open_book.clicked.connect(self._on_open_book_clicked)
+        action_bar.addWidget(self.btn_open_book)
 
         self.btn_open_lesson = QPushButton("📖 Open Interactive Lesson")
         self.btn_open_lesson.setObjectName("primary")
@@ -263,6 +280,7 @@ class TheoryView(QWidget):
         lang_name = curriculum_registry.display_name(self.current_language)
         self.chapter_badge.setText(f"Topic {ch.order}: {lang_name}")
         self.reading_estimate_badge.setText(f"⏱ {ch.reading_time_mins} min read")
+        self._refresh_source(ch)
 
         html_body = markdown_to_html(ch.content)
         styled_html = (
@@ -272,6 +290,49 @@ class TheoryView(QWidget):
             f"</div>"
         )
         self.reader_view.setHtml(styled_html)
+
+    def _refresh_source(self, chapter) -> None:
+        """Show which book this chapter follows, and offer to open it."""
+        line = chapter.source_line
+        self.source_label.setText(line)
+        self.source_label.setVisible(bool(line))
+        self.source_label.setToolTip(line)
+
+        pdf = theory.find_book_pdf(self.current_language)
+        self._book_pdf = pdf
+        has_page = bool(pdf) and chapter.source_page is not None
+        self.btn_open_book.setVisible(has_page)
+        if has_page:
+            self.btn_open_book.setToolTip(
+                f"Open {pdf.name} at page {chapter.source_page} in your PDF reader"
+            )
+        elif pdf:
+            self.btn_open_book.setToolTip(f"Open {pdf.name} in your PDF reader")
+
+    def _on_open_book_clicked(self) -> None:
+        """Open the learner's own PDF at the matching page.
+
+        The file is the learner's, on their disk, and is opened with whatever
+        reader they use - the app neither copies nor embeds it.
+        """
+        pdf = getattr(self, "_book_pdf", None)
+        if not pdf:
+            return
+        from PyQt6.QtCore import QUrl
+        from PyQt6.QtGui import QDesktopServices
+
+        chapter = self._current_chapter
+        page = chapter.source_page if chapter else None
+        if page:
+            # #page= is honoured by the common readers (Evince, Okular,
+            # Firefox, Zathura). Where it is not, the file still opens - at
+            # the beginning rather than at the page, which is a lesser
+            # outcome than not opening it at all.
+            target = QUrl.fromLocalFile(str(pdf))
+            target.setFragment(f"page={page}")
+        else:
+            target = QUrl.fromLocalFile(str(pdf))
+        QDesktopServices.openUrl(target)
 
     def select_chapter_by_lesson_id(self, lesson_id: str) -> None:
         """Navigate to the chapter corresponding to a lesson."""

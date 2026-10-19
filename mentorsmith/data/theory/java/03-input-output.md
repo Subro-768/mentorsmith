@@ -5,6 +5,10 @@ order: 3
 lesson_id: 03-input-output
 summary: InputStream, Reader/Writer abstraction, Scanner regex parsing, and high-performance BufferedReader.
 tags: io, streams, scanner, bufferedreader
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 16.4
+source_page: 290
 ---
 
 # 3. Streams, Buffering & Modern Scanner I/O

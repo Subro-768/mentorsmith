@@ -327,7 +327,10 @@ def test_prerequisite_graph_is_valid(language: str) -> None:
 def test_cpp_curriculum_is_preserved() -> None:
     """Phase 4 must not reduce the existing C++ track."""
     track = registry.load_track("cpp")
-    assert len(track.lessons) == 16
+    # A floor, not a figure: the track must not shrink. It has since grown
+    # to 19 lessons with the inheritance, operator-overloading and
+    # virtual-function chapters from the OOP book.
+    assert len(track.lessons) >= 16
     assert len(track.model.concepts) >= 18
     assert len(track.bank.exercises) >= 53
 

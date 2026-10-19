@@ -8,15 +8,15 @@ and runtime output, then pairs each lesson with an AI tutor that supports three
 levels of help. On top of that it tracks *evidence* of understanding rather than
 what you clicked, and adapts what it gives you next.
 
-**Five tracks: C++, Python, Java, C and JavaScript.** 54 lessons, 56 concepts,
-102 exercises. Plus an Android companion and developer tooling.
+**Five tracks: C++, Python, Java, C and JavaScript.** 63 lessons, 65 concepts,
+111 exercises, 63 theory chapters. Plus an Android companion and developer tooling.
 
 ---
 
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1019 automated tests. It has **not** been
+and its behaviour is covered by 1125 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1019 tests
+python3 -m pytest tests/ -q                       # 1125 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -176,6 +176,28 @@ Python, and reading one track after another quietly teaches the wrong thing.
   checks, an exercise with starter code, common mistakes, and a recap. Content
   lives in Markdown under `mentorsmith/lessons/<language>/`, not in UI code.
 
+### The theory book, and the books it follows
+
+- Every track has a **Theory Book**: a longer conceptual reference beside
+  the lesson, covering the same ground at a different pace. 63 chapters
+  across the five languages, each with examples, common mistakes, review
+  questions and a practice task.
+- The Java and C++ chapters are written to accompany two textbooks that sit
+  in this project under `theory/`:
+  - *Programming with Java: A Primer*, E. Balagurusamy (3rd edition)
+  - *Object Oriented Programming with C++*, Dhamodharan G, Balasubramanian
+    and Priya K
+- Each chapter names the book section it follows and the **page** it starts
+  on, so the two can be read side by side. The **Open in book** button
+  opens your own copy of the PDF at that page.
+- The app never ships, copies or quotes the books. It holds an original
+  explanation per topic and points at the page; the PDFs are found on disk
+  in `theory/<language>/`, in `~/.local/share/mentorsmith/books/<language>/`,
+  or wherever `MENTORSMITH_BOOKS_DIR` points.
+- Java gained six chapters and C++ three, covering what the books teach and
+  the app was missing: inheritance, interfaces, packages, file I/O,
+  threads, assertions, operator overloading and virtual functions.
+
 ### Real compile and run
 
 - Compiles or interprets with the right tool per language, showing the exact
@@ -189,10 +211,10 @@ Python, and reading one track after another quietly teaches the wrong thing.
 
 ### Adaptive practice
 
-- **56 concepts** with an explicit prerequisite graph, held as structured data
+- **65 concepts** with an explicit prerequisite graph, held as structured data
   and validated on load (unknown references and prerequisite cycles fail at
   startup).
-- **102 exercises across 8 types**: predict-output, find-a-bug, complete-code,
+- **111 exercises across 8 types**: predict-output, find-a-bug, complete-code,
   write-a-function, explain-code, modify-code, solve-without-AI, and
   compare-implementations. Every concept has at least one.
 - **Deterministic grading where possible.** Code exercises are compiled or run,

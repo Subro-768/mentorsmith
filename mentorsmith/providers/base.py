@@ -86,6 +86,63 @@ class CompletionRequest:
     model: str | None = None
 
 
+@dataclass(frozen=True)
+class TokenUsage:
+    """How much of the model's context a request consumed.
+
+    Providers report this in a ``usage`` object and it is the only honest
+    source for what a call cost - counting characters locally would be a guess
+    dressed up as a number, and would be wrong for every tokeniser but one.
+    """
+
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+
+    def __post_init__(self) -> None:
+        """Derive the total when it was not supplied.
+
+        A record built by hand with only the two halves should still total
+        correctly, rather than quietly reporting that the call cost nothing.
+        """
+        if not self.total_tokens:
+            total = self.prompt_tokens + self.completion_tokens
+            if total:
+                object.__setattr__(self, "total_tokens", total)
+
+    @classmethod
+    def from_payload(cls, payload: object) -> "TokenUsage | None":
+        """Build from a provider's ``usage`` object, or None if absent.
+
+        Tolerant on purpose: gateways differ over whether fields are ints,
+        strings, or missing entirely, and a reply is not worth discarding over
+        its accounting.
+        """
+        if not isinstance(payload, dict):
+            return None
+
+        def as_int(*names: str) -> int:
+            for name in names:
+                value = payload.get(name)
+                if isinstance(value, bool):
+                    continue
+                if isinstance(value, int):
+                    return max(0, value)
+                if isinstance(value, str) and value.strip().isdigit():
+                    return max(0, int(value.strip()))
+            return 0
+
+        prompt = as_int("prompt_tokens", "input_tokens")
+        completion = as_int("completion_tokens", "output_tokens")
+        total = as_int("total_tokens")
+        if not total:
+            total = prompt + completion
+        if not (prompt or completion or total):
+            return None
+        return cls(prompt_tokens=prompt, completion_tokens=completion,
+                   total_tokens=total)
+
+
 @dataclass
 class CompletionResponse:
     """A successful reply."""
@@ -95,6 +152,8 @@ class CompletionResponse:
     provider: str = ""
     #: Whether the provider flagged the reply as truncated.
     truncated: bool = False
+    #: Token accounting, when the provider reported it.
+    usage: TokenUsage | None = None
     raw: dict = field(default_factory=dict)
 
 
@@ -111,6 +170,16 @@ class LLMProvider(ABC):
     @abstractmethod
     def describe(self) -> str:
         """One-line, secret-free summary for the settings screen."""
+
+    def close_active(self) -> bool:
+        """Interrupt a request in flight, if this provider can.
+
+        Returns True when a request was actually interrupted. The default is
+        False: a provider that cannot be interrupted says so rather than
+        pretending. The reply from an interrupted request, if it arrives at
+        all, is discarded by the caller.
+        """
+        return False
 
     @property
     def configured(self) -> bool:

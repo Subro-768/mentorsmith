@@ -5,6 +5,10 @@ order: 11
 lesson_id: 11-collections
 summary: List, Set, Queue, Map hierarchies, ArrayList array doubling, HashMap bucket hashing, and type erasure.
 tags: collections, generics, hashmap, arraylist, type-erasure
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 18
+source_page: 341
 ---
 
 # 11. The Collections Framework & Generics

@@ -5,6 +5,10 @@ order: 5
 lesson_id: 05-conditions
 summary: If-else statements, switch statement jump tables, and C++17 init-statements.
 tags: branching, if, switch, jump-table, cpp17
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 3
+source_page: 8
 ---
 
 # 5. Branching, Jump Tables & Modern Conditionals

@@ -59,7 +59,14 @@ def test_theory_search() -> None:
 def test_theory_view_widget(qapp: QApplication) -> None:
     view = TheoryView()
     view.set_language("java")
-    assert len(view._chapters) == 12
+    # Derived from the files rather than written down: the Java theory book
+    # gained six chapters alongside the lessons the Balagurusamy primer
+    # covers.
+    from mentorsmith.core.theory import load_chapters
+
+    expected = len(load_chapters("java"))
+    assert len(view._chapters) == expected
+    assert expected >= 12, "the Java theory book has shrunk"
 
     # Test search filter
     view.search_input.setText("exception")

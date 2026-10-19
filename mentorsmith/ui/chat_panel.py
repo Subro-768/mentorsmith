@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ..services.metering import UsageMeter
 from ..services.tutor import ASSISTANCE_LEVELS, LEVEL_LABELS
 from . import theme
 
@@ -27,10 +28,13 @@ class ChatPanel(QWidget):
 
     message_requested = pyqtSignal(str, str)   # (message, level)
     hint_requested    = pyqtSignal(str)
+    cancel_requested  = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._provider = None
+        #: Running token/cost totals for this conversation.
+        self.usage_meter = UsageMeter()
         self._build_ui()
 
     # ------------------------------------------------------------------
@@ -180,6 +184,14 @@ class ChatPanel(QWidget):
         self.sending_label = QLabel()
         self.sending_label.setStyleSheet(f"color: {theme.MUTED}; font-size: 12px;")
         bottom_row.addWidget(self.sending_label)
+
+        # Token and cost meter. Sits between the status text and the buttons
+        # because it answers "what did that cost me", which is a question
+        # asked *after* a reply, not while waiting for one.
+        self.usage_label = QLabel()
+        self.usage_label.setStyleSheet(f"color: {theme.MUTED}; font-size: 11px;")
+        self.usage_label.setVisible(False)
+        bottom_row.addWidget(self.usage_label)
         bottom_row.addStretch(1)
 
         self.clear_button = QPushButton("Clear")
@@ -195,11 +207,24 @@ class ChatPanel(QWidget):
         self.send_button.setEnabled(False)
         bottom_row.addWidget(self.send_button)
 
+        # Stop. A request to a slow or wedged provider otherwise cannot be
+        # given up on - the reply is the only thing that ends it.
+        self.cancel_button = QPushButton("Stop")
+        self.cancel_button.setObjectName("subtle")
+        self.cancel_button.setFixedHeight(32)
+        self.cancel_button.setFixedWidth(60)
+        self.cancel_button.setEnabled(False)
+        self.cancel_button.setToolTip(
+            "Give up on this request. A reply that still arrives is discarded."
+        )
+        bottom_row.addWidget(self.cancel_button)
+
         input_lay.addLayout(bottom_row)
         layout.addWidget(input_container)
 
         # Wiring
         self.send_button.clicked.connect(self._on_send)
+        self.cancel_button.clicked.connect(self._on_cancel)
         send_shortcut = QShortcut(QKeySequence("Ctrl+Return"), self.input)
         send_shortcut.activated.connect(self._on_send)
         self.clear_button.clicked.connect(self.clear_transcript)
@@ -355,10 +380,17 @@ class ChatPanel(QWidget):
         self.input.setPlainText(text)
         self._on_send()
 
+    def _on_cancel(self) -> None:
+        """Ask for the request in flight to be stopped."""
+        self.cancel_button.setEnabled(False)
+        self.sending_label.setText("⏹  Stopping…")
+        self.cancel_requested.emit()
+
     def set_sending(self, sending: bool) -> None:
         self.send_button.setEnabled(not sending and self.provider_ready)
         self.request_hint_button.setEnabled(not sending and self.provider_ready)
         self.level_combo.setEnabled(not sending)
+        self.cancel_button.setEnabled(bool(sending))
         self.sending_label.setText("⏳ Waiting for the tutor…" if sending else "")
 
     provider_ready: bool = False
@@ -393,6 +425,18 @@ class ChatPanel(QWidget):
     # ------------------------------------------------------------------
     def clear_transcript(self) -> None:
         self.transcript.clear()
+        # The meter is per conversation, and clearing starts a new one.
+        self.usage_meter.reset()
+        self.usage_label.setVisible(False)
+        self.usage_label.setToolTip("")
+
+    def record_usage(self, model: str, usage) -> None:
+        """Add one completed request to the meter and refresh the footer."""
+        self.usage_meter.record(model, usage)
+        summary = self.usage_meter.summary()
+        self.usage_label.setText(summary)
+        self.usage_label.setVisible(bool(summary))
+        self.usage_label.setToolTip(self.usage_meter.tooltip())
 
     def add_learner_message(self, text: str) -> None:
         escaped = html_module.escape(text)

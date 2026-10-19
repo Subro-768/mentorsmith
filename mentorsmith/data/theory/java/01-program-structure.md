@@ -5,6 +5,10 @@ order: 1
 lesson_id: 01-program-structure
 summary: The JVM execution model, JIT compilation, classloaders, and the main entry point.
 tags: jvm, bytecode, jit, classloader
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 3
+source_page: 30
 ---
 
 # 1. JVM Architecture, Bytecode & Class Loading

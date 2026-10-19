@@ -5,6 +5,10 @@ order: 13
 lesson_id: 13-classes-and-objects
 summary: Encapsulation, access specifiers, the this pointer, const member functions, and memory overhead.
 tags: oop, classes, this-pointer, const-methods
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 5
+source_page: 23
 ---
 
 # 13. Classes, Objects & The Object Model

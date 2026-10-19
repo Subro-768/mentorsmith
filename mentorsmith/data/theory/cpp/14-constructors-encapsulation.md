@@ -5,6 +5,10 @@ order: 14
 lesson_id: 14-constructors-encapsulation
 summary: Member initializer lists, explicit constructors, move semantics, and the Rule of Five.
 tags: constructors, destructors, rule-of-5, move-semantics
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 6
+source_page: 31
 ---
 
 # 14. Constructors, Destructors & The Rule of 5

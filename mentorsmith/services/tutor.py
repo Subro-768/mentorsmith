@@ -43,7 +43,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from ..providers.base import CompletionRequest, LLMProvider
+from ..providers.base import CompletionRequest, LLMProvider, TokenUsage
 
 #: Ordered so the UI can present them as an escalation.
 ASSISTANCE_LEVELS: tuple[str, ...] = ("hint", "guided", "full")
@@ -320,6 +320,10 @@ class TutorService:
     #: Set True the moment a request is actually dispatched, so the UI can
     #: show an explicit "this was sent to an external provider" notice.
     last_request_sent: bool = field(default=False, init=False)
+    #: Token accounting and model for the most recent completed call, so the
+    #: UI can show what it cost. ``None`` when the provider reported nothing.
+    last_usage: "TokenUsage | None" = field(default=None, init=False)
+    last_model: str = field(default="", init=False)
 
     def set_level(self, level: str) -> str:
         self.level = normalise_level(level)
@@ -334,4 +338,8 @@ class TutorService:
         request = build_request(self.level, context, self.model)
         self.last_request_sent = True
         response = self.provider.complete(request)
+        # Recorded before parsing: a reply the tutor parser dislikes still cost
+        # real tokens, and pretending otherwise would undercount the meter.
+        self.last_usage = getattr(response, "usage", None)
+        self.last_model = getattr(response, "model", "") or request.model or ""
         return parse_tutor_response(response.text)

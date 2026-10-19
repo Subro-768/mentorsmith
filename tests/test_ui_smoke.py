@@ -75,9 +75,14 @@ def test_main_window_constructs(window) -> None:
     assert window.windowTitle().startswith("MentorSmith")
 
 
-def test_all_sixteen_lessons_are_registered(window) -> None:
-    assert len(window.lessons) == 16
-    assert window.dashboard.lesson_list.count() == 16
+def test_every_lesson_is_registered(window) -> None:
+    """The window shows every lesson the track ships.
+
+    Counted from the track rather than written down, so adding a lesson
+    does not turn this into a test that only fails.
+    """
+    assert len(window.lessons) == len(load_lessons())
+    assert window.dashboard.lesson_list.count() == len(window.lessons)
 
 
 def test_dashboard_starts_with_nothing_complete(window) -> None:
@@ -270,9 +275,11 @@ def test_dashboard_renders_progress(qt_app) -> None:
     view.set_lessons(lessons)
     view.refresh(completed={lessons[0].id, lessons[1].id})
 
-    # 2 of 16 is 12.5%, which Python's round() resolves to 12.
-    assert view.progress_bar.value() == 12
-    assert "2 of 16" in view.progress_label.text()
+    # 2 of 19 is 10.5%, which Python's round() resolves to 11.
+    total = len(lessons)
+    expected = round(2 / total * 100)
+    assert view.progress_bar.value() == expected
+    assert f"2 of {total}" in view.progress_label.text()
 
 
 def test_dashboard_shows_an_empty_activity_message(qt_app) -> None:
@@ -283,9 +290,10 @@ def test_dashboard_shows_an_empty_activity_message(qt_app) -> None:
 
 def test_progress_view_renders(qt_app) -> None:
     view = ProgressView()
-    view.set_lessons(load_lessons())
+    lessons = load_lessons()
+    view.set_lessons(lessons)
     view.refresh(Database(":memory:"), [])
-    assert "0 of 16" in view.summary.text()
+    assert f"0 of {len(lessons)}" in view.summary.text()
 
 
 # ----------------------------------------------------------------------

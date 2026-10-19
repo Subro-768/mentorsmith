@@ -5,6 +5,10 @@ order: 6
 lesson_id: 06-loops
 summary: For, while, range-based loops, vectorization, and cache locality during iteration.
 tags: loops, iteration, cache-locality, vectorization
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 3
+source_page: 12
 ---
 
 # 6. Iteration Constructs & Loop Optimization

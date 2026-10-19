@@ -5,6 +5,10 @@ order: 10
 lesson_id: 10-encapsulation
 summary: Public, protected, package-private, and private access specifiers, defensive copying, and record classes.
 tags: encapsulation, access-modifiers, records, immutability
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 8.18
+source_page: 146
 ---
 
 # 10. Encapsulation, Access Levels & Invariant Preservation

@@ -5,6 +5,10 @@ order: 6
 lesson_id: 06-loops
 summary: Loop constructs, labeled break/continue, the Iterable interface, and ConcurrentModificationException.
 tags: loops, foreach, iterable, iterator
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 7
+source_page: 105
 ---
 
 # 6. Iteration, For-Each & Iterable Protocol

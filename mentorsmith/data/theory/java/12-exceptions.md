@@ -5,6 +5,10 @@ order: 12
 lesson_id: 12-exceptions
 summary: Throwable tree, Error vs Exception vs RuntimeException, checked exceptions, and AutoCloseable.
 tags: exceptions, checked-exceptions, try-with-resources, autocloseable
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 13
+source_page: 230
 ---
 
 # 12. Exception Hierarchy, Checked vs. Unchecked & Try-With-Resources

@@ -5,6 +5,10 @@ order: 8
 lesson_id: 08-arrays-and-strings
 summary: C-style array decay, std::array, dynamic std::string, and std::string_view.
 tags: arrays, strings, string_view, contiguity
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 2
+source_page: 3
 ---
 
 # 8. Arrays, Contiguity & String Representations

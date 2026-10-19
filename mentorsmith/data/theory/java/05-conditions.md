@@ -5,6 +5,10 @@ order: 5
 lesson_id: 05-conditions
 summary: Reference equality vs value equality, String pool, and modern Java 14+ switch expressions.
 tags: conditions, switch, string-pool, equals
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 6
+source_page: 81
 ---
 
 # 5. Conditionals, Switch Expressions & String Equality

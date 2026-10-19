@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+
 from PyQt6.QtCore import QThread, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QFont, QKeySequence
 from PyQt6.QtWidgets import (
@@ -68,21 +70,68 @@ _NAV_ITEMS = [
 class TutorWorker(QThread):
     """Calls the provider off the GUI thread so the window never freezes."""
 
-    replied = pyqtSignal(object)   # TutorReply
-    failed  = pyqtSignal(str)
+    replied   = pyqtSignal(object)   # TutorReply
+    failed    = pyqtSignal(str)
+    cancelled = pyqtSignal()
 
     def __init__(self, service: TutorService, context: TutorContext) -> None:
         super().__init__()
         self.service  = service
         self.context  = context
+        #: Set by :meth:`cancel`. Checked before the reply is shown, so a
+        #: reply that arrives after the learner gave up is discarded rather
+        #: than appearing in the transcript as if it had been wanted.
+        self._cancel = threading.Event()
+
+    @property
+    def cancelled_requested(self) -> bool:
+        return self._cancel.is_set()
+
+    def cancel(self) -> bool:
+        """Ask for the request to stop. Returns True if there was one to stop.
+
+        Two layers, because one is not enough:
+
+        * The provider's connection is closed, which unblocks a read that is
+          already in progress.
+        * The flag is set, so a reply that still arrives is thrown away and
+          the tutor reports a cancellation rather than a failure.
+
+        A request that has not been sent yet is simply never sent.
+        """
+        if self._cancel.is_set():
+            return False
+        self._cancel.set()
+        provider = getattr(self.service, "provider", None)
+        closer = getattr(provider, "close_active", None)
+        if callable(closer):
+            try:
+                closer()
+            except Exception:  # pragma: no cover - defensive
+                pass
+        return True
 
     def run(self) -> None:  # noqa: D102 - QThread API
+        if self._cancel.is_set():
+            self.cancelled.emit()
+            return
         try:
-            self.replied.emit(self.service.ask(self.context))
+            reply = self.service.ask(self.context)
         except ProviderError as exc:
-            self.failed.emit(str(exc))
+            if self._cancel.is_set():
+                self.cancelled.emit()
+            else:
+                self.failed.emit(str(exc))
         except Exception as exc:  # pragma: no cover - defensive
-            self.failed.emit(f"Unexpected failure talking to the tutor: {exc}")
+            if self._cancel.is_set():
+                self.cancelled.emit()
+            else:
+                self.failed.emit(f"Unexpected failure talking to the tutor: {exc}")
+        else:
+            if self._cancel.is_set():
+                self.cancelled.emit()
+            else:
+                self.replied.emit(reply)
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +200,9 @@ class MainWindow(QMainWindow):
         self.track_errors:      dict[str, str] = {}
         self.current_lesson_id: str | None   = None
         self._tutor_worker:     TutorWorker | None = None
+        #: Kept so the reply handler can read the token accounting the
+        #: service recorded for the call that produced it.
+        self._tutor_service:    TutorService | None = None
         self._pending_rubric_exercise: str | None  = None
 
         self._apply_track("cpp")
@@ -387,6 +439,12 @@ class MainWindow(QMainWindow):
             lambda text: self.statusBar().showMessage(text, 8000)
         )
         self.lesson_view.navigate_requested.connect(self._navigate)
+
+        # Stop is connected once, here, rather than on every send - a
+        # connection made per request would stack up and fire the handler
+        # several times for one click.
+        for chat in self._all_chat_panels():
+            chat.cancel_requested.connect(self._cancel_tutor_request)
         self.lesson_view.attempt_recorded.connect(self._record_attempt)
         self.lesson_view.lesson_completed.connect(self._mark_complete)
         self.lesson_view.tutor_requested.connect(self._on_lesson_tutor)
@@ -619,13 +677,29 @@ class MainWindow(QMainWindow):
         # whatever Settings says", so leaving the picker untouched behaves
         # exactly as before this existed.
         service.model = chat.current_model()
+        self._tutor_service = service
         self._tutor_worker = TutorWorker(service, context)
         self._tutor_worker.replied.connect(
             lambda reply: self._on_tutor_reply(reply, chat, rubric_exercise)
         )
         self._tutor_worker.failed.connect(chat.add_tutor_error)
+        self._tutor_worker.cancelled.connect(
+            lambda: chat.add_system_note(
+                "Request cancelled. Nothing was charged for a reply that was "
+                "not shown, though a provider may still count the tokens it "
+                "already generated."
+            )
+        )
         self._tutor_worker.finished.connect(lambda: chat.set_sending(False))
+
         self._tutor_worker.start()
+
+    def _cancel_tutor_request(self) -> None:
+        """Stop the request in flight, if there is one."""
+        worker = self._tutor_worker
+        if worker is None or not worker.isRunning():
+            return
+        worker.cancel()
 
     # ------------------------------------------------------------------
     # Tutor entry points
@@ -668,6 +742,12 @@ class MainWindow(QMainWindow):
 
     def _on_tutor_reply(self, reply: TutorReply, chat, rubric_exercise: str | None) -> None:
         chat.add_tutor_message(reply.as_chat_text())
+
+        # Meter the call. Recorded even when the tutor's own parser disliked
+        # the reply: the tokens were spent either way.
+        service = self._tutor_service
+        if service is not None:
+            chat.record_usage(service.last_model, service.last_usage)
 
         if rubric_exercise:
             self._record_rubric_grade(reply, chat, rubric_exercise)

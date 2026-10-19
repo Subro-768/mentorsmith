@@ -5,6 +5,10 @@ order: 10
 lesson_id: 10-references
 summary: Lvalue references, aliases, immutable binding, and differences between pointers and references.
 tags: references, lvalue, aliasing
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 4.3
+source_page: 18
 ---
 
 # 10. References & Aliasing

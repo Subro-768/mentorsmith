@@ -5,6 +5,10 @@ order: 4
 lesson_id: 04-operators
 summary: Arithmetic, bitwise manipulation, short-circuit evaluation, and sequencing rules.
 tags: operators, precedence, bitwise, short-circuit
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 2.5
+source_page: 5
 ---
 
 # 4. Operators, Precedence & Evaluation Order

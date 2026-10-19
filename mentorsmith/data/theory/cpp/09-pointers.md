@@ -5,6 +5,10 @@ order: 9
 lesson_id: 09-pointers
 summary: Address-of operator, dereferencing, pointer arithmetic, void pointers, and nullptr.
 tags: pointers, memory, addresses, pointer-arithmetic
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 4.3
+source_page: 18
 ---
 
 # 9. Pointers, Memory Addresses & Pointer Arithmetic

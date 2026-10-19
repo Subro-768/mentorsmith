@@ -5,6 +5,10 @@ order: 3
 lesson_id: 03-input-output
 summary: Deep dive into iostream, stream states, buffering, cin extraction pitfalls, and fast I/O.
 tags: iostream, streams, cin, cout, formatting
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 11
+source_page: 55
 ---
 
 # 3. Stream I/O Architecture & Formatting

@@ -5,6 +5,10 @@ order: 1
 lesson_id: 01-program-structure
 summary: The C++ translation unit, entry points, preprocessor mechanics, and compilation pipeline.
 tags: compilation, translation-unit, preprocessor, entry-point
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 2
+source_page: 3
 ---
 
 # 1. Program Structure & Compilation Model

@@ -137,10 +137,17 @@ class TestRealCurriculum:
 
     def test_classes_are_not_called_advanced(self) -> None:
         """Objects are first-year material; calling them advanced sets the
-        wrong expectation before anyone has written a line."""
+        wrong expectation before anyone has written a line.
+
+        The rule is about the *first* lesson on objects, not about any
+        lesson whose title happens to contain the word "class". "Abstract
+        Classes" and "Virtual Functions" are advanced because they are, and
+        a rule that flagged them would be wrong rather than strict.
+        """
         for language in ("python", "cpp", "java"):
             for lesson in load_all()[language].lessons:
-                if "class" in lesson.title.lower() or "object" in lesson.title.lower():
+                title = lesson.title.lower()
+                if "classes and objects" in title or "class and object" in title:
                     assert lesson.tier in ("foundation", "core"), (
                         f"{language}/{lesson.id} '{lesson.title}' is "
                         f"{lesson.tier}"

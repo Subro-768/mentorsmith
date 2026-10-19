@@ -5,6 +5,10 @@ order: 15
 lesson_id: 15-file-handling
 summary: fstream, ifstream, ofstream, binary I/O, and OS file descriptor management.
 tags: files, fstream, binary-io, persistence
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 11
+source_page: 55
 ---
 
 # 15. File Streams & Persistent Storage

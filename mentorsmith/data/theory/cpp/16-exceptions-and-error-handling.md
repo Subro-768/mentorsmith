@@ -5,6 +5,10 @@ order: 16
 lesson_id: 16-exceptions-and-error-handling
 summary: Try/catch mechanics, stack unwinding, noexcept guarantees, and the three exception safety levels.
 tags: exceptions, stack-unwinding, noexcept, error-handling
+source_book: Object Oriented Programming with C++
+source_author: Dhamodharan G, Balasubramanian, Priya K
+source_chapter: 12.2
+source_page: 61
 ---
 
 # 16. Exceptions, Stack Unwinding & Exception Safety

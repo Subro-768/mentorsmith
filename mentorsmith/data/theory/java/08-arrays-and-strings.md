@@ -5,6 +5,10 @@ order: 8
 lesson_id: 08-arrays-and-strings
 summary: Covariant arrays, cache locality, compact strings (byte[] Latin1/UTF-16), and StringBuilder.
 tags: arrays, strings, stringbuilder, immutability
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 9
+source_page: 153
 ---
 
 # 8. Array Memory Layout & String Immutability

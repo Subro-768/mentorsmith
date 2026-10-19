@@ -5,6 +5,10 @@ order: 2
 lesson_id: 02-variables-and-types
 summary: 8 primitives vs references, autoboxing overhead, object headers, and variable widening.
 tags: primitives, autoboxing, wrappers, memory-layout
+source_book: Programming with Java: A Primer
+source_author: E. Balagurusamy
+source_chapter: 4
+source_page: 43
 ---
 
 # 2. Primitive Types, Object Wrappers & Memory Layout
