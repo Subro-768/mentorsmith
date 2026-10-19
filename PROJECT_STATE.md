@@ -166,8 +166,8 @@ Verified by the test suite and by rendering the UI:
 - [x] Runtime timeout enforced and reported as a timeout
 - [x] Stop button terminates a hanging program (verified with `for(;;){}`)
 - [x] Memory limit refuses an unbounded allocation
-- [x] Optional `bwrap` sandbox; verified to block host filesystem reads *and*
-      writes from inside the sandbox
+- [x] `bwrap` sandbox, on by default where bubblewrap is installed; verified to
+      block host filesystem reads *and* writes from inside the sandbox
 - [x] Sandbox status reported honestly, including when requested but inactive
 - [x] Progress persists across restarts (verified by reopening the database)
 - [x] Exercise attempts record `compiled_ok` / `ran_ok` from real results
@@ -568,7 +568,13 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
   interpreted as shell syntax.
 - **Stale binaries are deleted before every compile.** A failed compile must
   never leave a previous executable behind that appears to run.
-- **Sandbox is off by default**, and its state is always displayed honestly.
+- **The sandbox is on by default wherever bubblewrap is installed**, and its
+  state is always displayed honestly. This reverses the earlier decision to
+  leave it off: learner code is code the learner did not write, and running
+  it with the user's own file access makes a stray path dangerous. Where
+  bubblewrap is absent the setting stays off, because promising containment
+  that is not there is worse than not promising it. The user's own choice
+  is remembered - the default only applies to a setting never set.
 - **UI never opens a database connection.**
 - **Lesson and exercise content stays in data files**, not in UI code.
 - **No claim of success without real output.**

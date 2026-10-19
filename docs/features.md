@@ -12,6 +12,24 @@ Priority key: **S** ships in a sitting · **M** a day · **L** a week or more.
 
 ---
 
+## Built so far
+
+Items from this list that now exist in the code, with the commit that built
+them. The list stays a list of proposals; this is the record of which ones
+actually shipped.
+
+| # | Feature | What it is now |
+|---|---|---|
+| 1 | Doc-freshness test | `tests/test_docs_are_current.py` — checks every headline figure in README and PROJECT_STATE against the content, and the test count against what is collected. Fourteen of the figures it checks were a whole track out of date. |
+| 2 | Token and cost metering | Tokens are read from the provider's own `usage` object and are exact. Cost is an estimate from a dated list-price table, labelled as one; a model that is not in the table gets no figure at all. Shown in the chat footer. |
+| 3 | Cancel a tutor request | The provider's connection is closed, which unblocks a read in progress, and a flag discards any reply that still arrives. The **Stop** button appears while a request is in flight. |
+| 4 | Bubblewrap on by default | The sandbox is on wherever `bwrap` is installed, because learner code is code the learner did not write. The user's own choice is remembered; where bubblewrap is absent the setting stays off, because promising containment that is not there is worse than not promising it. |
+| 7 | "What you should review today" | A **Review today** card on the Mastery page, leading with one sentence saying how many concepts are worth revisiting, with a button that opens the lesson for the top one. |
+| 11 | "You got this wrong N times" | Each review carries a badge with the number of wrong attempts. One concept failed four times is one thing to revisit, and it reads differently from one that is merely stale. |
+| 21 | Multi-model comparison | **Not built.** Deferred: it needs per-provider cost accounting to be meaningful, which did not exist until item 2 above. |
+
+---
+
 ## A. Corrections to the first draft of this list
 
 A second pass checked each claim against the code by tracing call chains rather

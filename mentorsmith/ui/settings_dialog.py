@@ -229,8 +229,10 @@ class SettingsDialog(QDialog):
         )
         self.sandbox_check.setToolTip(
             "Adds a private mount namespace, no network and a read-only view of "
-            "the system. Off by default because it can break code that expects "
-            "host access. Resource limits apply either way."
+            "the system. On by default wherever bubblewrap is installed, "
+            "because learner code runs with your own file access otherwise. "
+            "Turn it off if your code needs to reach the host. Resource "
+            "limits apply either way."
         )
         toolchain_layout.addWidget(self.sandbox_check)
 
@@ -540,7 +542,11 @@ class SettingsDialog(QDialog):
 
         if shutil.which("bwrap"):
             self.sandbox_detail.setText(
-                "bubblewrap (bwrap) is installed, so this option will work."
+                "bubblewrap (bwrap) is installed, so this option will work. "
+                "It is on by default: learner code runs in a private mount "
+                "namespace with no network, rather than with your own file "
+                "access. Turn it off if a program needs to read or write "
+                "files on the host."
             )
         else:
             self.sandbox_detail.setText(

@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1125 automated tests. It has **not** been
+and its behaviour is covered by 1151 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1125 tests
+python3 -m pytest tests/ -q                       # 1151 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -226,6 +226,11 @@ Python, and reading one track after another quietly teaches the wrong thing.
   repeated failure, and ask a related question after you fix it.
 - **The next activity is chosen from your history** and always comes with its
   reason, quoting your own numbers.
+- **A "Review today" card** on the Mastery page leads with one sentence saying
+  how many concepts are worth revisiting, and each one carries a badge with the
+  number of times you got it wrong — a concept failed four times is a different
+  problem from one that is merely stale. **Start reviewing** opens the lesson
+  that teaches the top one.
 
 ### Evidence, not vibes
 
@@ -330,6 +335,22 @@ you find out now rather than mid-lesson.
 The app speaks the widely used `POST /chat/completions` shape, so one adapter
 covers most hosted models.
 
+### What a request cost
+
+The chat footer shows the running cost of the conversation: tokens in and out,
+and an estimated dollar figure. **Token counts are exact** — they come from the
+provider's own accounting, not from counting characters locally. **The money
+is an estimate**, computed from a dated table of published list prices, and it
+is labelled as one. A model that is not in the table gets **no figure at all** —
+not zero, not a guess. A provider that reports no usage is not counted.
+
+### Stopping a request
+
+A request to a slow or wedged provider can be given up on. The **Stop** button
+appears while a request is in flight; it closes the provider's connection, which
+unblocks a read already in progress, and any reply that still arrives is
+discarded rather than appearing in the transcript as though it had been wanted.
+
 ### When your code leaves the machine
 
 Only when you send a message, MentorSmith sends the following to your provider:
@@ -363,11 +384,16 @@ emit gigabytes within the time it is allowed to run, and reading all of it into
 memory first is how the app would exhaust the machine. Discarded output is
 counted and the learner is told, rather than being silently dropped.
 
-**Optional — bubblewrap sandbox.** Compiled languages only. Enable it in
-Settings and the binary runs in a private mount namespace with no network and a
-read-only view of the system, so your program cannot read or write your home
-directory. Interpreted languages have no binary to isolate, and the app says so
-rather than implying otherwise.
+**On by default — bubblewrap sandbox.** Compiled languages only. Where
+bubblewrap (`bwrap`) is installed, the binary runs in a private mount
+namespace with no network and a read-only view of the system, so your program
+cannot read or write your home directory. This is the default because learner
+code is code you did not write, and running it with your own file access
+means a stray path can do real damage. Turn it off in Settings if a program
+needs to reach the host; your choice is remembered. Where bubblewrap is not
+installed the setting stays off, because a promise of containment that is not
+there is worse than none. Interpreted languages have no binary to isolate,
+and the app says so rather than implying otherwise.
 
 **This is defence in depth, not a real sandbox.** `bwrap` relies on unprivileged
 user namespaces, and those give far less protection than a VM or a properly

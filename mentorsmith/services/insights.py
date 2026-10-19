@@ -84,10 +84,34 @@ class DashboardReport:
     error_categories: list[tuple[str, int]] = field(default_factory=list)
     projects: list[dict] = field(default_factory=list)
     milestone_totals: dict[str, int] = field(default_factory=dict)
+    #: Concepts the review scheduler says are worth revisiting today.
+    review_due: int = 0
+    #: Wrong attempts across those concepts - the "you got this wrong N
+    #: times" figure, summed.
+    review_wrong: int = 0
     next_activity: Recommendation | None = None
     next_activity_reason: str = ""
     disclaimer: str = DISCLAIMER
     not_evidence_note: str = NOT_EVIDENCE_NOTE
+
+    def review_today_line(self) -> str:
+        """One sentence saying what is worth reviewing today.
+
+        Says plainly when there is nothing, without turning that into a
+        claim that the learner knows everything.
+        """
+        if not self.review_due:
+            return (
+                "Nothing is flagged for review today. That is not the same as "
+                "knowing everything - it means no recorded attempt looks weak "
+                "or stale yet."
+            )
+        noun = "concept" if self.review_due == 1 else "concepts"
+        line = f"{self.review_due} {noun} worth revisiting today"
+        if self.review_wrong:
+            times = "time" if self.review_wrong == 1 else "times"
+            line += f" · {self.review_wrong} wrong attempt(s) across them"
+        return line
 
     def summary_line(self) -> str:
         done = self.label_counts.get("strong", 0)
@@ -104,6 +128,8 @@ class DashboardReport:
             "concepts": [c.to_dict() for c in self.concepts],
             "recommendations": [r.to_dict() for r in self.recommendations],
             "reviews": [r.to_dict() for r in self.reviews],
+            "review_due": self.review_due,
+            "review_wrong": self.review_wrong,
             "label_counts": dict(self.label_counts),
             "independent_results": self.independent_results,
             "hints_used": self.hints_used,
@@ -221,6 +247,13 @@ def build_report(
         review_regressions=regressions,
         limit=review_limit,
     )
+
+    # What the learner should look at today, and how many wrong attempts
+    # sit behind it. The count is the number of concepts flagged, not the
+    # number of attempts: one concept failed four times is one thing to
+    # revisit, and it deserves a badge that says so.
+    report.review_due = len(report.reviews)
+    report.review_wrong = sum(item.wrong for item in report.reviews)
 
     # Reviews used to be computed and displayed but never written, so the
     # `reviews` table stayed empty forever and close_review had nothing to act

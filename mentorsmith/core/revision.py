@@ -46,6 +46,21 @@ class ReviewItem:
     reason: str
     evidence: list[str] = field(default_factory=list)
     urgency: float = 0.0
+    #: Graded attempts recorded for this concept.
+    attempts: int = 0
+    #: How many of those were wrong. A concept failed three times reads
+    #: very differently from one that was never attempted, and the learner
+    #: should be able to see which it is.
+    wrong: int = 0
+
+    @property
+    def wrong_badge(self) -> str:
+        """A short label for the number of wrong attempts, or "" if none."""
+        if self.wrong <= 0:
+            return ""
+        if self.wrong == 1:
+            return "wrong once"
+        return f"wrong {self.wrong} times"
 
     def to_dict(self) -> dict:
         return {
@@ -54,6 +69,8 @@ class ReviewItem:
             "reason": self.reason,
             "evidence": list(self.evidence),
             "urgency": round(self.urgency, 3),
+            "attempts": self.attempts,
+            "wrong": self.wrong,
         }
 
 
@@ -160,6 +177,7 @@ def recommend_reviews(
         if not reason_parts:
             continue
 
+        correct = int(metrics.get("correct", 0))
         items.append(
             ReviewItem(
                 concept_id=concept_id,
@@ -167,6 +185,8 @@ def recommend_reviews(
                 reason="Recommended because " + ", and ".join(reason_parts) + ".",
                 evidence=evidence,
                 urgency=urgency,
+                attempts=attempts,
+                wrong=max(0, attempts - correct),
             )
         )
 

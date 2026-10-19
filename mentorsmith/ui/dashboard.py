@@ -403,9 +403,15 @@ class InsightsPanel(QWidget):
     activity_requested = pyqtSignal(str)
     practice_requested = pyqtSignal()
     projects_requested = pyqtSignal()
+    #: The lesson the learner should open to revise the top review.
+    review_lesson_requested = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        #: The concept model, when one has been supplied. Used to find the
+        #: lesson behind a concept so the review button has somewhere to go.
+        self._concept_model = None
+        self._review_concept_id = ""
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -492,14 +498,32 @@ class InsightsPanel(QWidget):
         layout.addLayout(stats_row)
 
         # Review box
-        review_box    = QGroupBox("Concepts to review")
+        review_box    = QGroupBox("Review today")
         review_layout = QVBoxLayout(review_box)
+
+        # The headline, first, so the answer is visible without scrolling.
+        self.review_headline = QLabel()
+        self.review_headline.setWordWrap(True)
+        self.review_headline.setStyleSheet(
+            f"color: {theme.FOREGROUND}; font-size: 13px; font-weight: 700;"
+        )
+        review_layout.addWidget(self.review_headline)
+
         self.review_view = QTextBrowser()
-        self.review_view.setMaximumHeight(160)
+        self.review_view.setMaximumHeight(180)
         self.review_view.setStyleSheet(
             f"background: {theme.BASE}; border: none; border-radius: 6px;"
         )
         review_layout.addWidget(self.review_view)
+
+        # A way to act on it, not just a list to stare at.
+        self.review_button = QPushButton("Start reviewing")
+        self.review_button.setObjectName("primary")
+        self.review_button.setFixedHeight(32)
+        self.review_button.setEnabled(False)
+        self.review_button.clicked.connect(self._on_start_reviewing)
+        review_layout.addWidget(self.review_button)
+
         layout.addWidget(review_box)
 
         # Error box
@@ -542,11 +566,31 @@ class InsightsPanel(QWidget):
         self.practice_button.clicked.connect(self.practice_requested)
         self.projects_button.clicked.connect(self.projects_requested)
 
+    def _on_start_reviewing(self) -> None:
+        """Ask for the lesson the top review belongs to."""
+        concept_id = getattr(self, "_review_concept_id", "")
+        if not concept_id:
+            return
+        lesson_id = self._lesson_for_concept(concept_id)
+        if lesson_id:
+            self.review_lesson_requested.emit(lesson_id)
+
+    def _lesson_for_concept(self, concept_id: str) -> str:
+        """The lesson that teaches a concept, if the model knows one."""
+        model = getattr(self, "_concept_model", None)
+        if model is None:
+            return ""
+        concept = model.get(concept_id)
+        return concept.lesson_id if concept else ""
+
     def _metric_box(self, title: str) -> QGroupBox:
         box = QGroupBox(title)
         return box
 
-    def set_report(self, report) -> None:
+    def set_report(self, report, model=None) -> None:
+        """Show a report. ``model`` lets the review button find the lesson."""
+        if model is not None:
+            self._concept_model = model
         self.summary.setText(report.summary_line())
         self.disclaimer.setText(f"{report.disclaimer}  {report.not_evidence_note}")
 
@@ -565,20 +609,36 @@ class InsightsPanel(QWidget):
             self._next_exercise_id = None
             self.start_button.setEnabled(False)
 
+        self.review_headline.setText(report.review_today_line())
+
         if report.reviews:
             rows = []
             for item in report.reviews:
+                # The badge says how many times this concept was got wrong.
+                # A concept failed four times reads very differently from one
+                # that was merely stale, and the learner can only act on the
+                # difference if they can see it.
+                badge = ""
+                if item.wrong:
+                    badge = (
+                        f" <span style='color:{theme.WARNING}; font-weight:700;'>"
+                        f"· {_escape(item.wrong_badge)}</span>"
+                    )
                 rows.append(
-                    f"<p><b>{_escape(item.title)}</b><br>"
+                    f"<p><b>{_escape(item.title)}</b>{badge}<br>"
                     f"<span style='color:{theme.MUTED}'>{_escape(item.reason)}</span></p>"
                 )
             self.review_view.setHtml("".join(rows))
+            self._review_concept_id = report.reviews[0].concept_id
+            self.review_button.setEnabled(True)
         else:
             self.review_view.setHtml(
                 f"<p style='color:{theme.MUTED}'>Nothing flagged for review. That is not "
                 "the same as knowing everything — it means no recorded attempt looks weak "
                 "or stale yet.</p>"
             )
+            self._review_concept_id = ""
+            self.review_button.setEnabled(False)
 
         self.independent_label.setText(str(report.independent_results))
         self.hints_label.setText(

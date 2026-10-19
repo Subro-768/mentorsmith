@@ -458,6 +458,8 @@ class MainWindow(QMainWindow):
         self.insights.activity_requested.connect(self._open_practice_exercise)
         self.insights.practice_requested.connect(lambda: self.show_page(PAGE_PRACTICE))
         self.insights.projects_requested.connect(lambda: self.show_page(PAGE_PROJECTS))
+        # "Start reviewing" opens the lesson that teaches the top review.
+        self.insights.review_lesson_requested.connect(self._navigate)
         self.projects_view.data_changed.connect(self.refresh_insights)
 
         self.analytics_view.language_switch_requested.connect(self._on_analytics_language_switch)
@@ -592,7 +594,7 @@ class MainWindow(QMainWindow):
 
     def refresh_insights(self) -> None:
         report = build_report(self.database, self.model, self.bank, language=self.language)
-        self.insights.set_report(report)
+        self.insights.set_report(report, self.model)
         self.practice_view.set_recommendations(report.recommendations)
         self.projects_view.refresh(report.assessments)
 

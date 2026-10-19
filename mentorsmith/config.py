@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+from functools import lru_cache
 from pathlib import Path
 
 APP_DIR_NAME = "mentorsmith"
@@ -155,6 +157,16 @@ def clear_api_key() -> bool:
     return True
 
 
+@lru_cache(maxsize=1)
+def sandbox_available() -> bool:
+    """Whether bubblewrap is installed on this machine.
+
+    Cached: it is a PATH scan, and the answer cannot change while the app
+    is running.
+    """
+    return shutil.which("bwrap") is not None
+
+
 def default_settings() -> dict:
     """Settings the app starts with on a fresh machine."""
     return {
@@ -166,8 +178,18 @@ def default_settings() -> dict:
         "provider_timeout": 60,
         # Tutor behaviour
         "assistance_level": "guided",
-        # Toolchain
-        "sandbox_enabled": False,
+        # Toolchain.
+        #
+        # The sandbox is ON by default wherever bubblewrap is installed.
+        # Learner code is code the learner did not write, and running it
+        # with the user's own file access means a stray `rm -rf` or a
+        # mistake in a path can do real damage. Where bubblewrap is not
+        # installed the setting cannot take effect anyway, so it stays off
+        # rather than promising containment that is not there.
+        #
+        # The user can turn it off, and their choice is remembered: the
+        # default only applies to a setting that has never been set.
+        "sandbox_enabled": sandbox_available(),
         # Appearance — "dark_orange" | "dark_purple" | "light"
         "theme": "dark_orange",
     }
