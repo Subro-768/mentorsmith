@@ -1,0 +1,615 @@
+MENTORSMITH — AI HANDOFF / IMPLEMENTATION BRIEF Purpose: Audit the
+existing project, identify what is already implemented, fix gaps, and
+plan/implement a carefully scoped SRM Institute of Science and
+Technology (SRMIST), Kattankulathur (KTR) CSE-focused exam-preparation
+module.
+
+IMPORTANT: This is a handoff for an AI coding agent. Work from the
+actual repository state, not assumptions in this document. The README
+has previously been reviewed, but the source code has NOT yet been
+independently audited. First inspect the repository and report what is
+genuinely present before making changes.
+
+============================================================ 1. PRODUCT
+VISION ============================================================
+
+MentorSmith should become a Linux-first programming tutor with a focused
+exam-preparation mode for SRM KTR students, especially first-year CSE
+students. It should also teach programming fundamentals to students from
+allied branches who want to learn coding.
+
+Two connected product areas:
+
+A. EXAM PREP - Organised, syllabus-mapped question banks. - Verified
+previous-year questions (PYQs), only when a legitimate source and the
+exact paper/session are known. - Important practice questions selected
+from syllabus coverage, concept importance, and analysed historical
+papers where available. - Clearly labelled predicted PRACTICE questions
+generated from the syllabus, permitted source material, and observed
+question patterns. - Worked solutions and explanations. - Timed mock
+tests matching a documented exam pattern when that pattern is
+verified. - Topic-wise performance, mistake analysis, weak-topic
+revision, and adaptive practice. - Clear distinction between verified
+past questions, original practice questions, and uncertain predictions.
+
+B. CODING ACADEMY - Beginner-friendly learning paths for programming,
+initially prioritising C and Python if those match the user’s actual
+target course and validated curriculum. - Real compiler/interpreter
+feedback, output prediction, code tracing, debugging, progressive
+exercises, and lab-exam practice. - Friendly learning path for CSE and
+allied-branch students who want to learn coding. - Reuse the current
+evidence-based mastery engine where it is appropriate; do not create a
+disconnected duplicate learning system without a reason.
+
+Do not reduce MentorSmith to a generic chatbot or a PDF summariser. Its
+differentiation should be structured practice, correctness, transparent
+source provenance, and adaptive revision.
+
+============================================================ 2.
+NON-NEGOTIABLE AGENT RULES
+============================================================
+
+1.  Inspect before changing. Read the complete relevant source, project
+    structure, README, tests, schemas, migrations, data files,
+    curriculum, and architecture. Determine the actual current branch
+    and git status first.
+2.  Do not overwrite working features or perform a sweeping rewrite.
+    Make small, reviewable changes.
+3.  Preserve existing architecture and style where sensible. Explain
+    proposed architectural changes before large changes.
+4.  Never claim a feature is implemented or tested unless the source and
+    test evidence support it.
+5.  Do not invent SRM KTR course codes, course titles, syllabi,
+    CAT/midsem/endsem patterns, marks distributions, PYQs, dates, or
+    official policies.
+6.  Do not call generated questions “actual PYQs.” Label each item as
+    VERIFIED_PYQ, OFFICIAL_SAMPLE, ORIGINAL_PRACTICE, or
+    PREDICTED_PRACTICE, as appropriate.
+7.  Prediction is not certainty. Never promise that a question will
+    appear on an exam or encourage students to study only predicted
+    questions.
+8.  Preserve provenance for all externally sourced academic material:
+    source title, source URL or file identifier, semester/course,
+    paper/session/date if known, acquisition/verification status, and
+    permission/licensing notes.
+9.  Do not scrape, redistribute, or package copyrighted papers/materials
+    unless their use and redistribution are permitted. If uncertain,
+    keep user-provided materials local/private or provide a
+    reference/link where lawful rather than redistributing the file.
+10. Do not include API keys, passwords, tokens, student personal
+    information, or private credentials in source control, logs,
+    screenshots, test fixtures, or prompts.
+11. Avoid sending uploaded course material or student code to an AI
+    provider without clear user awareness and an appropriate privacy
+    explanation. Support offline/non-AI functions where possible.
+12. Maintain compatibility with the existing Python/runtime requirements
+    unless there is a well-justified reason to change them.
+13. Use the project’s existing test and lint conventions. Run relevant
+    tests after changes and report exact commands/results, including
+    skipped tests and failures.
+14. Keep the user in control of git operations. Do not push, publish,
+    delete data, install system packages, or make destructive changes
+    without explicit approval.
+15. If source evidence is missing, create a TODO or ask for the missing
+    official material. Do not silently fill gaps with guesses.
+
+============================================================ 3. FIRST
+TASK: REPOSITORY AUDIT
+============================================================
+
+Before implementation, inspect and report:
+
+A. Repository and environment - Current directory, branch, git status,
+recent commits. - Project tree, language/runtime versions, dependency
+files, install/test commands. - Existing README claims compared with
+actual code. - Any uncommitted work that must be preserved.
+
+B. Desktop app - Startup path, main UI/navigation, lesson/curriculum
+loading. - Code editor, execution adapters, compiler detection, output
+capture, timeouts and process termination. - Existing tutor/provider
+integration and whether a real provider request works end-to-end. -
+Error handling for missing API keys, network errors, timeouts, rate
+limits, malformed responses and invalid credentials. - SQLite schema,
+migrations, progress persistence, backups, data deletion/export if
+present. - Existing mastery/evidence/adaptive-revision pipeline and
+where it can be reused. - Git features and confirmation gates. -
+Workspace path validation and file operations.
+
+C. Android companion and optional backend - Build configuration,
+navigation, Room/database, sync logic, backend
+authentication/security. - Whether the app has actually been run on a
+physical device or emulator. - Do not claim Android is device-tested
+just because compilation/unit tests pass. - Check sync/offline/conflict
+behaviour, API key handling, and network error states.
+
+D. Tests and security - Run the existing test suite and relevant
+scripts. - Review process isolation/resource limits/output caps and
+optional bubblewrap behaviour. - Clearly document that optional
+bubblewrap is defence in depth and not equivalent to a hardened
+VM/container. Identify whether interpreted languages have equivalent
+protection; do not imply they do if they do not. - Review test quality,
+missing integration tests, and flaky/environment-dependent tests. -
+Audit file/path traversal, untrusted content handling, API key storage,
+prompt injection risks from imported materials, and unsafe generated
+content. - Do not run malicious payloads outside an explicitly isolated,
+safe test setup.
+
+E. README truth audit The previously reviewed README made these
+claims/limitations; verify all against source before relying on them: -
+Linux-first desktop programming tutor using Python/PyQt6. - Android
+companion in Kotlin/Compose/Room and optional FastAPI + SQLite sync
+backend. - Curriculum/exercise/concept counts and language coverage. -
+Real compiler/interpreter execution, resource limits, bounded output
+capture, optional bubblewrap. - Evidence-based mastery and adaptive
+revision. - Git integration is mostly read-only and commits require
+explicit approval. - Tests include compiler, timeout, resource, sandbox,
+DB, curriculum, UI and provider-mocking tests. - Live AI provider
+integration was not yet verified end-to-end. - Android had not yet been
+tested on a physical device/emulator. - Sync backend was described as
+having no authentication; verify and address before exposing it beyond
+localhost. - Exercise coverage, language counts, editor features,
+release packaging, and curriculum counts may be inconsistent. Do not
+blindly copy old counts. Recompute counts from actual data and reconcile
+README statements.
+
+Audit deliverable: - A concise report with: confirmed working, present
+but unverified, incomplete, broken, security risks, tests run/results,
+and recommended order of work. - Do not start a large implementation
+before reporting the audit. After audit, proceed with the safe,
+high-value changes in small stages unless clarification is needed.
+
+============================================================ 4. SRM KTR
+CSE EXAM-PREP: DATA ACCURACY FIRST
+============================================================
+
+The target is SRMIST Kattankulathur (KTR), initially first-year CSE and
+then allied branches for coding education. Do not assume all branches or
+cohorts share identical curricula or exam formats.
+
+Create a verified course catalogue with fields such as: - institution:
+SRMIST - campus: Kattankulathur (KTR) - academic year / regulation /
+curriculum version - programme / branch - semester - official course
+title - official course code (only if verified) - syllabus source and
+version/date - assessment type (CAT/midterm/endsem/lab/internal/etc.)
+only when confirmed - verified exam pattern, marks and duration only
+when sourced - source provenance and verification status - last reviewed
+date
+
+The user is currently a first-year CSE Core student in 2026. That
+context is not enough to infer all official syllabi, subject codes, exam
+patterns, or paper contents. Verify against official SRM materials or
+documents supplied by the user. If official sources are not available,
+ask the user to provide the syllabus and authorised papers. Do not
+fabricate course details.
+
+Initial scope recommendation: - Start with one first-year CSE course
+that the user can supply verified material for. - Prioritise
+C/C++/Python programming or another course only after confirming the
+actual current syllabus and student demand. - Keep the architecture
+general enough to add other first-year courses later. - Allied-branch
+coding learning can be offered as a separate curriculum/path; do not
+falsely label it as an official allied-branch exam-prep catalogue unless
+the course syllabus is verified.
+
+============================================================ 5. QUESTION
+BANK: REQUIRED MODEL AND WORKFLOW
+============================================================
+
+Every question must have stable identity and provenance. Suggested
+fields (adapt to existing architecture rather than blindly imposing a
+new schema):
+
+-   question_id
+-   course_id
+-   unit/module/topic/concept IDs
+-   question_text
+-   question_type (MCQ, short answer, long answer, numerical, code
+    tracing, debugging, programming, etc.)
+-   difficulty and estimated time, where meaningful
+-   marks and expected answer length only if verified or clearly marked
+    as a configurable practice estimate
+-   answer / reference solution
+-   explanation / marking rubric
+-   accepted variants or test cases, where appropriate
+-   source_type: VERIFIED_PYQ | OFFICIAL_SAMPLE | ORIGINAL_PRACTICE |
+    PREDICTED_PRACTICE
+-   source_title / source_file / URL / page / question number
+-   exam/session/date if known
+-   verification_status and verified_by/verification date where
+    appropriate
+-   content rights / redistribution status
+-   tags and prerequisite concepts
+-   confidence/reasoning metadata for generated practice questions (not
+    a fake probability of appearing in an exam)
+-   created/updated timestamps
+-   content version
+
+Workflow: 1. Import syllabus and permitted papers/material. 2.
+Parse/extract candidate questions without silently modifying the
+original text. 3. Keep a source excerpt or source pointer so a human can
+compare the extracted item with the source. 4. Mark uncertain
+OCR/parsing for manual review. 5. Human verifies exact PYQ wording,
+answer, marks, year/session and provenance before it is labelled
+VERIFIED_PYQ. 6. Generated questions must be checked for syllabus
+alignment, correctness, duplicate similarity, ambiguity and answer
+validity. 7. Keep generated content distinct from original sourced
+material. 8. Permit editing, correction, deactivation and versioning of
+erroneous questions. 9. Provide a report/export of unverified,
+missing-source, duplicate or possibly incorrect questions. 10. Never
+fabricate a year, exam session, marks allocation, official answer key,
+or source.
+
+Question quality: - Answers should show reasoning, not only final
+results. - For code questions, execute tests where feasible; include
+edge cases and explain expected output. - For MCQs, verify there is one
+defensible correct answer unless the question explicitly permits
+multiple answers. - For long answers, provide a transparent rubric and
+explain that AI grading is approximate. - Where a question depends on a
+diagram, table, or equation, preserve it accurately and check
+rendering. - Use deterministic grading for objective/programming answers
+where feasible; use rubric-assisted grading for free-text answers with
+uncertainty disclosed. - Include difficulty and concept tags without
+claiming objective precision unless calibrated.
+
+============================================================ 6.
+PREDICTED QUESTIONS: SAFE, HONEST DESIGN
+============================================================
+
+Do not promise that any generated question will appear on a real exam.
+
+Predicted practice questions should be generated from: - Verified
+official syllabus and learning outcomes. - Topics/concepts represented
+in available permitted past papers. - Coverage gaps in the student’s
+preparation. - Documented exam format, if verified. - Important
+prerequisite concepts and common misconceptions. - Question patterns
+that can actually be supported by the available paper set.
+
+Every prediction should display: - “Predicted practice — not an actual
+past question.” - Why it was generated (e.g., syllabus topic, concept
+not yet practised, or pattern observed in N verified papers). - Which
+syllabus unit/concept it covers. - Whether any pattern analysis is based
+on a small sample. - A warning that real exam questions may differ and
+the student should study the full syllabus.
+
+Do not display fake precision such as “97% chance of appearing” unless a
+defensible, calibrated statistical method and sufficient data support
+it. Prefer transparent qualitative labels such as “high syllabus
+priority” or “useful practice” with an explanation. “High priority” must
+not imply certainty of exam appearance.
+
+Pattern analysis: - Only calculate topic frequencies from papers with
+verified provenance. - Show sample size and coverage years/sessions. -
+Distinguish “appeared in this dataset” from “likely to appear again.” -
+Avoid leakage or training/evaluating on the same papers when validating
+prediction claims. - Do not imply past frequency guarantees future
+appearance.
+
+============================================================ 7. STUDENT
+FEATURES TO CHECK / ADD
+============================================================
+
+Prioritise based on the audit and existing architecture. Avoid
+implementing all features at once.
+
+P0 — correctness and usable MVP - A course/semester selector based only
+on verified catalogue data. - Syllabus/unit/topic navigation. - Question
+bank with visible source and question type. - Filters for topic, type,
+difficulty and verified/unverified status where appropriate. - A PYQ
+view clearly separating actual past questions from original and
+predicted practice. - Worked solutions and explanations. - Topic-wise
+practice mode. - Timed mock mode based only on a verified exam pattern
+or a user-configurable practice format. - Results page:
+correct/incorrect, marks estimate if rubric exists, time spent, concepts
+to revise. - “Practise my mistakes” / weak-topic revision. - Save
+progress and recover after app restart. - Useful empty states when no
+verified course content is installed. - Clear feedback for incorrect
+answers and AI/service failures. - Accessibility/readability: usable on
+laptop screens; do not assume a mobile-first website unless the user
+chooses that direction.
+
+P1 — once MVP works - Import a syllabus or permitted notes/PDF, with
+preview and confirmation before adding extracted content. - Search
+within a course’s question bank. - Duplicate detection and source
+validation tools for content maintainers. - Admin/content-editor review
+workflow for PYQs and answer keys. - Export a personal revision sheet
+where permitted. - Revision schedule based on mistakes and time
+remaining before an exam, if the student enters the exam date. -
+Optional AI explanations with deterministic fallback content when AI is
+unavailable. - Per-question feedback/report an incorrect answer. -
+Course-level progress dashboard. - Support C lab-exam practice: output
+prediction, tracing, debugging, short coding tasks and tests. - Optional
+browser/mobile interface only after validating distribution needs and
+assessing architectural cost.
+
+P2 — later, only after real user demand - Cross-device sync with
+authentication and conflict handling. - Payments, entitlements, purchase
+receipts, refunds and customer support. - More branches/semesters and
+larger course catalogue. - Community-contributed questions with
+moderation, provenance and abuse prevention. - Analytics for content
+quality and learning outcomes with privacy safeguards. - More
+sophisticated recommendation or prediction models only if there is
+enough trustworthy data.
+
+Do not implement payment processing before a reliable product, verified
+content, privacy/terms, support process, and a clear cost model exist.
+
+============================================================ 8. CODING
+ACADEMY / EXISTING LEARNING ENGINE
+============================================================
+
+Inspect the current concept graph, lessons, exercises, graders, compiler
+adapters and mastery engine before changing them.
+
+Desired user experience: - A beginner chooses “I have never coded” or a
+skill level established by a diagnostic. - Lessons introduce one concept
+at a time. - Student attempts an exercise before seeing the complete
+solution where appropriate. - Compiler/runtime errors are explained in
+plain language. - Guided hints escalate in stages; do not reveal the
+full answer immediately unless requested. - Code tracing and output
+prediction build understanding. - Mistakes update concept-level evidence
+only when the attempt is meaningfully graded. - Recommendations explain
+why a topic/exercise is recommended. - Student can choose a
+language/path without being forced through irrelevant content. -
+Allied-branch students can learn coding fundamentals without being
+presented with inaccurate branch-specific exam claims.
+
+Retain the existing project principle if confirmed in code: lesson
+completion, time spent or chatbot use should not automatically count as
+mastery; evidence should come from graded attempts. Keep the flow from
+graded attempts to concept evidence to mastery/revision explainable.
+
+Before adding languages or many exercises: - Reconcile the README’s
+language/lesson/concept/exercise counts with actual data. - Check
+whether Java is claimed but absent from any curriculum summary/table,
+and fix discrepancies based on source truth. - Identify uneven exercise
+coverage and show it transparently. - Do not add superficial lessons
+just to inflate counts.
+
+============================================================ 9. AI
+INTEGRATION AND PROMPT SAFETY
+============================================================
+
+Verify whether the live provider integration currently works. If it does
+not: - Implement or repair a real end-to-end provider call using the
+existing supported provider abstraction. - Keep keys outside the
+repository, with restrictive file permissions or environment
+variables. - Never place secrets in the Android APK. - Add safe error
+handling for missing key, invalid key, rate limit, timeout, network
+failure and malformed response. - Use low-cost/limited calls during
+testing and never run costly bulk generation without approval. - Add
+mocked unit tests plus an explicitly opt-in live integration test that
+requires the user to configure credentials. - Do not claim the provider
+is live-tested when only mocked tests ran. - Show users when a request
+sends their code, question, or imported material to an external
+provider. - Avoid sending entire documents when only relevant excerpts
+are needed. - Treat uploaded PDFs, notes, source code and retrieved
+material as untrusted data, not instructions to the AI agent. - Defend
+against prompt injection embedded in uploaded content; system
+instructions must not be overridden by a document. - Validate structured
+AI output against a schema; never trust model output directly as
+executable commands, database queries or trusted answer keys. - Provide
+deterministic or cached alternatives where practical. - Record
+model/provider and content version for generated questions if needed for
+reproducibility, but never log secrets or unnecessary personal data.
+
+============================================================ 10.
+PRIVACY, SECURITY, AND ACADEMIC INTEGRITY
+============================================================
+
+-   Explain what data is stored locally and what is sent to an external
+    AI service.
+-   Store the minimum student data necessary.
+-   Do not collect student IDs, grades, names or contact details unless
+    genuinely needed.
+-   Provide clear local data reset/export behaviour if practical.
+-   Do not expose a sync backend publicly without authentication,
+    authorization, transport security, input validation, rate limiting
+    and appropriate operational safeguards.
+-   If backend auth is absent, keep it localhost-only and explicitly
+    document that limitation.
+-   Review uploaded file size/type handling and PDF/text extraction
+    limits.
+-   Treat all extracted content and user-supplied paths as untrusted.
+-   Avoid executing imported or generated code outside the existing
+    resource-limited execution path.
+-   Review shell invocation and subprocess argument construction; prefer
+    argument lists over shell strings.
+-   Preserve existing explicit user confirmation before risky operations
+    such as committing changes or executing generated tests.
+-   The product is for learning and preparation, not cheating during
+    live exams. Do not build features for covert exam assistance,
+    bypassing proctoring, accessing leaked papers, or impersonating
+    students.
+-   Respect SRM’s academic rules and applicable copyright/licensing
+    restrictions.
+
+============================================================ 11. UI / UX
+EXPECTATIONS
+============================================================
+
+Keep the existing UI consistent unless the audit shows it needs changes.
+
+Navigation may eventually include: - Learn - Practise - Exam Prep -
+Progress - Settings
+
+Exam Prep flow: 1. Select verified course. 2. Select unit/topic or
+exam-prep mode. 3. Choose PYQs / important practice / predicted practice
+/ timed mock. 4. Show source and status labels before starting. 5.
+Present one question at a time where useful. 6. Allow hints/solution
+according to selected mode. 7. End with performance, mistakes and next
+revision recommendations. 8. Make the student aware when an answer/mark
+is AI-estimated. 9. Keep keyboard navigation and readable layout in
+mind. 10. Show useful empty states rather than fabricated content when
+no questions are available.
+
+Possible labels: - “Verified past question” - “Official sample
+question” - “Original practice question” - “Predicted practice — not a
+guaranteed exam question” - “Answer key verified” - “AI-assisted
+explanation — review if uncertain” Use labels only when they match
+actual verification status.
+
+Do not use SRM logos or claim official affiliation/endorsement without
+permission. Make it clear this is an independent student project unless
+formal authorisation exists.
+
+============================================================ 12. TEST
+PLAN / ACCEPTANCE CRITERIA
+============================================================
+
+Add or update tests for the following as applicable to the current
+architecture:
+
+Data and provenance: - Course cannot claim verified status without
+required source metadata. - Question source labels remain correct in
+storage, UI, export and tests. - PYQ, sample, original and predicted
+question types are never silently conflated. - Missing syllabus or
+papers leads to a clear empty state, not fabricated records. - Counts in
+documentation match actual curriculum/question data.
+
+Question bank: - CRUD/validation and schema migrations. - Invalid marks,
+malformed question, missing answer/source metadata. - Duplicate
+detection behaviour. - OCR uncertainty/manual review workflow if PDF
+import is implemented. - Answer and rubric rendering, including
+equations/code/diagrams where supported.
+
+Exam mode: - Unit/topic filtering. - Timed mock behaviour and time
+expiry. - Progress persistence across restart. - Objective grading, code
+tests and rubric-based answer feedback. - Honest display of estimated
+marks and prediction caveats. - Review of incorrect answers and
+weak-topic recommendations. - Graceful behaviour when the AI provider is
+offline or unconfigured.
+
+AI: - Mocked provider tests for success, invalid JSON, malformed
+response, timeout, rate limit, authentication failure and network
+failure. - Schema validation for generated question objects. - Tests
+that uploaded document instructions cannot override trusted system
+instructions. - Optional live integration test is opt-in and does not
+expose secrets.
+
+Execution/security: - Existing compile/runtime tests, timeouts, process
+termination, output cap, memory/resource restrictions and sandbox
+tests. - Test paths with traversal attempts and unusual Unicode/path
+cases. - Confirm no accidental network access or writable system paths
+in any sandbox configuration that claims to block them. - Clearly
+document unsupported/weak isolation modes.
+
+Android/backend: - Build and unit tests. - If possible, run on
+emulator/physical device and report actual results. - Test offline
+state, sync success/failure/conflict, authentication and key handling. -
+Never state “tested on device” without doing so.
+
+Documentation: - Fresh install steps verified in a clean environment if
+feasible. - Test commands and results accurate. - README has
+screenshots/demo only if real current screenshots are available. -
+Feature status uses honest labels: implemented, experimental, planned,
+not verified. - Document known limitations and security boundaries.
+
+For each change, report: - Files changed. - Why the change was needed. -
+Tests run and exact result. - Any test skipped and why. - Known
+limitations and next step.
+
+============================================================ 13. README
+/ GITHUB / INTERNSHIP PRESENTATION
+============================================================
+
+The repository should honestly demonstrate engineering quality, not just
+ambition.
+
+Update README only after checking the actual implementation. Include: -
+One-line product description. - Clear prototype/maturity status. -
+Screenshots or short demo GIF/video only if genuinely captured from the
+current app. - Current feature list, distinguishing implemented from
+planned. - Architecture overview and data flow. - Setup, dependencies,
+run and test instructions. - Course/question content sourcing and
+verification policy. - AI provider setup and privacy disclosure. -
+Security model and limitations. - Test coverage/results without inflated
+claims. - Known issues and roadmap. - Contribution/content-review
+workflow if community contributions are accepted.
+
+Fix inconsistencies between: - “five tracks” and language tables, if
+still inconsistent. - Curriculum lesson/concept/exercise counts. -
+Actual supported languages vs claimed languages. - Desktop vs Android
+feature availability. - Mocked AI provider vs live provider claims. -
+Android build tests vs actual device testing. - Optional bubblewrap vs
+guarantees of code isolation. - Backend availability vs
+authentication/security status.
+
+For internship/resume purposes, prioritise verifiable engineering
+evidence: - Reproducible tests. - Real integration tests. - Clean
+architecture and documented trade-offs. - Verified end-to-end demo. - A
+small group of real users and anonymised, consent-based usage/outcome
+measurements. - Do not fabricate adoption, accuracy, improvement
+percentages, course coverage or paid users.
+
+============================================================ 14.
+IMPLEMENTATION ORDER
+============================================================
+
+Stage 0 — Audit and report. Do not skip this. Establish the real
+codebase state and identify the highest-priority blockers.
+
+Stage 1 — Stabilise current project. Fix verified bugs, reconcile docs,
+verify installation/tests, and address serious security/privacy gaps.
+Verify the AI provider path and Android status accurately.
+
+Stage 2 — Define the first course. Use official or user-provided current
+syllabus and permitted source material. Record
+institution/campus/programme/semester/curriculum version. Ask the user
+for missing materials rather than inventing them.
+
+Stage 3 — Question bank foundation. Implement a minimal, validated model
+for questions, source provenance, answer/rubric, topic tags and
+verification status. Add a small manually verified dataset before
+building import automation.
+
+Stage 4 — Exam Prep MVP. Add course/topic navigation, question filters,
+worked answers, practice mode, timed mocks, results and weak-topic
+revision. Reuse existing mastery/progress systems where feasible.
+
+Stage 5 — Predicted practice. Only after verified syllabus mapping and a
+trustworthy question bank exist. Explain why each question was
+generated; label it honestly; check answer correctness and duplicates.
+
+Stage 6 — Pilot. Test with a small volunteer group. Ask about usefulness
+and willingness to pay. Collect only necessary, consented, anonymised
+feedback. Do not claim success without results.
+
+Stage 7 — Distribution and monetisation. Choose desktop/web/mobile
+distribution based on user research. Before charging, establish content
+rights, privacy policy, terms, AI cost controls, payment security,
+refund/support process, and reliable product behaviour.
+
+Do not start Stage 7 while core correctness and provenance are
+unresolved.
+
+============================================================ 15.
+QUESTIONS TO ASK THE USER ONLY WHEN NEEDED
+============================================================
+
+Avoid overwhelming the user with a long questionnaire. Ask one concise,
+high-impact question at a time.
+
+Likely missing information: - Which exact first-year SRM KTR course
+should be the pilot? - Can the user provide the current official
+syllabus and permitted PYQ/sample papers? - Is the desired first
+distribution target Linux desktop, browser, or both? - Which current
+academic year/regulation should be represented? - Are there specific
+exam formats or marking patterns confirmed by faculty/course material?
+
+Do not ask for information that can be read directly from the
+repository.
+
+============================================================ 16.
+REQUIRED FINAL HANDOFF REPORT
+============================================================
+
+When done with a stage, summarise: 1. What was inspected. 2. What is
+confirmed to work. 3. What is incomplete or unverified. 4. Files changed
+and design decisions. 5. Tests run, passed/failed/skipped. 6.
+Security/privacy/copyright concerns. 7. What requires user-provided
+official material or approval. 8. The single highest-value next step.
+
+Do not silently continue into unrelated features. Preserve a clean git
+history and leave the repository in a clear, reproducible state.
+
+END OF HANDOFF

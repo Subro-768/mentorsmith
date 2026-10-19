@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1204 automated tests. It has **not** been
+and its behaviour is covered by 1311 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1204 tests
+python3 -m pytest tests/ -q                       # 1311 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -261,6 +261,49 @@ evidence** either.
   opened. A blocked project tells you which concepts to strengthen first.
 - Each project splits into small milestones, each with requirements and
   acceptance criteria you can check yourself.
+
+## Exam prep
+
+A separate mode for preparing for a specific course's papers, built around
+one hard rule: **a student must always be able to tell what a question is.**
+
+Two labels travel with every question, and they are different things:
+
+- **what it is** — a past question, an official sample, something the
+  project wrote, or a predicted question;
+- **whether a human has checked it** — extracted by a machine, verified, or
+  rejected.
+
+So a question pulled out of a paper by the importer says *"Past question —
+extraction pending human review"*, not *"Verified past question"*. It
+becomes the latter only when somebody has read it against the paper and
+confirmed the wording, the answer and the marks.
+
+### What ships and what does not
+
+The **course catalogue** ships: the course code, title, branch, semester,
+unit outline and the exam pattern, each field traced to the document it was
+read from. The **questions do not** — past papers and question banks are
+your own material, and they are not ours to redistribute. They are
+extracted from your copies into your own copy of the app:
+
+```bash
+python3 tools/import_exam_papers.py --folder "path/to/your/papers"
+python3 tools/import_exam_papers.py --report     # what still needs a human
+```
+
+The importer never modifies the text, never invents an answer key, and
+never marks anything as verified. A scanned paper with no text layer is
+reported as needing OCR rather than silently producing nothing.
+
+### Grading, honestly
+
+The papers do not print an answer key, so most questions **cannot be marked
+automatically**. When that happens the app records your answer, tells you
+which page of which paper to check it against, and reports the attempt as
+*ungraded* — **not** as a mistake. A session where nothing could be graded
+reports no score at all, rather than 0%. "Practise my mistakes" means the
+questions you actually got wrong.
 
 ## Requirements
 
@@ -629,6 +672,21 @@ the optional backend instead, which holds the key server-side. See
 
 **Deliberate gaps**
 
+- **Exam prep is a first slice, not a product.** The course catalogue, the
+  question-bank model, the importer and a practice screen exist and work.
+  What does **not** exist yet: a verified answer key for any question (the
+  papers print none), a timed mock mode (no exam pattern has been confirmed
+  against official material), a review workflow for promoting an extracted
+  question to *verified* (the model supports it, the screen does not yet),
+  search across a course's bank beyond the current filter, and any
+  predicted questions at all.
+- **Most supplied papers could not be read.** The CT papers and the two
+  question banks have a text layer and imported cleanly. The PYQ scans have
+  none: they need OCR, and there is no OCR toolchain in this project, so
+  they are reported as such rather than being guessed at.
+- **The course record is not verified.** Its fields are read from paper
+  headers, but nobody has checked the catalogue against official SRM
+  material, so it says `PENDING_REVIEW`.
 - Tutor chat on Android is disabled: an APK is not a secret store, so the key
   must live on a backend. See [docs/sync-contract.md](docs/sync-contract.md).
 - The sync backend has **no authentication**. Anyone who can reach the port can

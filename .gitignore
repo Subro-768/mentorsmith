@@ -19,6 +19,15 @@ a.out
 .env
 config.local.json
 
+# The learner's own exam papers and question banks.
+#
+# These are the learner's material, not ours: past papers and question
+# banks are not ours to redistribute, and the app's question bank is built
+# from them locally rather than shipped. They must not end up in the
+# repository.
+examprep/
+examprep for srm ktr/
+
 # Stock design references, not part of the application source
 admin-dashboard-panel-with-gradient-style/
 dashboard-user-panel-template/

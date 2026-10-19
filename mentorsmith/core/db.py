@@ -210,6 +210,36 @@ MIGRATIONS: dict[int, list[str]] = {
             ON exercise_attempts (language, lesson_id)
         """,
     ],
+    5: [
+        # --- Exam preparation attempts -----------------------------------
+        # A student's answer to a question from their own papers. Kept
+        # separate from `exercise_attempts`, which belongs to the coding
+        # curriculum: an exam question has no concept, no exercise type and
+        # no grader, and forcing it into that table would have invented
+        # fields that mean something else.
+        """
+        CREATE TABLE IF NOT EXISTS exam_attempts (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            question_id   TEXT NOT NULL,
+            course_id     TEXT NOT NULL,
+            session_id    TEXT NOT NULL DEFAULT '',
+            chosen_answer TEXT NOT NULL DEFAULT '',
+            correct       INTEGER,          -- NULL when there is no key to grade against
+            topic_ids     TEXT NOT NULL DEFAULT '',
+            unit          INTEGER NOT NULL DEFAULT 0,
+            seconds_taken INTEGER NOT NULL DEFAULT 0,
+            created_at    TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_exam_attempts_question
+            ON exam_attempts (course_id, question_id)
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_exam_attempts_session
+            ON exam_attempts (session_id)
+        """,
+    ],
     4: [
         # --- Phase 5 audit: finish the language dimension ----------------
         # Phase 4 added `language` to lesson_progress and exercise_attempts but

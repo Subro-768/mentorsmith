@@ -1,0 +1,76 @@
+{
+ "_comment": [
+  "The exam-preparation course catalogue.",
+  "",
+  "Every field here is read from a document the learner supplied, and the",
+  "source is recorded so somebody can check it. Nothing is inferred: a fact",
+  "no source states is left empty.",
+  "",
+  "The question bank is NOT here. Past papers and question banks are the",
+  "learner's own material and are not ours to redistribute, so the bank",
+  "lives in the app's data directory and is written by",
+  "tools/import_exam_papers.py.",
+  "",
+  "The course record is 'PENDING_REVIEW' rather than 'VERIFIED': the fields",
+  "are sourced, but nobody has yet checked this catalogue against official",
+  "SRM material. The importer, not this file, produces the questions."
+ ],
+ "courses": [
+  {
+   "id": "21css101j-pps",
+   "title": "Programming for Problem Solving",
+   "institution": "SRM Institute of Science and Technology",
+   "campus": "Kattankulathur (KTR)",
+   "programme": "B.Tech",
+   "branch": "All Branches",
+   "semester": "I / I",
+   "course_code": "21CSS101J",
+   "syllabus_source": "Unit-wise course material supplied by the learner (PPS UNIT I-V notes, slides and the course question bank). This is the course's own teaching material, not an official published syllabus.",
+   "syllabus_version": "Course code 21CSS101J (2021 regulation). Some of the supplied material carries the earlier code 18CSS101J, so both appear; the papers themselves use 21CSS101J.",
+   "exam_pattern": "Cycle Test I: 25 marks, 50 minutes, Part A = 10 x 1 mark MCQ, plus Part B. Read from the CT-1 paper headers. The end-semester pattern (75 marks / 3 hours / Part A 20 x 1) was read from a scanned paper and is NOT yet confirmed.",
+   "marks": 25,
+   "duration_minutes": 50,
+   "source_files": [
+    "examprep for srm ktr/pps/pyqs and questions and theory/CT 1 Set 3.pdf",
+    "examprep for srm ktr/pps/pyqs and questions and theory/CT 1 Set 4.pdf",
+    "examprep for srm ktr/pps/pyqs and questions and theory/Important Questions.pdf",
+    "examprep for srm ktr/pps/pyqs and questions and theory/Question Bank with MCQs.pdf"
+   ],
+   "verification_status": "PENDING_REVIEW",
+   "last_reviewed": "2026-10-20",
+   "notes": "The unit titles below are verbatim from the course's own unit material. The supplied 'Exam Strategies For PPS' document itself says the Part B and Part C formats are NOT CONFIRMED, so no end-semester pattern is asserted here beyond the CT-1 header. CLO-1 as printed on the CT paper: 'To solve problems through computer programming. Express the basic data types and variables in C.'",
+   "topics": [
+    {
+     "id": "u1",
+     "title": "Introduction",
+     "unit": 1,
+     "source": "PPS UNIT I.docx (course material supplied by the learner)"
+    },
+    {
+     "id": "u2",
+     "title": "Decision Making and Branching",
+     "unit": 2,
+     "source": "PPS UNIT II.docx (course material supplied by the learner)"
+    },
+    {
+     "id": "u3",
+     "title": "Strings",
+     "unit": 3,
+     "source": "PPS UNIT III.docx (course material supplied by the learner)"
+    },
+    {
+     "id": "u4",
+     "title": "Basics of Python",
+     "unit": 4,
+     "source": "PPS UNIT IV.docx (course material supplied by the learner)"
+    },
+    {
+     "id": "u5",
+     "title": "Python Libraries",
+     "unit": 5,
+     "source": "PPS UNIT V.docx (course material supplied by the learner)"
+    }
+   ]
+  }
+ ]
+}

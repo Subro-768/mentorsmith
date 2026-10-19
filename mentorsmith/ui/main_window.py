@@ -33,6 +33,7 @@ from ..services.tutor import TutorContext, TutorReply, TutorService
 from . import theme
 from .analytics_view import AnalyticsView
 from .dashboard import DashboardView, InsightsPanel, ProgressView
+from .exam_view import ExamPrepView
 from .developer_view import DeveloperView
 from .lesson_view import LessonView
 from .practice_view import PracticeView
@@ -52,6 +53,7 @@ PAGE_DEVELOPER  = 6
 PAGE_ANALYTICS  = 7
 PAGE_THEORY     = 8
 PAGE_PLAYGROUND = 9
+PAGE_EXAM      = 10
 
 _NAV_ITEMS = [
     (PAGE_ANALYTICS,  "📊", "Analytics"),
@@ -63,6 +65,7 @@ _NAV_ITEMS = [
     (PAGE_INSIGHTS,   "🎯", "Mastery"),
     (PAGE_PROJECTS,   "🏗", "Projects"),
     (PAGE_PROGRESS,   "📋", "History"),
+    (PAGE_EXAM,      "🎓", "Exam Prep"),
     (PAGE_DEVELOPER,  "🛠", "Developer"),
 ]
 
@@ -389,6 +392,7 @@ class MainWindow(QMainWindow):
         self.dashboard      = DashboardView()
         self.practice_view  = PracticeView(self.database, self.bank, self.toolchain)
         self.lesson_view    = LessonView(toolchain=self.toolchain)
+        self.exam_view      = ExamPrepView(self.database)
         self.insights       = InsightsPanel()
         self.projects_view  = ProjectsView(self.database, self.model)
         self.progress_view  = ProgressView()
@@ -407,6 +411,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.analytics_view)  # 7
         self.stack.addWidget(self.theory_view)     # 8
         self.stack.addWidget(self.playground_view) # 9
+        self.stack.addWidget(self.exam_view)        # 10
 
         content_layout.addWidget(self.stack, 1)
         root_layout.addWidget(content_area, 1)

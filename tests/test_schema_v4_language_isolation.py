@@ -81,10 +81,16 @@ def v3_database(tmp_path: Path, monkeypatch) -> tuple[str, Database]:
 
 
 class TestMigration4:
-    def test_version_is_four(self, v3_database) -> None:
+    def test_the_v3_database_reaches_the_latest_version(self, v3_database) -> None:
+        """Migration 4 is applied, and the database ends at the latest.
+
+        Written against LATEST_SCHEMA_VERSION rather than a fixed number:
+        a schema version is a moving target, and a test that pins it only
+        ever reports that somebody added a migration.
+        """
         _path, database = v3_database
-        assert LATEST_SCHEMA_VERSION == 4
-        assert database.schema_version() == 4
+        assert LATEST_SCHEMA_VERSION >= 4
+        assert database.schema_version() == LATEST_SCHEMA_VERSION
 
     @pytest.mark.parametrize(
         "table", ["reviews", "projects", "project_milestones",
@@ -114,11 +120,12 @@ class TestMigration4:
         assert database.list_projects("cpp")[0]["language"] == "cpp"
 
     def test_earlier_data_still_migrates_in_one_step(self, tmp_path: Path) -> None:
-        """A schema-1 database reaches 4 without an intermediate upgrade."""
+        """A schema-1 database reaches the latest without a manual upgrade."""
         path = str(tmp_path / "v1.db")
         saved = dict(MIGRATIONS)
-        for version in (2, 3, 4):
-            del MIGRATIONS[version]
+        for version in list(MIGRATIONS):
+            if version != 1:
+                del MIGRATIONS[version]
         conn = sqlite3.connect(path)
         for statement in MIGRATIONS[1]:
             conn.execute(statement)
@@ -134,7 +141,7 @@ class TestMigration4:
 
         database = Database(path)
         database.connect()
-        assert database.schema_version() == 4
+        assert database.schema_version() == LATEST_SCHEMA_VERSION
         assert database.completed_lessons("cpp") == ["01-program-structure"]
 
 

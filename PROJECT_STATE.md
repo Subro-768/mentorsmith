@@ -540,6 +540,38 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
 5. Then Phase 5 (`aihandoff_5.md`): git integration, project workspaces, AI code
    review, test generation, security audit and portfolio docs.
 
+## Exam preparation (SRM KTR)
+
+Built to a handoff brief. The design is driven by one rule: a student must
+always be able to tell what a question is.
+
+- **Catalogue** (`mentorsmith/data/exam/courses.json`): one course,
+  `21CSS101J Programming for Problem Solving`, B.Tech (All Branches),
+  semester I/I, SRMIST KTR. Every field read from the paper headers or the
+  course's own unit material, with the source recorded. The record is
+  `PENDING_REVIEW`, not `VERIFIED`: nobody has checked it against official
+  SRM material.
+- **Question bank** (`mentorsmith/core/exam.py`): every question carries
+  `source_type` (VERIFIED_PYQ / OFFICIAL_SAMPLE / ORIGINAL_PRACTICE /
+  PREDICTED_PRACTICE) *and* `verification_status` (PENDING_REVIEW /
+  VERIFIED / REJECTED). A question is only labelled a *verified* past
+  question once a human has checked it against a file, page and question
+  number.
+- **The bank is not in the repository.** It lives in
+  `~/.local/share/mentorsmith/exam/questions.json`, mode 0600, because past
+  papers are the learner's material. `tools/import_exam_papers.py` builds
+  it from their own PDFs.
+- **The importer verifies nothing.** It copies the text verbatim, never
+  invents an answer key, reports scanned papers as needing OCR, and flags
+  OCR damage and layout noise for review.
+- **Ungraded is not wrong.** The papers print no answer key, so most
+  questions cannot be marked. Such an attempt is recorded and reported as
+  *ungraded*, never as a mistake, and a session where nothing could be
+  graded reports no score rather than 0%.
+- **What was actually extracted:** 356 questions from the two clean-text
+  question banks and the CT papers; 132 duplicates skipped; 15 of the 27
+  supplied PDFs have no text layer and need OCR.
+
 ## Decisions not to silently reverse
 - **Lesson completion is not evidence.** Phase 2 says completing a lesson must
   not mean mastery. `core/adaptive.py` never reads `lesson_progress`, and a test
