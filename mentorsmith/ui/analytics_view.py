@@ -9,6 +9,13 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 import html as html_module
 
+#: The XP rates that define a level. Named so the formula and its description
+#: cannot drift apart - they did once, with a comment claiming 10 XP per lesson
+#: above a line awarding 20.
+XP_PER_LESSON = 20
+XP_PER_SUCCESS = 5
+XP_PER_ATTEMPT = 2
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
@@ -229,7 +236,10 @@ class AnalyticsView(QWidget):
 
         self.xp_bar = QProgressBar()
         self.xp_bar.setRange(0, 100)
-        self.xp_bar.setValue(10)
+        # 0, not a plausible-looking placeholder. refresh() sets the real value
+        # before the view is ever shown, but a bar that starts at 10% is a small
+        # lie that becomes a real one the moment refresh() fails.
+        self.xp_bar.setValue(0)
         self.xp_bar.setFixedWidth(140)
         self.xp_bar.setFixedHeight(5)
         self.xp_bar.setTextVisible(False)
@@ -271,7 +281,7 @@ class AnalyticsView(QWidget):
         lay.addLayout(self.lang_grid)
 
         # ── Activity Heatmap ──────────────────────────────────────────────
-        sec_heat = QLabel("ACTIVITY HEATMAP (LAST 90 DAYS)")
+        sec_heat = QLabel("ACTIVITY HEATMAP (LAST 14 WEEKS)")
         sec_heat.setObjectName("section_header")
         lay.addWidget(sec_heat)
 
@@ -339,8 +349,14 @@ class AnalyticsView(QWidget):
         streak = self._calculate_streak(set(dates_with_activity.keys()))
 
         # 4. XP and Level
-        # 10 XP per lesson complete, 5 XP per success attempt, 2 XP per attempt
-        xp = (total_completed * 20) + (successful_attempts * 5) + (total_attempts * 2)
+        # 20 XP per lesson completed, 5 XP per successful attempt, 2 XP per
+        # attempt. The rates below are the definition of a level, so they are
+        # named rather than inlined - the comment here used to say 10 XP per
+        # lesson while the line beneath it awarded 20, which is the kind of
+        # drift that makes a progression system impossible to reason about.
+        xp = (total_completed * XP_PER_LESSON
+              + successful_attempts * XP_PER_SUCCESS
+              + total_attempts * XP_PER_ATTEMPT)
         level, lvl_name, pct_level, next_xp = self._calculate_level(xp)
 
         # Update cards
@@ -351,7 +367,13 @@ class AnalyticsView(QWidget):
 
         self.level_lbl.setText(f"Level {level} · {lvl_name}")
         self.xp_bar.setValue(pct_level)
-        self.xp_details.setText(f"{xp} XP (Next level at {next_xp} XP)")
+        if next_xp is None:
+            # Top level reached. There is no next one, so say that rather than
+            # naming a threshold the learner has already passed - which is what
+            # this used to display.
+            self.xp_details.setText(f"{xp} XP · Top level reached")
+        else:
+            self.xp_details.setText(f"{xp} XP (Next level at {next_xp} XP)")
 
         # 5. Populate Language Cards
         # Clear existing
@@ -405,7 +427,13 @@ class AnalyticsView(QWidget):
             cur -= timedelta(days=1)
         return streak
 
-    def _calculate_level(self, xp: int) -> tuple[int, str, int, int]:
+    def _calculate_level(self, xp: int) -> tuple[int, str, int, int | None]:
+        """Return (level, name, percent_through_this_level, next_threshold).
+
+        ``next_threshold`` is None at the top level, because there is no next
+        one. Reporting a fabricated threshold there produced the text "12000 XP
+        (Next level at 10000 XP)" for a learner who was already past it.
+        """
         levels = [
             (0, "Novice"),
             (100, "Apprentice"),
@@ -417,7 +445,7 @@ class AnalyticsView(QWidget):
         ]
         curr_lvl = 1
         curr_name = "Novice"
-        next_threshold = 100
+        next_threshold = levels[1][0]
         prev_threshold = 0
 
         for i, (threshold, name) in enumerate(levels):
@@ -425,9 +453,13 @@ class AnalyticsView(QWidget):
                 curr_lvl = i + 1
                 curr_name = name
                 prev_threshold = threshold
-                next_threshold = levels[i + 1][0] if i + 1 < len(levels) else threshold * 2
+                next_threshold = levels[i + 1][0] if i + 1 < len(levels) else None
             else:
                 break
+
+        if next_threshold is None:
+            # Top level: the bar is simply full, and there is nothing to reach.
+            return curr_lvl, curr_name, 100, None
 
         span = next_threshold - prev_threshold
         progress_in_level = xp - prev_threshold
@@ -436,9 +468,11 @@ class AnalyticsView(QWidget):
 
     def _render_heatmap(self, dates_with_activity: dict[str, int]) -> None:
         today = date.today()
-        # 13 weeks = ~91 days
+        # Go back 90 days, then align back to Monday so the columns are whole
+        # weeks. That alignment can add up to six more days, so the window is
+        # 90-96 days, not 90 - which is why the heading says 14 weeks rather
+        # than 90 days.
         start_date = today - timedelta(days=90)
-        # align to start of week (Monday)
         start_date -= timedelta(days=start_date.weekday())
 
         days_count = (today - start_date).days + 1
