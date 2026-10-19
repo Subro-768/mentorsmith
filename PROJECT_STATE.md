@@ -182,7 +182,7 @@ Verified by the test suite and by rendering the UI:
 
 ### Phase 2 (aihandoff_2.md)
 
-- [x] Concept model with 18 concepts and an explicit prerequisite graph,
+- [x] Concept model with 56 concepts and an explicit prerequisite graph,
       stored as validated structured data
 - [x] Exercise history affects recommendations (repair / consolidate /
       extension / review, each with its reason)

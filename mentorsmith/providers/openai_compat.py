@@ -70,6 +70,10 @@ class OpenAICompatibleProvider(LLMProvider):
         self.api_key_env = api_key_env
         self.timeout = timeout
         self.extra_headers = extra_headers or {}
+        #: Memoised ``/models`` listing. None means "not fetched yet"; an empty
+        #: list is a real answer from an endpoint that publishes no listing,
+        #: and is cached too so the picker does not retry on every focus.
+        self._models_cache: list[dict[str, str]] | None = None
 
     # ------------------------------------------------------------------
     # Configuration
@@ -171,20 +175,30 @@ class OpenAICompatibleProvider(LLMProvider):
         if not network_allowed():
             return []
 
+        # Cached per provider instance so the several chat panels in the app
+        # cost one request between them rather than one each.
+        if self._models_cache is not None:
+            return self._models_cache
+
         request = urllib.request.Request(
             self._models_url(),
             headers=self._headers(),
             method="GET",
         )
         try:
-            with urllib.request.urlopen(request, timeout=min(self.timeout, 20)) as resp:
+            # Short on purpose. A listing is a nicety; nobody should wait a
+            # generation's worth of timeout for a dropdown.
+            with urllib.request.urlopen(request, timeout=8) as resp:
                 payload = json.loads(resp.read().decode("utf-8", "replace"))
         except (urllib.error.URLError, OSError, ValueError, json.JSONDecodeError):
             return []
 
         entries = payload.get("data") if isinstance(payload, dict) else None
         if not isinstance(entries, list):
-            return []
+            # Cache the empty result too, so an endpoint that does not publish a
+            # listing is not re-fetched every time the picker gains focus.
+            self._models_cache = []
+            return self._models_cache
 
         models = []
         for entry in entries:
@@ -201,7 +215,8 @@ class OpenAICompatibleProvider(LLMProvider):
                 else identifier.strip(),
             })
         models.sort(key=lambda m: m["name"].lower())
-        return models
+        self._models_cache = models
+        return self._models_cache
 
     # ------------------------------------------------------------------
     # Request

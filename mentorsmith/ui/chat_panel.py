@@ -112,6 +112,11 @@ class ChatPanel(QWidget):
         self.refresh_models_button.clicked.connect(self.refresh_models)
         topbar_lay.addWidget(self.refresh_models_button)
 
+        # Fetch on first use, not on launch. ``focusInEvent`` fires the moment
+        # the learner reaches the control and before they can click it, so the
+        # list is usually there by the time it is looked at.
+        self.model_combo.installEventFilter(self)
+
         self.request_hint_button = QPushButton("💡 Hint")
         self.request_hint_button.setObjectName("subtle")
         self.request_hint_button.setFixedHeight(28)
@@ -208,6 +213,19 @@ class ChatPanel(QWidget):
     # Behaviour
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # Lazy model loading
+    # ------------------------------------------------------------------
+    def eventFilter(self, watched, event):
+        """Load the model list the first time the picker is reached.
+
+        See :meth:`ensure_models_loaded` for why this is not done at startup.
+        """
+        if (watched is self.model_combo
+                and event.type() == event.Type.FocusIn):
+            self.ensure_models_loaded()
+        return super().eventFilter(watched, event)
+
+    # ------------------------------------------------------------------
     # Model selection
     # ------------------------------------------------------------------
     def current_model(self) -> str:
@@ -264,17 +282,47 @@ class ChatPanel(QWidget):
         self.model_combo.blockSignals(blocked)
         return len(models)
 
-    def set_provider(self, provider) -> int:
-        """Remember the provider so the picker can ask it for models.
+    def load_models_if_empty(self) -> int:
+        """Populate from the provider's cache only - never hits the network."""
+        cached = list(getattr(self._provider, "_models_cache", []) or [])
+        if not cached or self.model_combo.count():
+            return self.model_combo.count()
+        blocked = self.model_combo.blockSignals(True)
+        self.model_combo.clear()
+        for model in cached:
+            self.model_combo.addItem(model["name"], model["id"])
+        current = getattr(self._provider, "model", "")
+        if current:
+            self._set_model_text(current)
+        self.model_combo.blockSignals(blocked)
+        return len(cached)
 
-        Returns how many models were listed, matching :meth:`refresh_models`
-        so a caller does not have to know which half did the work.
+    def set_provider(self, provider) -> int:
+        """Remember the provider and show the model it is configured with.
+
+        Deliberately makes **no network call**. This runs from
+        ``MainWindow.__init__`` via ``_refresh_provider_status``, for every chat
+        panel, and a ``/models`` fetch with a 20 s timeout there blocked the
+        UI thread twice over - which is why the app took 15-20 seconds to open
+        once a key was configured. The list is fetched on demand instead, by
+        :meth:`ensure_models_loaded`, and the provider caches it so the second
+        panel costs nothing.
         """
         self._provider = provider
         model = getattr(provider, "model", "")
         if model:
             self.set_model(model)
-        return self.refresh_models(provider)
+        return 0
+
+    def ensure_models_loaded(self) -> int:
+        """Fetch the model list if it has not been fetched already.
+
+        Called when the picker is first used rather than at startup, so an
+        unreachable provider delays nothing the learner is waiting for.
+        """
+        if self.model_combo.count():
+            return self.model_combo.count()
+        return self.refresh_models()
 
     def current_level(self) -> str:
         return str(self.level_combo.currentData() or "guided")

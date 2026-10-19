@@ -12,17 +12,30 @@ Priority key: **S** ships in a sitting · **M** a day · **L** a week or more.
 
 ---
 
-## A. Gaps found in the cross-check (highest value — these are defects, not ideas)
+## A. Corrections to the first draft of this list
+
+A second pass checked each claim against the code by tracing call chains rather
+than grepping one directory. Several entries in the first draft were wrong, and
+the wrongness was worth recording.
+
+| Claim in the first draft | Reality |
+|---|---|
+| "`core/revision.py` is a finished engine with **zero UI references** — built code with no door" | **Wrong.** `main_window.refresh_insights()` → `insights.build_report()` → `revision.recommend_reviews()`, and the dashboard renders a "Concepts to review" panel from `report.reviews`. I grepped `ui/` for the literal word "revision" and missed it by one layer of indirection. |
+| "There is unreachable code" | **Wrong.** Every one of `git_tools, testgen, security_audit, review, retention, comparisons, debugging, revision, workspaces, projects, mastery, adaptive, concepts` is reachable from the UI, directly or through a service. There is no dead module. |
+| "Coverage visualisation tied to the learner's own code" | Half right. `testgen.coverage_gaps()` exists and checks that a generated suite includes an `expected_failure` case. What is missing is *rendering* that, not the analysis. |
+| "Keyboard-first navigation" | Half right. Shortcuts exist (`Ctrl+Return` to send, page navigation in `main_window`). A command palette does not. |
+| "Detect when the model ignored the reply format" | **Wrong.** `parse_tutor_response` already sets `unparsed=True` and keeps the raw text. Already built. |
+| "CSV export", "streaming responses", "learner data export", "cost metering" | Verified genuinely absent. The `csv` and `stream` greps were false positives — `json.dump` on settings is not a data export, and every "stream" hit was `std::cout`. |
+
+**The real gaps, verified:**
 
 | # | Feature | Why it matters | P |
 |---|---|---|---|
-| 1 | **Surface the `revision` engine in the UI** | `core/revision.py` is used by services and has 3 tests, but **zero UI references**. A learner cannot reach spaced-repetition scheduling that already exists. This is built code with no door. | S |
-| 2 | Page counter that matches reality | `PROJECT_STATE.md` claimed seven pages; there are ten. | S |
-| 3 | A doc-freshness test | Every number in the docs drifted when Java landed. A test that parses lesson files and asserts the counts in README/PROJECT_STATE would have caught it. | S |
-| 4 | `mentorsmith --check` in the install banner | It exists now but nobody discovers it. Print the command when a toolchain is missing. | S |
-| 5 | Dead-code detector in CI | `analytics_view.py` and `theory.py` both carried defects that a "reachable from UI" check would have surfaced. | M |
-
----
+| 1 | **A doc-freshness test** — parse the lesson files, assert the counts in README and PROJECT_STATE | Ten separate figures in the docs were a whole track out of date and nothing failed. This is the same class of silence as every other bug found this session. | S |
+| 2 | **Token and cost metering per request** | The provider never reads `usage` from the response, so a request's size and cost are invisible. | S |
+| 3 | **Cancel a tutor request mid-flight** | `ProcessHandle.stop()` exists for code execution, but `TutorWorker` has no abort path — a slow or hung request cannot be stopped. | M |
+| 4 | **Turn bubblewrap on by default where available** | `bwrap` is installed on this machine and the setting defaults to `False`, so learner code runs unconfined unless the user finds the checkbox. | S |
+| 5 | A dead-code / reachability check in CI | Would have caught the mistake I made in the first draft of this list. | M |
 
 ## B. Learning science — build on `core/mastery.py`, `adaptive.py`, `retention.py`
 
