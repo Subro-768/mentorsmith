@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1164 automated tests. It has **not** been
+and its behaviour is covered by 1186 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1164 tests
+python3 -m pytest tests/ -q                       # 1186 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -226,6 +226,11 @@ Python, and reading one track after another quietly teaches the wrong thing.
   repeated failure, and ask a related question after you fix it.
 - **The next activity is chosen from your history** and always comes with its
   reason, quoting your own numbers.
+- **Your data is yours to keep.** The History page has an **Export CSV**
+  button that writes four files — your attempts (the learning curve), a
+  per-concept summary, completed lessons, and the reviews the scheduler
+  opened — plus a README explaining every column. It is written as the app
+  holds it, with no re-interpretation, and only into the folder you choose.
 - **A heads-up when a lesson assumes something you have not met.** Opening a
   lesson whose prerequisites have not been started shows a banner naming
   them. It is a warning, not a lock — the fastest way to meet a prerequisite

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html as html_module
+from pathlib import Path
 
 from PyQt6.QtCore import Qt, QPropertyAnimation, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
@@ -742,8 +743,17 @@ class InsightsPanel(QWidget):
 class ProgressView(QWidget):
     """Detailed progress, attempt history and data management."""
 
+    #: Emitted with the folder the export was written to.
+    export_status = pyqtSignal(str)
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        #: Set by :meth:`refresh`, so the export button has something to
+        #: export. The view never opens a database connection itself.
+        self._database = None
+        self._model = None
+        self._language = "cpp"
+        self._assessments: dict = {}
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -771,6 +781,16 @@ class ProgressView(QWidget):
         self.refresh_button = QPushButton("↺  Refresh")
         self.refresh_button.setFixedHeight(36)
         buttons.addWidget(self.refresh_button)
+
+        # The learner's data is theirs to keep.
+        self.export_button = QPushButton("⭳  Export CSV")
+        self.export_button.setFixedHeight(36)
+        self.export_button.setToolTip(
+            "Write your attempts, concepts, lessons and reviews as CSV files "
+            "you can open in a spreadsheet or a notebook."
+        )
+        self.export_button.clicked.connect(self._on_export_clicked)
+        buttons.addWidget(self.export_button)
         buttons.addStretch(1)
         self.reset_button = QPushButton("Reset all progress")
         self.reset_button.setObjectName("danger")
@@ -778,10 +798,63 @@ class ProgressView(QWidget):
         buttons.addWidget(self.reset_button)
         root.addLayout(buttons)
 
+    def _on_export_clicked(self) -> None:
+        """Ask where to put the export, then write it.
+
+        The export is written only into the folder the learner chooses, and
+        the app says where it went - a silent export to a path nobody
+        remembers is not much of an export.
+        """
+        from PyQt6.QtWidgets import QFileDialog
+
+        from ..services.export import export_summary, export_to_folder
+
+        database = getattr(self, "_database", None)
+        model = getattr(self, "_model", None)
+        if database is None or model is None:
+            return
+
+        language = getattr(self, "_language", "cpp")
+        folder = QFileDialog.getExistingDirectory(
+            self, "Choose a folder for the export"
+        )
+        if not folder:
+            return
+
+        try:
+            datasets = export_to_folder(
+                database, model, Path(folder), language,
+                getattr(self, "_assessments", {}) or {},
+            )
+        except OSError as exc:
+            self.summary.setText(f"Export failed: {exc}")
+            return
+
+        from ..services.export import collect_datasets
+
+        collected = collect_datasets(
+            database, model, language, getattr(self, "_assessments", {}) or {}
+        )
+        self.summary.setText(
+            f"Exported to {folder} — {export_summary(collected)}"
+        )
+        self.export_status.emit(folder)
+
     def set_lessons(self, lessons: list[Lesson]) -> None:
         self._lessons = lessons
 
-    def refresh(self, database, completed: list[str]) -> None:
+    def refresh(
+        self,
+        database,
+        completed: list[str],
+        model=None,
+        language: str = "cpp",
+        assessments: dict | None = None,
+    ) -> None:
+        self._database = database
+        self._model = model
+        self._language = language
+        self._assessments = assessments or {}
         self._lessons = getattr(self, "_lessons", [])
         total = len(self._lessons)
         self.summary.setText(

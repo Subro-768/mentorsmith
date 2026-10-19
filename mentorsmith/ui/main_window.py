@@ -607,7 +607,13 @@ class MainWindow(QMainWindow):
         self.dashboard.refresh(completed, stats)
         self.dashboard.set_activity(self.database.recent_activity(12, self.language))
         self.progress_view.set_lessons(self.lessons)
-        self.progress_view.refresh(self.database, self.database.completed_lessons(self.language))
+        self.progress_view.refresh(
+            self.database,
+            self.database.completed_lessons(self.language),
+            model=self.model,
+            language=self.language,
+            assessments=getattr(self, "_assessments", {}) or {},
+        )
 
     def refresh_insights(self) -> None:
         report = build_report(self.database, self.model, self.bank, language=self.language)
