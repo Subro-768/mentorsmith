@@ -112,6 +112,16 @@ class LessonView(QWidget):
         )
         self.title_label.setObjectName("title")
 
+        # Tier badge. A learner working through a track has no other way of
+        # telling whether the next topic is more or less demanding than the
+        # last one, and "am I still on the beginner part?" is the question a
+        # progression is supposed to answer.
+        self.tier_badge = QLabel("")
+        self.tier_badge.setFixedHeight(22)
+        self.tier_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.tier_badge.setContentsMargins(9, 0, 9, 0)
+        header.addWidget(self.tier_badge)
+
         self.next_button = QPushButton("Next →")
         self.next_button.setObjectName("subtle")
         self.next_button.setFixedHeight(34)
@@ -365,10 +375,34 @@ class LessonView(QWidget):
             )
         self.comparisons_view.setHtml("".join(blocks))
 
+    #: Colour per tier. Deliberately the accent for Advanced so the badge
+    #: itself becomes a signal as the work gets harder.
+    _TIER_COLOURS = {
+        "foundation": "INFO",
+        "core": "CYAN",
+        "advanced": "ACCENT",
+    }
+
+    def _set_tier_badge(self, lesson: Lesson) -> None:
+        token = self._TIER_COLOURS.get(lesson.tier, "MUTED")
+        colour = getattr(theme, token, theme.MUTED)
+        self.tier_badge.setText(lesson.tier_label)
+        self.tier_badge.setStyleSheet(
+            f"background-color: {theme.SURFACE_HOV}; color: {colour}; "
+            f"border: 1px solid {colour}; border-radius: 11px; "
+            f"font-size: 11px; font-weight: 700;"
+        )
+        self.tier_badge.setToolTip(
+            f"{lesson.tier_label}: {lesson.tier_blurb}"
+            if lesson.tier_blurb
+            else lesson.tier_label
+        )
+
     def set_lesson(self, lesson: Lesson, *, has_previous: bool, has_next: bool) -> None:
         """Display ``lesson`` and reset the working area."""
         self.lesson = lesson
         self.title_label.setText(lesson.display_title)
+        self._set_tier_badge(lesson)
         self.prev_button.setEnabled(has_previous)
         self.next_button.setEnabled(has_next)
 

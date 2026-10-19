@@ -145,3 +145,56 @@ class TestRealCurriculum:
                         f"{language}/{lesson.id} '{lesson.title}' is "
                         f"{lesson.tier}"
                     )
+
+
+# ======================================================================
+# The badge
+# ======================================================================
+class TestTierBadgeIsShown:
+    """Data nothing displays is not a feature."""
+
+    @pytest.fixture(scope="module")
+    def qapp(self):
+        from PyQt6.QtWidgets import QApplication
+
+        existing = QApplication.instance()
+        app = existing or QApplication([])
+        yield app
+
+    @pytest.fixture()
+    def view(self, qapp):
+        from mentorsmith.compiler.toolchain import Toolchain
+        from mentorsmith.ui.lesson_view import LessonView
+
+        widget = LessonView(Toolchain())
+        yield widget
+        widget.deleteLater()
+
+    def test_it_shows_the_lesson_tier(self, view) -> None:
+        tracks = load_all()
+        advanced = next(
+            (l for l in tracks["c"].lessons if l.tier == "advanced"), None
+        )
+        if advanced is None:
+            pytest.skip("no advanced lesson in the C track")
+        view.set_lesson(advanced, has_previous=True, has_next=False)
+        assert view.tier_badge.text() == "Advanced"
+
+    def test_the_first_lesson_of_a_track_reads_foundation(self, view) -> None:
+        tracks = load_all()
+        view.set_lesson(tracks["java"].lessons[0], has_previous=False, has_next=True)
+        assert view.tier_badge.text() == "Foundation"
+
+    def test_it_explains_itself_on_hover(self, view) -> None:
+        tracks = load_all()
+        view.set_lesson(tracks["python"].lessons[0], has_previous=False, has_next=True)
+        tip = view.tier_badge.toolTip()
+        assert tip.startswith("Foundation")
+        assert len(tip) > len("Foundation"), "the badge says nothing about itself"
+
+    def test_an_unknown_tier_does_not_break_it(self, view) -> None:
+        from mentorsmith.core.curriculum import Lesson
+
+        lesson = Lesson(id="x", title="X", order=1, language="cpp", tier="mystery")
+        view.set_lesson(lesson, has_previous=False, has_next=False)
+        assert view.tier_badge.text() == "mystery"
