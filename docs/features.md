@@ -26,6 +26,7 @@ actually shipped.
 | 4 | Bubblewrap on by default | The sandbox is on wherever `bwrap` is installed, because learner code is code the learner did not write. The user's own choice is remembered; where bubblewrap is absent the setting stays off, because promising containment that is not there is worse than not promising it. |
 | 7 | "What you should review today" | A **Review today** card on the Mastery page, leading with one sentence saying how many concepts are worth revisiting, with a button that opens the lesson for the top one. |
 | 11 | "You got this wrong N times" | Each review carries a badge with the number of wrong attempts. One concept failed four times is one thing to revisit, and it reads differently from one that is merely stale. |
+| 13 | Warn when a lesson is unlocked without its prerequisites met | A banner names the concepts a lesson assumes and that the learner has not started. A heads-up, not a lock: the lesson still opens, and the warning fires only for concepts never started, not merely ones not yet mastered. |
 | 21 | Multi-model comparison | **Not built.** Deferred: it needs per-provider cost accounting to be meaningful, which did not exist until item 2 above. |
 
 ---

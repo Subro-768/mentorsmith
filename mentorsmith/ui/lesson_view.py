@@ -80,6 +80,8 @@ class LessonView(QWidget):
         self.toolchain = toolchain
         self.lesson: Lesson | None = None
         self._worker: CompileWorker | None = None
+        #: The unmet-prerequisite banner, created the first time it is needed.
+        self.prereq_banner: QLabel | None = None
         self._build_ui()
 
     # ------------------------------------------------------------------
@@ -398,11 +400,56 @@ class LessonView(QWidget):
             else lesson.tier_label
         )
 
-    def set_lesson(self, lesson: Lesson, *, has_previous: bool, has_next: bool) -> None:
-        """Display ``lesson`` and reset the working area."""
+    def _set_prerequisite_banner(self, gaps: list) -> None:
+        """Say which assumed concepts have not been started."""
+        if not gaps:
+            if self.prereq_banner is not None:
+                self.prereq_banner.setVisible(False)
+            return
+
+        # A plain string is a title; an object carries one in .title. Using
+        # getattr alone would find str.title - the method - and print it.
+        titles = ", ".join(
+            g if isinstance(g, str) else str(getattr(g, "title", g))
+            for g in gaps
+        )
+        plural = "s" if len(gaps) != 1 else ""
+        if self.prereq_banner is None:
+            self.prereq_banner = QLabel()
+            self.prereq_banner.setWordWrap(True)
+            self.prereq_banner.setStyleSheet(
+                f"background-color: {theme.WARNING_BG}; color: {theme.WARNING}; "
+                f"border: 1px solid {theme.BORDER}; border-radius: 6px; "
+                f"font-size: 11px; padding: 7px 10px;"
+            )
+            # Above the lesson body, where it cannot be scrolled past.
+            self.layout().insertWidget(1, self.prereq_banner)
+        self.prereq_banner.setText(
+            f"⚠  This lesson assumes {titles}, which you have not started yet. "
+            f"Going ahead is fine — but if something here does not make sense, "
+            f"that is probably why."
+        )
+        self.prereq_banner.setVisible(True)
+
+    def set_lesson(
+        self,
+        lesson: Lesson,
+        *,
+        has_previous: bool,
+        has_next: bool,
+        prerequisites: list | None = None,
+    ) -> None:
+        """Display ``lesson`` and reset the working area.
+
+        ``prerequisites`` lists the concepts this lesson assumes and that
+        the learner has not started. They are shown as a heads-up, not a
+        gate: the lesson is still open, because sometimes the fastest way
+        to learn the prerequisite is to meet it here.
+        """
         self.lesson = lesson
         self.title_label.setText(lesson.display_title)
         self._set_tier_badge(lesson)
+        self._set_prerequisite_banner(prerequisites or [])
         self.prev_button.setEnabled(has_previous)
         self.next_button.setEnabled(has_next)
 

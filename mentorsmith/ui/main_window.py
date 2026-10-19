@@ -203,6 +203,9 @@ class MainWindow(QMainWindow):
         #: Kept so the reply handler can read the token accounting the
         #: service recorded for the call that produced it.
         self._tutor_service:    TutorService | None = None
+        #: Mastery assessments from the last insights report, used to say
+        #: which prerequisites a lesson assumes are not yet met.
+        self._assessments:      dict = {}
         self._pending_rubric_exercise: str | None  = None
 
         self._apply_track("cpp")
@@ -506,10 +509,24 @@ class MainWindow(QMainWindow):
             lesson,
             has_previous=index.get(lesson_id, 0) > 0,
             has_next=index.get(lesson_id, -1) < len(self.lessons) - 1,
+            prerequisites=self._prerequisite_gaps(lesson_id),
         )
         self.complete_button_state()
         self.show_page(PAGE_LESSON)
         self.statusBar().showMessage(f"Opened {lesson.display_title}")
+
+    def _prerequisite_gaps(self, lesson_id: str) -> list:
+        """Concepts this lesson assumes that the learner has not started.
+
+        A heads-up rather than a lock. The lesson stays open, because the
+        fastest way to meet a prerequisite is often to run into it.
+        """
+        from ..services.insights import lesson_prerequisite_gaps
+
+        assessments = getattr(self, "_assessments", {}) or {}
+        if not assessments:
+            return []
+        return lesson_prerequisite_gaps(self.model, assessments, lesson_id)
 
     def complete_button_state(self) -> None:
         if not self.current_lesson_id:
@@ -594,6 +611,8 @@ class MainWindow(QMainWindow):
 
     def refresh_insights(self) -> None:
         report = build_report(self.database, self.model, self.bank, language=self.language)
+        # Kept so a lesson can say which assumed concepts are not yet met.
+        self._assessments = report.assessments
         self.insights.set_report(report, self.model)
         self.practice_view.set_recommendations(report.recommendations)
         self.projects_view.refresh(report.assessments)

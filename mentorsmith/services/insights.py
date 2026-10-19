@@ -40,6 +40,60 @@ NOT_EVIDENCE_NOTE = (
 
 
 @dataclass
+class PrerequisiteGap:
+    """A prerequisite of a lesson the learner has not reached."""
+
+    concept_id: str
+    title: str
+    #: The learner's label for the prerequisite concept.
+    label: str
+    #: The lesson that teaches it, if there is one.
+    lesson_id: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "concept_id": self.concept_id,
+            "title": self.title,
+            "label": self.label,
+            "lesson_id": self.lesson_id,
+        }
+
+
+def lesson_prerequisite_gaps(
+    model,
+    assessments: dict[str, MasteryAssessment],
+    lesson_id: str,
+) -> list[PrerequisiteGap]:
+    """Prerequisites of a lesson that the learner has not started.
+
+    "Not started" rather than "not mastered": a learner who has had a go at
+    pointers and got them wrong is in a much better position than one who has
+    never met them, and a warning that fires for both teaches people to
+    ignore it.
+    """
+    gaps: list[PrerequisiteGap] = []
+    for concept_id in model.concepts_for_lesson(lesson_id):
+        concept = model.get(concept_id)
+        if concept is None:
+            continue
+        for prereq_id in concept.prerequisites:
+            assessment = assessments.get(prereq_id)
+            label = assessment.label if assessment else "not_started"
+            if label != "not_started":
+                continue
+            prereq = model.get(prereq_id)
+            gaps.append(
+                PrerequisiteGap(
+                    concept_id=prereq_id,
+                    title=prereq.title if prereq else prereq_id,
+                    label=label,
+                    lesson_id=prereq.lesson_id if prereq else "",
+                )
+            )
+    return gaps
+
+
+@dataclass
 class ConceptRow:
     """One concept's state, for the dashboard table."""
 
