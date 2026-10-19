@@ -12,11 +12,13 @@ import os
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -24,6 +26,8 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -64,18 +68,55 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.settings = load_settings()
         self.setWindowTitle("MentorSmith settings")
-        self.setMinimumWidth(620)
         self._build_ui()
         self._load()
+        self._fit_to_screen()
+
+    def _fit_to_screen(self) -> None:
+        """Size the dialog to the screen and make sure it can be resized.
+
+        The content grew - a provider dropdown, a Detect button, key status and
+        a candidate-button row - and with no size management the dialog simply
+        grew past the bottom of the display. Save and Cancel were below the fold
+        and there was no way to reach them short of killing the process.
+        """
+        screen = QApplication.primaryScreen()
+        available = screen.availableGeometry() if screen else None
+        if available is None:
+            self.resize(680, 720)
+            return
+
+        # Aim for a comfortable default, then never exceed what fits.
+        width = min(720, max(620, available.width() - 120))
+        height = min(880, available.height() - 80)
+        self.resize(width, height)
+        self.setMinimumSize(560, 320)
 
     # ------------------------------------------------------------------
     def _build_ui(self) -> None:
         self.setStyleSheet(
             f"QDialog {{ background-color: {theme.SURFACE}; }}"
         )
-        layout = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setSpacing(12)
+        outer.setContentsMargins(16, 16, 16, 12)
+
+        # Everything between here and the button box lives inside a scroll
+        # area. The Save/Cancel row deliberately does *not*: a dialog whose
+        # only way to save is to scroll to the bottom is a dialog that looks
+        # broken on a short screen.
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet("background: transparent;")
+
+        content = QWidget()
+        content.setStyleSheet(f"background-color: {theme.SURFACE};")
+        layout = QVBoxLayout(content)
         layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setContentsMargins(4, 4, 8, 4)
 
         # ── Title ────────────────────────────────────────────────────────
         title = QLabel("Settings")
@@ -118,6 +159,11 @@ class SettingsDialog(QDialog):
         self.key_edit.setPlaceholderText("paste your key here")
         self.key_edit.setFixedHeight(34)
         self.key_edit.setText(load_api_key())
+        # Live feedback. Previously the status line was only computed when the
+        # dialog opened, so typing a key left a red "No key." sitting directly
+        # above a green "Detected OpenRouter" - two contradictory statements
+        # about the same field, both visible at once.
+        self.key_edit.textChanged.connect(self._on_key_text_changed)
         provider_form.addRow("API key:", self.key_edit)
 
         self.detect_button = QPushButton("Detect")
@@ -287,7 +333,12 @@ class SettingsDialog(QDialog):
         if cancel_btn:
             cancel_btn.setFixedHeight(36)
         buttons.addWidget(box)
-        layout.addLayout(buttons)
+
+        # Seal the scroll area, then pin the buttons below it so they stay on
+        # screen no matter how tall the form gets.
+        scroll.setWidget(content)
+        outer.addWidget(scroll, 1)
+        outer.addLayout(buttons)
 
         box.accepted.connect(self._on_save)
         box.rejected.connect(self.reject)
@@ -419,6 +470,52 @@ class SettingsDialog(QDialog):
             if item.widget() is not None:
                 item.widget().deleteLater()
 
+    def _on_key_text_changed(self, text: str) -> None:
+        """Keep the status honest about what is actually typed right now.
+
+        Three sources exist - typed-and-saved, typed-but-unsaved, and the
+        environment variable - and the line has to distinguish them, or "I
+        pasted a key and the app says there is none" becomes undebuggable.
+        """
+        typed = text.strip()
+        stored = load_api_key()
+        env = bool(os.environ.get(DEFAULT_KEY_ENV, "").strip())
+
+        if typed and typed == stored:
+            body = (
+                f"<span style='color:{theme.SUCCESS}'>Key saved.</span> "
+                f"Owner-only in <code>{secrets_path().name}</code>."
+            )
+        elif typed and env:
+            body = (
+                f"<span style='color:{theme.WARNING}'>Typed, not saved yet</span> "
+                f"— press Save to store it. ${DEFAULT_KEY_ENV} is also set and "
+                f"is currently being used."
+            )
+        elif typed:
+            body = (
+                f"<span style='color:{theme.WARNING}'>Typed, not saved yet</span> "
+                f"— press Save to store it. <code>Detect</code> will work "
+                f"before saving."
+            )
+        elif stored:
+            body = (
+                f"<span style='color:{theme.SUCCESS}'>A key is saved in "
+                f"<code>{secrets_path().name}</code>.</span>"
+            )
+        elif env:
+            body = (
+                f"<span style='color:{theme.SUCCESS}'>Using ${DEFAULT_KEY_ENV} "
+                f"from your shell.</span> Nothing is stored on disk."
+            )
+        else:
+            body = (
+                f"<span style='color:{theme.ERROR}'>No key.</span> Paste one "
+                f"above and press Save, or keep it out of the app and export "
+                f"<code>{DEFAULT_KEY_ENV}</code> in your shell."
+            )
+        self.key_status.setText(body)
+
     def _on_toggle_show_key(self, on: bool) -> None:
         self.key_edit.setEchoMode(
             QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password
@@ -426,48 +523,17 @@ class SettingsDialog(QDialog):
 
     def _on_forget_key(self) -> None:
         clear_api_key()
+        # Clearing the field fires textChanged, which refreshes the line.
         self.key_edit.clear()
-        self._refresh_key_status()
 
     def _refresh_key_status(self) -> None:
-        """Say where the key is, without ever showing it.
+        """Recompute the status line from the field as it stands now.
 
-        Three sources are possible and the user should be able to tell which
-        one is in play, because "I pasted a key and it is not being used" is
-        otherwise impossible to debug.
+        Deliberately delegates rather than reimplementing: two versions of the
+        same message is how the dialog ended up showing a stale red "No key."
+        next to a green "Detected OpenRouter".
         """
-        stored = load_api_key()
-        env = bool(os.environ.get(DEFAULT_KEY_ENV, "").strip())
-        try:
-            mode = oct(secrets_path().stat().st_mode & 0o777)
-        except OSError:
-            mode = None
-
-        if stored and env:
-            self.key_status.setText(
-                f"<span style='color:{theme.SUCCESS}'>Key saved in Settings</span> "
-                f"(takes precedence over ${DEFAULT_KEY_ENV}, which is also set)."
-            )
-        elif stored:
-            self.key_status.setText(
-                f"<span style='color:{theme.SUCCESS}'>Key saved in "
-                f"<code>{secrets_path().name}</code></span>"
-                + (f" (mode {mode})." if mode else ".")
-                + "<br>Owner-only. It is never written to settings.json or "
-                  "any log."
-            )
-        elif env:
-            self.key_status.setText(
-                f"<span style='color:{theme.SUCCESS}'>Key found in "
-                f"${DEFAULT_KEY_ENV} for this session.</span><br>"
-                "Nothing is stored on disk."
-            )
-        else:
-            self.key_status.setText(
-                f"<span style='color:{theme.ERROR}'>No key.</span><br>"
-                "Paste one above to store it here, or keep it out of the app "
-                f"and export <code>{DEFAULT_KEY_ENV}</code> in your shell."
-            )
+        self._on_key_text_changed(self.key_edit.text())
 
     def _refresh_sandbox_detail(self) -> None:
         import shutil

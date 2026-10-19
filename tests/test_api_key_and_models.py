@@ -420,3 +420,169 @@ class TestListModels:
             lambda *a, **k: (_ for _ in ()).throw(AssertionError("called anyway")),
         )
         assert provider.list_models() == []
+
+# ======================================================================
+# The settings dialog has to be usable
+# ======================================================================
+class TestSettingsDialogIsReachable:
+    """It grew tall enough to run off the bottom of the screen.
+
+    Save and Cancel ended up below the fold with no scroll bar and no way to
+    resize, so the only way out was to kill the process. A dialog nobody can
+    close is worse than no dialog.
+    """
+
+    @pytest.fixture()
+    def dialog(self, tmp_path, monkeypatch):
+        pytest.importorskip("PyQt6")
+        from PyQt6.QtWidgets import QApplication
+
+        monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+        app = QApplication.instance() or QApplication([])
+        import importlib
+
+        import mentorsmith.config as config
+
+        importlib.reload(config)
+        config.save_settings({})
+        from mentorsmith.ui.settings_dialog import SettingsDialog
+
+        widget = SettingsDialog()
+        widget.show()
+        app.processEvents()
+        yield widget, app
+        widget.deleteLater()
+
+    def test_it_fits_within_the_available_screen(self, dialog) -> None:
+        from PyQt6.QtWidgets import QApplication
+
+        widget, _app = dialog
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            return
+        available = screen.availableGeometry()
+        assert widget.height() <= available.height(), (
+            f"dialog is {widget.height()}px tall on a {available.height()}px screen"
+        )
+        assert widget.width() <= available.width()
+
+    def test_it_can_be_resized(self, dialog) -> None:
+        widget, _app = dialog
+        minimum = widget.minimumSize()
+        assert minimum.height() <= 400, (
+            f"minimum height {minimum.height()}px forces it off a short screen"
+        )
+        widget.resize(minimum.width(), minimum.height())
+        assert widget.height() == minimum.height()
+
+    def test_the_long_form_is_scrollable(self, dialog) -> None:
+        from PyQt6.QtWidgets import QScrollArea
+
+        widget, app = dialog
+        area = widget.findChild(QScrollArea)
+        assert area is not None, "no scroll area, so the bottom is unreachable"
+        assert area.widgetResizable()
+        app.processEvents()
+        if area.widget().sizeHint().height() > area.viewport().height():
+            assert area.verticalScrollBar().maximum() > 0, (
+                "content overflows but there is no scroll bar"
+            )
+
+    def test_save_and_cancel_are_on_screen_without_scrolling(self, dialog) -> None:
+        from PyQt6.QtCore import QPoint
+        from PyQt6.QtWidgets import QDialogButtonBox, QPushButton
+
+        widget, _app = dialog
+        box = widget.findChild(QDialogButtonBox)
+        assert box is not None
+        found = {}
+        for button in box.findChildren(QPushButton):
+            found[button.text().strip()] = button
+        assert {"Save", "Cancel"} <= set(found), f"only found {sorted(found)}"
+        for name in ("Save", "Cancel"):
+            position = found[name].mapTo(widget, QPoint(0, 0))
+            assert position.y() + found[name].height() <= widget.height(), (
+                f"{name} is below the bottom of the dialog"
+            )
+
+
+# ======================================================================
+# The status line must not contradict itself
+# ======================================================================
+class TestKeyStatusIsLive:
+    @pytest.fixture()
+    def dialog(self, tmp_path, monkeypatch):
+        pytest.importorskip("PyQt6")
+        from PyQt6.QtWidgets import QApplication
+
+        monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+        monkeypatch.delenv("MENTORSMITH_API_KEY", raising=False)
+        app = QApplication.instance() or QApplication([])
+        import importlib
+
+        import mentorsmith.config as config
+
+        importlib.reload(config)
+        config.save_settings({})
+        from mentorsmith.ui.settings_dialog import SettingsDialog
+
+        widget = SettingsDialog()
+        yield widget
+        widget.deleteLater()
+
+    def _status(self, dialog) -> str:
+        return dialog.key_status.text()
+
+    def test_an_empty_field_says_there_is_no_key(self, dialog) -> None:
+        assert "No key" in self._status(dialog)
+
+    def test_typing_updates_it_immediately(self, dialog) -> None:
+        """It used to be computed only on open, so the dialog showed a red
+        "No key." directly above a green "Detected OpenRouter" - two
+        contradictory statements about the same field, both on screen."""
+        dialog.key_edit.setText("sk-or-v1-abc")
+        assert "No key" not in self._status(dialog)
+
+    def test_a_typed_unsaved_key_is_distinguished_from_a_saved_one(
+        self, dialog
+    ) -> None:
+        dialog.key_edit.setText("sk-or-v1-abc")
+        assert "not saved" in self._status(dialog)
+
+    def test_a_saved_key_says_so(self, dialog) -> None:
+        import mentorsmith.config as config
+
+        config.save_api_key("sk-or-v1-abc")
+        dialog._refresh_key_status()
+        assert "saved" in self._status(dialog).lower()
+
+    def test_the_environment_is_reported_when_it_is_the_only_source(
+        self, dialog, monkeypatch
+    ) -> None:
+        monkeypatch.setenv("MENTORSMITH_API_KEY", "sk-env")
+        dialog._refresh_key_status()
+        assert "MENTORSMITH_API_KEY" in self._status(dialog)
+
+    def test_forgetting_clears_both_the_file_and_the_field(self, dialog) -> None:
+        import mentorsmith.config as config
+
+        config.save_api_key("sk-or-v1-abc")
+        dialog._on_forget_key()
+        assert config.load_api_key() == ""
+        assert not config.secrets_path().exists()
+        assert dialog.key_edit.text() == ""
+        assert "No key" in self._status(dialog)
+
+    def test_clearing_the_field_and_saving_deletes_the_stored_key(
+        self, dialog
+    ) -> None:
+        import mentorsmith.config as config
+
+        dialog.key_edit.setText("sk-or-v1-abc")
+        dialog._on_save()
+        assert config.load_api_key() == "sk-or-v1-abc"
+
+        dialog.key_edit.setText("")
+        dialog._on_save()
+        assert config.load_api_key() == ""
+        assert not config.secrets_path().exists()
