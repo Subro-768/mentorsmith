@@ -6,7 +6,7 @@
   (see "Why Phase 4 came before Phase 3" below).
 - Last updated: 2026-10-19
 - Branch / repository status: `master`, 13 commits, clean tree. No remote.
-- App launch status: **Launches on Fedora 44**, seven pages, verified by
+- App launch status: **Launches on Fedora 44**, ten pages, verified by
   constructing the window offscreen (`python3 main.py --check`) and by rendering
   every screen.
 - Android status: **APK builds and runs its unit tests.** No device or emulator
@@ -34,7 +34,7 @@ de-risked it: if the Android toolchain had failed on JDK 25 / AGP, Phases 2 and
 | After the §6 offline work | **627** | 4 |
 | After branding, install and Java track | 712 | 4 |
 | After the icon/analytics/theme fixes | 837 | 4 |
-| After the AI key, model picker, dialog and theory work | **944** | 4 |
+| After the AI key, model picker, dialog and theory work | **956** | 4 |
 
 All earlier tests still pass unchanged. Android adds **41** JVM unit tests.
 
@@ -85,7 +85,7 @@ planned:
 - **`core/curriculum_registry.py`** — one entry point per language. Hides the
   fact that C++'s data predates the per-language layout, so callers only ever
   ask for a language id.
-- **`lessons/<language>/`** — 42 Markdown files across four languages. Content
+- **`lessons/<language>/`** — 54 Markdown files across five languages. Content
   is never embedded in UI code.
 - **`execution/`** — introduced in Phase 4. `base.py` holds what is genuinely
   shared (tool detection, the process runner, POSIX resource limits, stoppable
@@ -209,12 +209,12 @@ but not auto-graded.
 
 - [x] Shared learning model; language-specific tooling. No differences abstracted
       away that actually matter.
-- [x] Execution adapters for all four languages, verified by *running* each one
+- [x] Execution adapters for all five languages, verified by *running* each one
 - [x] C++ curriculum preserved intact: still 16 lessons, 18 concepts, 53 exercises
 - [x] Python 9 lessons / 9 concepts / 12 exercises
 - [x] C 9 lessons / 9 concepts / 11 exercises
 - [x] JavaScript 8 lessons / 8 concepts / 11 exercises
-- [x] **42 lessons, 44 concepts, 87 exercises** total
+- [x] **54 lessons, 56 concepts, 102 exercises** total
 - [x] Schema v3 adds `language`; the same lesson id in two languages is two
       achievements, and v1/v2 data survives (tested against a hand-built v2 db)
 - [x] **Mastery never transfers between languages** — a C++ pointer label says
@@ -226,7 +226,7 @@ but not auto-graded.
 
 - [x] Kotlin + Compose app, builds to a 17.5 MB debug APK
 - [x] Room schema mirroring the desktop, `language` in every key
-- [x] Bundled curriculum for all four languages (exported, not copied by hand)
+- [x] Bundled curriculum for all five languages (exported, not copied by hand)
 - [x] Documents/offline-first: a row is `synced` only after server confirmation
 - [x] Sync queue with `local / pending / synced / conflict / failed`
 - [x] Sync contract documented in `docs/sync-contract.md`
@@ -409,7 +409,7 @@ Stated plainly because the distinction matters:
 
 **Verified by actually running the commands:**
 - `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL, `app-debug.apk`, 17.5 MB
-- The APK contains `assets/curriculum/{cpp,python,c,javascript}.json` (checked
+- The APK contains `assets/curriculum/{cpp,python,java,c,javascript}.json` (checked
   with `unzip -l`)
 - The manifest requests only `INTERNET` and `ACCESS_NETWORK_STATE`
 - `./gradlew :app:testDebugUnitTest` → 41 tests, 0 failures
@@ -535,7 +535,7 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
    gates Android tutor chat.
 3. Add a `/v1/tutor` proxy to `sync_server` so Android chat can work without ever
    shipping a key. This is the natural next endpoint and is deliberately absent.
-4. Review lesson content for technical accuracy. 42 lessons have been written and
+4. Review lesson content for technical accuracy. 54 lessons have been written and
    machine-checked for structure, but nobody has read them end to end.
 5. Then Phase 5 (`aihandoff_5.md`): git integration, project workspaces, AI code
    review, test generation, security audit and portfolio docs.

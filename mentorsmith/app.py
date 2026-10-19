@@ -14,6 +14,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from . import APP_NAME, ORG_NAME, __version__
+from .selfcheck import wants_self_check
 
 #: Directory holding the rendered logo PNGs. Generated from ``assets/logo.svg``
 #: by ``tools/build_icons.py``.
@@ -79,7 +80,19 @@ def build_window(app: QApplication | None = None):
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the application. Returns the process exit code."""
+    """Run the application. Returns the process exit code.
+
+    ``--check`` is honoured here as well as in ``main.py``, because this is what
+    the installed ``mentorsmith`` command calls. It used to be handled only by
+    ``main.py``, so ``mentorsmith --check`` ignored the flag and launched the
+    full GUI - which, with no display, sits in the event loop looking exactly
+    like a hang.
+    """
+    if wants_self_check(argv):
+        from .selfcheck import run_self_check
+
+        return run_self_check()
+
     app, window = build_window(create_application(argv))
     window.show()
     return app.exec()

@@ -8,15 +8,15 @@ and runtime output, then pairs each lesson with an AI tutor that supports three
 levels of help. On top of that it tracks *evidence* of understanding rather than
 what you clicked, and adapts what it gives you next.
 
-**Four tracks: C++, Python, C and JavaScript.** 42 lessons, 44 concepts,
-87 exercises. Plus an Android companion and developer tooling.
+**Five tracks: C++, Python, Java, C and JavaScript.** 54 lessons, 56 concepts,
+102 exercises. Plus an Android companion and developer tooling.
 
 ---
 
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 576 automated tests. It has **not** been
+and its behaviour is covered by 956 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 944 tests
+python3 -m pytest tests/ -q                       # 956 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -189,10 +189,10 @@ Python, and reading one track after another quietly teaches the wrong thing.
 
 ### Adaptive practice
 
-- **44 concepts** with an explicit prerequisite graph, held as structured data
+- **56 concepts** with an explicit prerequisite graph, held as structured data
   and validated on load (unknown references and prerequisite cycles fail at
   startup).
-- **87 exercises across 8 types**: predict-output, find-a-bug, complete-code,
+- **102 exercises across 8 types**: predict-output, find-a-bug, complete-code,
   write-a-function, explain-code, modify-code, solve-without-AI, and
   compare-implementations. Every concept has at least one.
 - **Deterministic grading where possible.** Code exercises are compiled or run,
