@@ -5,6 +5,10 @@ order: 1
 lesson_id: 01-program-structure
 summary: The original C translation model, macros, headers, object files, and the ABI.
 tags: c, compilation, preprocessor, abi
+source_book: Programming in ANSI C
+source_author: Ray Dawson
+source_chapter: Section 1
+source_page: 12
 ---
 
 # 1. C Architecture, Preprocessing & Linking

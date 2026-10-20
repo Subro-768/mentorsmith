@@ -5,6 +5,10 @@ order: 8
 lesson_id: 08-memory
 summary: malloc, calloc, realloc, free, heap fragmentation, and valgrind memory auditing.
 tags: memory, malloc, free, heap, valgrind
+source_book: Programming in ANSI C
+source_author: Ray Dawson
+source_chapter: Section 11
+source_page: 106
 ---
 
 # 8. Dynamic Memory Allocation & Heap Management

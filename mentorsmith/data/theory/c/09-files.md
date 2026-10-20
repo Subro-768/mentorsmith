@@ -5,6 +5,10 @@ order: 9
 lesson_id: 09-files
 summary: C stdio FILE* streams, POSIX open/read/write/close, and buffering strategies.
 tags: files, stdio, posix, io
+source_book: Programming in ANSI C
+source_author: Ray Dawson
+source_chapter: Section 12
+source_page: 112
 ---
 
 # 9. File I/O, Buffering & POSIX File Descriptors

@@ -37,6 +37,21 @@ BOOKS: dict[str, dict[str, str]] = {
         "edition": "First Edition",
         "publisher": "Emperor Research Foundation (Mayas Publication)",
     },
+    "c": {
+        "title": "Programming in ANSI C",
+        "author": "Ray Dawson",
+        "edition": "Third Edition",
+        "publisher": "Group D Publications",
+    },
+}
+
+#: The book the exam answer key was written against. Recorded because the
+#: key is a derived artefact and the learner is entitled to know what it was
+#: derived from.
+ANSWER_KEY_REFERENCE = {
+    "title": "The C Programming Language",
+    "author": "Brian Kernighan and Dennis Ritchie",
+    "edition": "Second Edition",
 }
 
 #: Where a learner's copy of the book might be, in order of preference.

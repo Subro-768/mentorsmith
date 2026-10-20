@@ -5,6 +5,10 @@ order: 3
 lesson_id: 03-conditions-and-loops
 summary: Zero as false, while/do-while/for equivalence, and break/continue in C.
 tags: branching, conditions, loops, control-flow
+source_book: Programming in ANSI C
+source_author: Ray Dawson
+source_chapter: Section 6
+source_page: 48
 ---
 
 # 3. Structured Control Flow & Branching Mechanics

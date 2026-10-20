@@ -182,11 +182,15 @@ Python, and reading one track after another quietly teaches the wrong thing.
   the lesson, covering the same ground at a different pace. 63 chapters
   across the five languages, each with examples, common mistakes, review
   questions and a practice task.
-- The Java and C++ chapters are written to accompany two textbooks that sit
-  in this project under `theory/`:
+- The Java, C++ and C chapters are written to accompany three textbooks
+  that sit on this machine under `theory/`:
   - *Programming with Java: A Primer*, E. Balagurusamy (3rd edition)
   - *Object Oriented Programming with C++*, Dhamodharan G, Balasubramanian
     and Priya K
+  - *Programming in ANSI C*, Ray Dawson (3rd edition) — the PPS course
+    textbook
+  - and *The C Programming Language*, Kernighan & Ritchie (2nd edition),
+    which the exam answer key was written against
 - Each chapter names the book section it follows and the **page** it starts
   on, so the two can be read side by side. The **Open in book** button
   opens your own copy of the PDF at that page.

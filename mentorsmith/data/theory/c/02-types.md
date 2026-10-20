@@ -5,6 +5,10 @@ order: 2
 lesson_id: 02-types
 summary: Two's complement, integer promotion, storage classes (static, extern), and limits.h.
 tags: types, storage-classes, integers, twocomplement
+source_book: Programming in ANSI C
+source_author: Ray Dawson
+source_chapter: Section 2
+source_page: 15
 ---
 
 # 2. Types, Storage Classes & Word Representation

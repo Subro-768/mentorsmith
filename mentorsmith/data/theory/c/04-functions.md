@@ -5,6 +5,10 @@ order: 4
 lesson_id: 04-functions
 summary: System V AMD64 calling convention, stack frame layout, and return mechanisms.
 tags: functions, callstack, abi, registers
+source_book: Programming in ANSI C
+source_author: Ray Dawson
+source_chapter: Section 9
+source_page: 73
 ---
 
 # 4. Functions, Call Stacks & ABI Standards

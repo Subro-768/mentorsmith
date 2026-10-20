@@ -5,6 +5,10 @@ order: 7
 lesson_id: 07-structures
 summary: Struct memory layouts, offsetof macro, union memory sharing, and bitfields.
 tags: structs, unions, bitfields, offsetof
+source_book: Programming in ANSI C
+source_author: Ray Dawson
+source_chapter: Section 8
+source_page: 63
 ---
 
 # 7. Structures, Unions, Alignment & Bitfields
