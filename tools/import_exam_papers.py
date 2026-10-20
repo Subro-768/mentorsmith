@@ -460,7 +460,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--folder", help="Folder of papers to import.")
     parser.add_argument(
-        "--course", default="21css101j-pps", help="Course id to file them under."
+        "--course", default="26cse1002j-pps",
+        help="Course id to file them under. The default is the course in the "
+             "catalogue; the papers carry the previous regulation's code, "
+             "which the course record also lists.",
     )
     parser.add_argument(
         "--dry-run", action="store_true",

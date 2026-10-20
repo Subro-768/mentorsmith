@@ -227,18 +227,59 @@ class TestTheCatalogue:
         assert courses, "the catalogue is empty"
 
     def test_the_shipped_course_is_the_one_in_the_papers(self) -> None:
-        """Course code and title are read from the paper headers."""
+        """Course code and title, read from the official syllabus."""
         courses = load_courses()
         course = courses[0]
-        assert course.course_code == "21CSS101J"
+        assert course.course_code == "26CSE1002J"
         assert course.title == "Programming for Problem Solving"
         assert course.institution.startswith("SRM Institute")
         assert course.semester == "I / I"
 
-    def test_it_does_not_claim_more_than_it_knows(self) -> None:
-        """The course is not verified, because nobody has checked it."""
+    def test_it_records_the_earlier_code_the_papers_carry(self) -> None:
+        """The papers predate the 2026 regulation, and the code changed."""
         course = load_courses()[0]
-        assert course.verification_status == PENDING_REVIEW
+        assert "21CSS101J" in course.previous_course_codes
+        assert course.course_code != "21CSS101J"
+
+    def test_it_names_the_regulation_and_its_approval(self) -> None:
+        course = load_courses()[0]
+        assert "2026" in course.regulation
+        assert course.academic_council
+
+    def test_it_records_the_course_structure(self) -> None:
+        course = load_courses()[0]
+        assert course.credits == 3
+        assert course.lecture_hours == 2
+        assert course.tutorial_hours == 0
+        assert course.practical_hours == 2
+        assert course.sessions_per_unit == 12
+
+    def test_it_records_the_assessment_split(self) -> None:
+        """The syllabus states it, so it is not left blank."""
+        course = load_courses()[0]
+        assessment = course.assessment
+        assert assessment["continuous_assessment_percent"] == 50
+        assert assessment["summative_final_percent"] == 50
+        assert assessment["ca1_written_test_percent"] == 15
+        assert assessment["ca2_written_test_or_examination_percent"] == 15
+        assert assessment["ca3_practice_percent"] == 20
+        assert assessment["final_theory_percent"] == 30
+        assert assessment["final_practice_percent"] == 30
+
+    def test_it_records_the_learning_outcomes(self) -> None:
+        course = load_courses()[0]
+        assert len(course.outcomes) == 5
+        assert all(o.startswith("CLO-") for o in course.outcomes)
+
+    def test_it_records_the_references(self) -> None:
+        course = load_courses()[0]
+        assert course.references
+        assert any("NPTEL" in r for r in course.references)
+
+    def test_it_is_verified_because_the_syllabus_verifies_it(self) -> None:
+        """An official syllabus is what a verified course needs."""
+        course = load_courses()[0]
+        assert course.verification_status == VERIFIED
 
     def test_its_topics_have_sources(self) -> None:
         for topic in load_courses()[0].topics:

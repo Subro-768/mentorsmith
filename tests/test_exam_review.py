@@ -36,7 +36,7 @@ def _question(**kwargs) -> ExamQuestion:
         "id": "q1",
         # The course id the catalogue actually uses, so the screen's
         # review queue finds these questions.
-        "course_id": "21css101j-pps",
+        "course_id": "26cse1002j-pps",
         "question_text": "Which of the following is valid?",
         "question_type": "MCQ",
         "options": ["int age;", "float rate;"],
@@ -150,7 +150,7 @@ class TestTheServiceRefusesToMarkAnUngradableQuestion:
         db.connect()
         service = ExamPrepService(db)
         session = service.start_session(
-            service.questions("21css101j-pps"), "21css101j-pps"
+            service.questions("26cse1002j-pps"), "26cse1002j-pps"
         )
         result = service.submit(session, "int age;")
         assert result.correct is None
@@ -167,7 +167,7 @@ class TestTheServiceRefusesToMarkAnUngradableQuestion:
         db.connect()
         service = ExamPrepService(db)
         session = service.start_session(
-            service.questions("21css101j-pps"), "21css101j-pps"
+            service.questions("26cse1002j-pps"), "26cse1002j-pps"
         )
         result = service.submit(session, "int age;")
         assert result.correct is True

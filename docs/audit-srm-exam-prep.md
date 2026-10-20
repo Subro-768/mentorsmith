@@ -56,16 +56,19 @@ followed the findings.
 - **The Android app has never been run.** It builds; 41 JVM tests pass; no
   device or emulator test exists, because this machine had no system images
   or `cmdline-tools`.
-- **The exam-prep course catalogue is `PENDING_REVIEW`.** Its fields are
-  read from paper headers and course material, but nobody has checked them
-  against official SRM material.
+- **The exam-prep course catalogue is verified** - the learner supplied the
+  official syllabus (*Regulations 2026, Vol 2*) and the course entry is
+  taken from it. The *questions* are all still `PENDING_REVIEW`.
 - **Every extracted question is `PENDING_REVIEW`.** 356 questions; none has
   been compared with its paper by a human yet.
-- **The end-semester exam pattern is unknown.** Only the Cycle Test header
-  (25 marks, 50 min, Part A 10 × 1) is stated in the material. The
-  "Exam Strategies" document supplied says in terms that the Part B and C
-  formats are *not confirmed*, so no end-semester format is asserted
-  anywhere in the app.
+- **The end-semester exam pattern is unknown.** The official syllabus
+  states the *assessment* split - CA 50% (written test 15%, written
+  test/examination 15%, practice 20%) and a summative final 50% (theory
+  30%, practice 30%) - but **no question-paper pattern**. The only pattern
+  available is the Cycle Test header on the CT papers (25 marks, 50 min,
+  Part A 10 × 1), and the "Exam Strategies" document supplied says in terms
+  that the Part B and C formats are *not confirmed*. So no end-semester
+  format is asserted anywhere in the app.
 
 ## 4. Broken or missing
 

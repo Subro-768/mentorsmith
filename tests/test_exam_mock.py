@@ -22,7 +22,7 @@ from mentorsmith.core.db import Database
 from mentorsmith.core.exam import ExamQuestion, PENDING_REVIEW, VERIFIED_PYQ
 from mentorsmith.services.exam_prep import ExamPrepService
 
-COURSE = "21css101j-pps"
+COURSE = "26cse1002j-pps"
 
 
 def _question(index: int) -> ExamQuestion:
@@ -202,13 +202,13 @@ class TestTheScreen:
     def test_the_resume_button_appears_when_there_is_a_session(
         self, view
     ) -> None:
-        mock = view.service.start_mock("21css101j-pps", count=3)
+        mock = view.service.start_mock("26cse1002j-pps", count=3)
         view.service.save_session(mock)
         view._offer_resume()
         assert view.resume_button.isVisibleTo(view) is True
 
     def test_resuming_picks_the_session_up(self, view) -> None:
-        mock = view.service.start_mock("21css101j-pps", count=3)
+        mock = view.service.start_mock("26cse1002j-pps", count=3)
         view.service.save_session(mock)
         view.resume_session()
         assert view.session is not None

@@ -172,6 +172,15 @@ class ExamPrepView(QWidget):
         header.addWidget(self.import_hint)
         root.addLayout(header)
 
+        # The course record: what the official syllabus actually says.
+        self.course_info = QLabel("")
+        self.course_info.setObjectName("muted")
+        self.course_info.setWordWrap(True)
+        self.course_info.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        root.addWidget(self.course_info)
+
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setHandleWidth(1)
 
@@ -390,6 +399,7 @@ class ExamPrepView(QWidget):
             self._show_empty()
             return
         course = self.service.course(self.course_id)
+        self._show_course_info(course)
         self.unit_combo.blockSignals(True)
         self.unit_combo.clear()
         self.unit_combo.addItem("All units", None)
@@ -400,6 +410,42 @@ class ExamPrepView(QWidget):
         self.unit_combo.blockSignals(False)
         self.refresh_questions()
         self._offer_resume()
+
+    def _show_course_info(self, course) -> None:
+        """Show what the official syllabus says about the course.
+
+        The old course code is shown next to the current one, because the
+        papers the learner has carry the old one and a student looking at
+        a 2021 paper should be able to see it is the same course.
+        """
+        if course is None:
+            self.course_info.setText("")
+            return
+        bits = []
+        if course.course_code:
+            bits.append(f"Course code <b>{course.course_code}</b>")
+        if course.previous_course_codes:
+            older = ", ".join(course.previous_course_codes)
+            bits.append(f"earlier code {older}")
+        if course.regulation:
+            bits.append(course.regulation)
+        if course.academic_council:
+            bits.append(f"approved {course.academic_council}")
+        if course.category or course.credits is not None:
+            detail = " · ".join(
+                part for part in (
+                    course.category,
+                    f"{course.credits} credits" if course.credits else "",
+                    f"L{course.lecture_hours} T{course.tutorial_hours} "
+                    f"P{course.practical_hours}" if course.lecture_hours else "",
+                ) if part
+            )
+            bits.append(detail)
+        if course.sessions_per_unit:
+            bits.append(f"{course.sessions_per_unit} sessions per unit")
+        if course.exam_pattern:
+            bits.append(f"Assessment: {course.exam_pattern}")
+        self.course_info.setText("  ·  ".join(bits))
 
     def _show_empty(self) -> None:
         """An empty state, not a fabricated course."""

@@ -2,73 +2,115 @@
  "_comment": [
   "The exam-preparation course catalogue.",
   "",
-  "Every field here is read from a document the learner supplied, and the",
-  "source is recorded so somebody can check it. Nothing is inferred: a fact",
-  "no source states is left empty.",
+  "Every field here is read from an official SRMIST document the learner",
+  "supplied, and the source is recorded so somebody can check it. Nothing",
+  "is inferred: a fact no source states is left empty.",
+  "",
+  "The syllabus is the 2026 regulation. The papers the learner supplied are",
+  "from the earlier regulation and carry the old course code, so both codes",
+  "are recorded and the difference is shown rather than smoothed over.",
   "",
   "The question bank is NOT here. Past papers and question banks are the",
   "learner's own material and are not ours to redistribute, so the bank",
   "lives in the app's data directory and is written by",
-  "tools/import_exam_papers.py.",
-  "",
-  "The course record is 'PENDING_REVIEW' rather than 'VERIFIED': the fields",
-  "are sourced, but nobody has yet checked this catalogue against official",
-  "SRM material. The importer, not this file, produces the questions."
+  "tools/import_exam_papers.py."
  ],
  "courses": [
   {
-   "id": "21css101j-pps",
+   "id": "26cse1002j-pps",
    "title": "Programming for Problem Solving",
+   "course_code": "26CSE1002J",
+   "previous_course_codes": [
+    "21CSS101J"
+   ],
    "institution": "SRM Institute of Science and Technology",
    "campus": "Kattankulathur (KTR)",
-   "programme": "B.Tech",
+   "programme": "B.Tech / M.Tech (Integrated)",
    "branch": "All Branches",
    "semester": "I / I",
-   "course_code": "21CSS101J",
-   "syllabus_source": "Unit-wise course material supplied by the learner (PPS UNIT I-V notes, slides and the course question bank). This is the course's own teaching material, not an official published syllabus.",
-   "syllabus_version": "Course code 21CSS101J (2021 regulation). Some of the supplied material carries the earlier code 18CSS101J, so both appear; the papers themselves use 21CSS101J.",
-   "exam_pattern": "Cycle Test I: 25 marks, 50 minutes, Part A = 10 x 1 mark MCQ, plus Part B. Read from the CT-1 paper headers. The end-semester pattern (75 marks / 3 hours / Part A 20 x 1) was read from a scanned paper and is NOT yet confirmed.",
-   "marks": 25,
-   "duration_minutes": 50,
-   "source_files": [
-    "examprep for srm ktr/pps/pyqs and questions and theory/CT 1 Set 3.pdf",
-    "examprep for srm ktr/pps/pyqs and questions and theory/CT 1 Set 4.pdf",
-    "examprep for srm ktr/pps/pyqs and questions and theory/Important Questions.pdf",
-    "examprep for srm ktr/pps/pyqs and questions and theory/Question Bank with MCQs.pdf"
+   "regulation": "B.Tech / M.Tech (Integrated) Regulations 2026, Volume 2 - Syllabi for First Year Courses",
+   "academic_council": "62nd Academic Council Meeting, 07/03/2026",
+   "syllabus_source": "Official SRMIST academic curriculum PDF supplied by the learner: 'Academic Curricula, Undergraduate/Integrated and Postgraduate Degree Programmes (Choice Based Flexible Credit System), Regulations 2026, Volume 2'. The course entry is on printed page 62 (PDF page 62).",
+   "syllabus_version": "Regulations 2026, approved by the 62nd Academic Council on 07/03/2026",
+   "department": "Computational Intelligence (School of Computing)",
+   "category": "Discipline Courses (B/E/C)",
+   "credits": 3,
+   "lecture_hours": 2,
+   "tutorial_hours": 0,
+   "practical_hours": 2,
+   "sessions_per_unit": 12,
+   "exam_pattern": "Continuous assessment 50% (CA-1 written test 15%, CA-2 written test or examination 15%, CA-3 practice 20%) and a summative final examination 50% (theory 30%, practice 30%). The syllabus states the assessment split and the Bloom-level distribution; it does not state a question-paper pattern, so none is asserted here.",
+   "assessment": {
+    "continuous_assessment_percent": 50,
+    "summative_final_percent": 50,
+    "ca1_written_test_percent": 15,
+    "ca2_written_test_or_examination_percent": 15,
+    "ca3_practice_percent": 20,
+    "final_theory_percent": 30,
+    "final_practice_percent": 30,
+    "bloom_levels": "Remember 30%, Understand 30%, Apply and Analyze 70/70/40/70%, Evaluate and Create 30%",
+    "cla_mapping": "CLA-1 covers Units I to II, CLA-2 covers Units III to V, CLA-3 covers Units I to V"
+   },
+   "outcomes": [
+    "CLO-1 Implement decision constructs to solve programming problems.",
+    "CLO-2 Apply functions and recursion to solve subproblems.",
+    "CLO-3 Use arrays, strings, and loops to solve problems.",
+    "CLO-4 Analyze and apply iterative-recursive logic efficiently.",
+    "CLO-5 Use structures and dynamic memory to manage heterogeneous and large input data."
    ],
-   "verification_status": "PENDING_REVIEW",
+   "rationale": [
+    "CLR-1 Develop logical decision-making skills for programming.",
+    "CLR-2 Promote problem decomposition and modular program design.",
+    "CLR-3 Build foundational skills in data storage and iteration.",
+    "CLR-4 Strengthen problem-solving through nested loops and recursion.",
+    "CLR-5 Integrate structures, memory management, and file handling."
+   ],
+   "references": [
+    "R. G. Dromey, How to Solve It by Computer, Pearson, 2020",
+    "Jeri R. Hanly and Elliot B. Koffman, Problem Solving and Program Design in C, Pearson, 2023",
+    "Behrouz A. Forouzan and Richard F. Gilberg, C: A Problem-Solving Approach, Cengage, 2023",
+    "Greg Perry and Dean Miller, C Programming Absolute Beginner's Guide, Pearson, 2023",
+    "H. S. Natarajan, The Art of Problem Solving with C, PHI Learning, 2021",
+    "Prof. Satyadev Nandakumar and Team (IIT Madras), NPTEL - Problem Solving Through Programming in C",
+    "S. Sridhar, S. S. Sridhar and V. M. Hariharan, Problem Solving and Programming in C, Pearson, 2025"
+   ],
+   "source_files": [
+    "examprep for srm ktr/syllabus.pdf (official, Regulations 2026, course page 62)",
+    "examprep for srm ktr/pps/pyqs and questions and theory/ (past papers and question banks, carrying the earlier course code)"
+   ],
+   "verification_status": "VERIFIED",
    "last_reviewed": "2026-10-20",
-   "notes": "The unit titles below are verbatim from the course's own unit material. The supplied 'Exam Strategies For PPS' document itself says the Part B and Part C formats are NOT CONFIRMED, so no end-semester pattern is asserted here beyond the CT-1 header. CLO-1 as printed on the CT paper: 'To solve problems through computer programming. Express the basic data types and variables in C.'",
+   "notes": "The course code changed between regulations: the syllabus the learner supplied is Regulations 2026 and uses 26CSE1002J, while the past papers carry 21CSS101J from the earlier regulation. Both are recorded. The unit titles below are descriptive labels derived from the official session-by-session content; the official syllabus names the units only as 'Unit 1' to 'Unit 5' and does not give them titles. The unit numbering on the older papers does not map one-to-one onto the 2026 units, so a question's unit is recorded as the paper stated it and is not translated. The end-semester question-paper pattern is not in the syllabus: the only pattern available is the Cycle Test header on the CT papers - 25 marks, 50 minutes, Part A 10 x 1 - which is a cycle test, not the end-semester paper.",
    "topics": [
     {
      "id": "u1",
-     "title": "Introduction",
+     "title": "Fundamentals of C: types, expressions and decision-making",
      "unit": 1,
-     "source": "PPS UNIT I.docx (course material supplied by the learner)"
+     "source": "Regulations 2026 syllabus, Unit 1, sessions 1-12"
     },
     {
      "id": "u2",
-     "title": "Decision Making and Branching",
+     "title": "Problem decomposition, functions and modular design",
      "unit": 2,
-     "source": "PPS UNIT II.docx (course material supplied by the learner)"
+     "source": "Regulations 2026 syllabus, Unit 2, sessions 1-12"
     },
     {
      "id": "u3",
-     "title": "Strings",
+     "title": "Arrays, strings, pointers and recursion",
      "unit": 3,
-     "source": "PPS UNIT III.docx (course material supplied by the learner)"
+     "source": "Regulations 2026 syllabus, Unit 3, sessions 1-12"
     },
     {
      "id": "u4",
-     "title": "Basics of Python",
+     "title": "Nested loops, sorting, searching and memory use",
      "unit": 4,
-     "source": "PPS UNIT IV.docx (course material supplied by the learner)"
+     "source": "Regulations 2026 syllabus, Unit 4, sessions 1-12"
     },
     {
      "id": "u5",
-     "title": "Python Libraries",
+     "title": "Structures, dynamic memory and file handling",
      "unit": 5,
-     "source": "PPS UNIT V.docx (course material supplied by the learner)"
+     "source": "Regulations 2026 syllabus, Unit 5, sessions 1-12"
     }
    ]
   }

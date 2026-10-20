@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1354 automated tests. It has **not** been
+and its behaviour is covered by 1362 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1354 tests
+python3 -m pytest tests/ -q                       # 1362 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -281,10 +281,23 @@ confirmed the wording, the answer and the marks.
 
 ### What ships and what does not
 
-The **course catalogue** ships: the course code, title, branch, semester,
-unit outline and the exam pattern, each field traced to the document it was
-read from. The **questions do not** — past papers and question banks are
-your own material, and they are not ours to redistribute. They are
+The **course catalogue** ships, and it is taken from the **official
+syllabus** — *Academic Curricula … Regulations 2026, Volume 2*, the
+Programming for Problem Solving entry on page 62:
+
+| | |
+|---|---|
+| Course code | `26CSE1002J` (the papers carry the earlier `21CSS101J`) |
+| Programme | B.Tech / M.Tech (Integrated), All Branches, semester I/I |
+| Structure | 5 units × 12 sessions · L2 T0 P2 · 3 credits |
+| Department | Computational Intelligence (SoC) |
+| Assessment | CA 50% (written test 15% + written test/exam 15% + practice 20%), final 50% (theory 30% + practice 30%) |
+| Approved | 62nd Academic Council, 07/03/2026 |
+
+The unit outline, the five course learning outcomes, the course rationale
+and the prescribed references are all in the catalogue, each traced to the
+syllabus. The **questions do not ship** — past papers and question banks
+are your own material, and they are not ours to redistribute. They are
 extracted from your copies into your own copy of the app:
 
 ```bash
@@ -295,6 +308,12 @@ python3 tools/import_exam_papers.py --report     # what still needs a human
 The importer never modifies the text, never invents an answer key, and
 never marks anything as verified. A scanned paper with no text layer is
 reported as needing OCR rather than silently producing nothing.
+
+**On the unit numbers.** The syllabus names the units only as "Unit 1" to
+"Unit 5" and gives no titles, so the app's unit titles are descriptive
+labels derived from the official session content. The papers predate the
+2026 regulation and their unit numbering does not map one-to-one onto the
+2026 units, so a question keeps the unit its own paper stated.
 
 ### Checking a question against your paper
 
@@ -714,9 +733,9 @@ the optional backend instead, which holds the key server-side. See
   question banks have a text layer and imported cleanly. The PYQ scans have
   none: they need OCR, and there is no OCR toolchain in this project, so
   they are reported as such rather than being guessed at.
-- **The course record is not verified.** Its fields are read from paper
-  headers, but nobody has checked the catalogue against official SRM
-  material, so it says `PENDING_REVIEW`.
+- **The course record is verified** — it comes from the official syllabus.
+  The *questions* are not: all 356 are still `PENDING_REVIEW`, because
+  nobody has compared them with their papers yet.
 - Tutor chat on Android is disabled: an APK is not a secret store, so the key
   must live on a backend. See [docs/sync-contract.md](docs/sync-contract.md).
 - The sync backend has **no authentication**. Anyone who can reach the port can

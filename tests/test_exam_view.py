@@ -23,7 +23,7 @@ from mentorsmith.core.exam import (
 def _question(**kwargs) -> ExamQuestion:
     base = {
         "id": "q1",
-        "course_id": "21css101j-pps",
+        "course_id": "26cse1002j-pps",
         "question_text": "Which of the following is a valid C variable name?",
         "question_type": "MCQ",
         "options": ["int age;", "float rate;", "int $x;"],
@@ -79,7 +79,17 @@ def view(qapp, database, tmp_path, monkeypatch):
 class TestTheLabels:
     def test_the_course_is_listed(self, view) -> None:
         assert view.course_combo.count() >= 1
-        assert "21CSS101J" in view.course_combo.currentText()
+        assert "26CSE1002J" in view.course_combo.currentText()
+
+    def test_the_official_course_details_are_shown(self, view) -> None:
+        """The syllabus facts, so a student can check them against it."""
+        info = view.course_info.text()
+        assert "26CSE1002J" in info
+        assert "21CSS101J" in info, "the code the papers carry is not shown"
+        assert "2026" in info
+
+    def test_the_verified_course_does_not_say_it_is_unverified(self, view) -> None:
+        assert "not yet verified" not in view.course_combo.currentText()
 
     def test_the_questions_are_listed(self, view) -> None:
         assert view.question_list.count() == 2
@@ -150,7 +160,7 @@ class TestASession:
         """Both questions lose their key, so nothing in the session grades."""
         import mentorsmith.core.exam as exam
 
-        questions = exam.load_questions("21css101j-pps")
+        questions = exam.load_questions("26cse1002j-pps")
         for question in questions:
             question.answer = ""
         exam.save_questions(questions)

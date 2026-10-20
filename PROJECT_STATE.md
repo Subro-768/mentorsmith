@@ -546,11 +546,18 @@ Built to a handoff brief. The design is driven by one rule: a student must
 always be able to tell what a question is.
 
 - **Catalogue** (`mentorsmith/data/exam/courses.json`): one course,
-  `21CSS101J Programming for Problem Solving`, B.Tech (All Branches),
-  semester I/I, SRMIST KTR. Every field read from the paper headers or the
-  course's own unit material, with the source recorded. The record is
-  `PENDING_REVIEW`, not `VERIFIED`: nobody has checked it against official
-  SRM material.
+  `26CSE1002J Programming for Problem Solving`, B.Tech / M.Tech
+  (Integrated), All Branches, semester I/I, SRMIST KTR. Taken from the
+  **official syllabus** - *Academic Curricula, Regulations 2026, Volume 2*,
+  course entry on page 62, approved by the 62nd Academic Council on
+  07/03/2026. The course code changed between regulations: the syllabus is
+  2026 and uses `26CSE1002J`, while the learner's papers carry
+  `21CSS101J` from the earlier regulation. Both are recorded, and the
+  older one is shown in the app next to the current one.
+  Assessment, from the same page: CA 50% - CA-1 written test 15%, CA-2
+  written test or examination 15%, CA-3 practice 20% - and a summative
+  final 50% split theory 30% / practice 30%. The syllabus states **no
+  question-paper pattern**, so none is asserted.
 - **Question bank** (`mentorsmith/core/exam.py`): every question carries
   `source_type` (VERIFIED_PYQ / OFFICIAL_SAMPLE / ORIGINAL_PRACTICE /
   PREDICTED_PRACTICE) *and* `verification_status` (PENDING_REVIEW /

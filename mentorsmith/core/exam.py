@@ -196,13 +196,31 @@ class Course:
     semester: str = ""
     #: Only when the source states it.
     course_code: str = ""
+    #: Earlier codes for the same course, when the regulation changed.
+    previous_course_codes: list[str] = field(default_factory=list)
+    #: The regulations this course record is taken from.
+    regulation: str = ""
+    academic_council: str = ""
     #: The syllabus or course outline this was built from.
     syllabus_source: str = ""
     syllabus_version: str = ""
-    #: The exam pattern, only when a paper states it.
+    department: str = ""
+    category: str = ""
+    credits: int | None = None
+    lecture_hours: int | None = None
+    tutorial_hours: int | None = None
+    practical_hours: int | None = None
+    sessions_per_unit: int | None = None
+    #: The exam pattern, only when a source states it.
     exam_pattern: str = ""
     marks: int | None = None
     duration_minutes: int | None = None
+    #: The assessment split, as the syllabus states it.
+    assessment: dict = field(default_factory=dict)
+    #: The course learning outcomes, verbatim.
+    outcomes: list[str] = field(default_factory=list)
+    rationale: list[str] = field(default_factory=list)
+    references: list[str] = field(default_factory=list)
     #: Provenance for the course record itself.
     source_files: list[str] = field(default_factory=list)
     verification_status: str = PENDING_REVIEW
@@ -220,11 +238,25 @@ class Course:
             "branch": self.branch,
             "semester": self.semester,
             "course_code": self.course_code,
+            "previous_course_codes": list(self.previous_course_codes),
+            "regulation": self.regulation,
+            "academic_council": self.academic_council,
             "syllabus_source": self.syllabus_source,
             "syllabus_version": self.syllabus_version,
+            "department": self.department,
+            "category": self.category,
+            "credits": self.credits,
+            "lecture_hours": self.lecture_hours,
+            "tutorial_hours": self.tutorial_hours,
+            "practical_hours": self.practical_hours,
+            "sessions_per_unit": self.sessions_per_unit,
             "exam_pattern": self.exam_pattern,
             "marks": self.marks,
             "duration_minutes": self.duration_minutes,
+            "assessment": dict(self.assessment),
+            "outcomes": list(self.outcomes),
+            "rationale": list(self.rationale),
+            "references": list(self.references),
             "source_files": list(self.source_files),
             "verification_status": self.verification_status,
             "last_reviewed": self.last_reviewed,
@@ -243,11 +275,27 @@ class Course:
             branch=str(data.get("branch", "")),
             semester=str(data.get("semester", "")),
             course_code=str(data.get("course_code", "")),
+            previous_course_codes=[
+                str(c) for c in data.get("previous_course_codes", [])
+            ],
+            regulation=str(data.get("regulation", "")),
+            academic_council=str(data.get("academic_council", "")),
             syllabus_source=str(data.get("syllabus_source", "")),
             syllabus_version=str(data.get("syllabus_version", "")),
+            department=str(data.get("department", "")),
+            category=str(data.get("category", "")),
+            credits=data.get("credits"),
+            lecture_hours=data.get("lecture_hours"),
+            tutorial_hours=data.get("tutorial_hours"),
+            practical_hours=data.get("practical_hours"),
+            sessions_per_unit=data.get("sessions_per_unit"),
             exam_pattern=str(data.get("exam_pattern", "")),
             marks=data.get("marks"),
             duration_minutes=data.get("duration_minutes"),
+            assessment=dict(data.get("assessment", {})),
+            outcomes=[str(o) for o in data.get("outcomes", [])],
+            rationale=[str(r) for r in data.get("rationale", [])],
+            references=[str(r) for r in data.get("references", [])],
             source_files=[str(f) for f in data.get("source_files", [])],
             verification_status=str(
                 data.get("verification_status", PENDING_REVIEW)
