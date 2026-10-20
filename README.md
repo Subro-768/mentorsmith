@@ -331,6 +331,10 @@ which page of which paper to check it against, and reports the attempt as
 reports no score at all, rather than 0%. "Practise my mistakes" means the
 questions you actually got wrong.
 
+The full audit behind this — what was inspected, what works, what is
+unverified, and the security and copyright findings — is in
+[docs/audit-srm-exam-prep.md](docs/audit-srm-exam-prep.md).
+
 ## Requirements
 
 - Fedora Linux (other Linux distributions should work)
