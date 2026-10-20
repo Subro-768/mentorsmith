@@ -28,6 +28,11 @@ config.local.json
 examprep/
 examprep for srm ktr/
 
+# The learner's own copies of textbooks. The app reads them from disk - the
+# Theory Book's "Open in book" button opens the PDF at the right page - but
+# a copyrighted book is not ours to put in the repository.
+theory/**/*.pdf
+
 # Stock design references, not part of the application source
 admin-dashboard-panel-with-gradient-style/
 dashboard-user-panel-template/
