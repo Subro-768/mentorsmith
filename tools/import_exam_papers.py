@@ -88,7 +88,18 @@ OPTION_LINE = re.compile(r"^\s{0,18}\(?([a-dA-DivxIV]{1,4})[\.\)]\s+(\S.*)$")
 #: An option label *inside* a line. The question banks set their options in
 #: two columns, so one line can hold "A. Bjarne Stroustrup   B. Dennis
 #: Ritchie" and both have to be recovered.
-OPTION_INSIDE = re.compile(r"(?:^|\s{2,})\(?([a-dA-D])\s*[\.\)]\s+")
+#: An option label *inside* a line. The three forms are treated
+#: differently, because they are not equally trustworthy:
+#:
+#: * ``(a)``  - parenthesised. Always a boundary.
+#: * ``a)``   - bracketed. Always a boundary.
+#: * ``A.``   - dotted. **Only** when it starts a column, because
+#:   "James A. Gosling" is a name, not an option.
+OPTION_INSIDE = re.compile(
+    r"(?:^|\s)\(([a-dA-D])\s*\)\s*(?=\S)"
+    r"|(?:^|\s{2,})([a-dA-D])\s*\)\s*(?=\S)"
+    r"|(?:^|\s{2,})([a-dA-D])\s*\.\s*(?=\S)"
+)
 #: The CO / PLO tags the banks print beside a question.
 COVERAGE_TAG = re.compile(r"\[(CLO|PLO|BL)[^\]]*\]", re.IGNORECASE)
 #: A unit heading.
@@ -100,6 +111,22 @@ OCR_NOISE = re.compile(r"[^ -~\n\t]")
 
 #: A word of four or more letters.
 LONG_WORD = re.compile(r"[A-Za-z]{4,}")
+
+#: Words that begin a question. Used to tell a question from a lecture-note
+#: heading, which is the difference between a question paper and a slide
+#: deck.
+QUESTION_LEAD = re.compile(
+    r"\b(what|which|who|whom|whose|when|where|why|how|can|could|do|does|did|"
+    r"is|are|was|were|will|shall|should|must|may|if|list|state|define|"
+    r"identify|explain|describe|write|develop|construct|compute|calculate|"
+    r"find|print|output|input|predict|evaluate|determine|true|false|"
+    r"valid|invalid|possible|not)\b",
+    re.IGNORECASE,
+)
+#: A blank to fill in.
+BLANK = re.compile(r"_{2,}")
+#: A slide heading truncated with an ellipsis, or one marked "Contd".
+HEADING_FRAGMENT = re.compile(r"(\.\.\.|\bcontd\b)", re.IGNORECASE)
 
 
 def looks_like_a_question(text: str) -> bool:
@@ -162,6 +189,27 @@ def _pdftotext_pages(pdf: Path) -> list[str]:
         except Exception:
             pages.append("")
     return pages
+
+
+def looks_like_a_question_mark(text: str) -> bool:
+    """Whether a stem reads as a question rather than a heading.
+
+    A fill-in-the-blank counts (``consists of __________ function(s)``), as
+    does a stem that ends in a colon (``Data types are differed on the basis
+    of``). A lecture-note heading - truncated, or marked "Contd" - does not.
+    """
+    stripped = text.strip()
+    if not stripped:
+        return False
+    if HEADING_FRAGMENT.search(stripped):
+        return False
+    if "?" in stripped:
+        return True
+    if BLANK.search(stripped):
+        return True
+    if QUESTION_LEAD.search(stripped):
+        return True
+    return stripped.rstrip().endswith(":")
 
 
 def _ocr_noise_ratio(text: str) -> float:
@@ -358,6 +406,136 @@ def _question_start_pages(pages: list[str]) -> dict[str, int]:
     return starts
 
 
+#: A second question's stem, run into the end of a previous question's last
+#: option by the two-column layout: "mantissa 17.When variable used in
+#: program is whole number, the variable is stored as".
+MERGED_STEM = re.compile(r"^(?P<option>.*?)\s*(?P<stem>\d{1,3}\.\s?[A-Z].*)$")
+#: An option label appearing inside an option: "8 bytes (d)10bytes". The
+#: next option started before the previous one was finished.
+TRAILING_OPTION = re.compile(
+    r"^(?P<first>.*?)\s*\((?P<label>[a-d])\)\s*(?P<rest>\S.*)$"
+)
+#: An option label appearing in the middle of a stem.
+STEM_OPTION = re.compile(r"\([a-d]\)\s*\S")
+
+
+def split_merged_questions(found: list[dict]) -> tuple[list[dict], int]:
+    """Separate questions the layout ran together.
+
+    The question banks set two questions side by side, and when a question's
+    text is long enough to wrap, the *next* question's stem can end up
+    inside the previous question's last option. Left alone, that produces
+    one question with a mangled option and a lost question.
+
+    This separates them. The words are not changed - the two pieces are
+    exactly what was printed - but the split is reported rather than
+    silent, because a reader comparing the app with the paper should be
+    able to see where the parser had to make a decision.
+    """
+    out: list[dict] = []
+    splits = 0
+    for item in found:
+        options = list(item["options"])
+        index = None
+        match = None
+        for position, option in enumerate(options):
+            candidate = MERGED_STEM.match(option)
+            if candidate:
+                index = position
+                match = candidate
+                break
+        if match is None or index is None:
+            out.append(item)
+            continue
+
+        stem = match.group("stem").strip()
+        # The stem carries the second question's CLO/PLO tags with it; they
+        # are metadata, not part of the question.
+        stem = COVERAGE_TAG.sub("", stem).strip()
+        # The question's own number, which the layout left in front of it.
+        stem = re.sub(r"^\d{1,3}\.\s*", "", stem)
+        if len(stem) < 10:
+            out.append(item)
+            continue
+
+        # The options printed *after* the merged one belong to the second
+        # question, not the first.
+        tail = options[index + 1:]
+        options = options[: index + 1]
+        options[-1] = match.group("option").strip()
+
+        # Only split when the result is a usable question. A stem that
+        # still carries option markers, or a tail with too few options,
+        # means the layout ran more than two things together and the
+        # honest answer is to leave it merged and flag it for review.
+        if len(tail) < 2 or STEM_OPTION.search(stem):
+            out.append(item)
+            continue
+
+        # An option label inside an option means the next option started
+        # early: "8 bytes (d)10bytes" is two options.
+        while tail and TRAILING_OPTION.match(tail[-1]):
+            inner = TRAILING_OPTION.match(tail[-1])
+            tail[-1] = inner.group("first").strip()
+            tail.append(inner.group("rest").strip())
+
+        first = dict(item)
+        first["options"] = options
+        out.append(first)
+        out.append({
+            "number": f"{item['number']}b",
+            "text": stem,
+            "options": tail,
+            "unit": item["unit"],
+        })
+        splits += 1
+    return out, splits
+
+
+#: Options printed *inline* in the stem, as "C programming language is
+#: (a)object oriented (b)Procedure oriented ...".
+INLINE_OPTIONS = re.compile(
+    r"\(?a\)\s*(?P<a>.*?)\s*"
+    r"\(?b\)\s*(?P<b>.*?)\s*"
+    r"\(?c\)\s*(?P<c>.*?)\s*"
+    r"\(?d\)\s*(?P<d>.*?)\s*$",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def split_inline_options(found: list[dict]) -> tuple[list[dict], int]:
+    """Move options printed inside the stem out into the option list.
+
+    Some of these questions put the choices in the stem itself, so the
+    parser sees one long line and no options. The words are not changed;
+    they are only moved from where the layout put them to where a reader
+    expects them.
+    """
+    out: list[dict] = []
+    moved = 0
+    for item in found:
+        match = INLINE_OPTIONS.search(item["text"])
+        if not match:
+            out.append(item)
+            continue
+        stem = item["text"][: match.start()].strip()
+        options = [
+            match.group("a").strip(),
+            match.group("b").strip(),
+            match.group("c").strip(),
+            match.group("d").strip(),
+        ]
+        if not stem or any(not o for o in options):
+            out.append(item)
+            continue
+        fixed = dict(item)
+        fixed["text"] = stem
+        fixed["options"] = options
+        out.append(fixed)
+        moved += 1
+    return out, moved
+
+
 def import_paper(path: Path, course_id: str) -> tuple[list[ExamQuestion], dict]:
     """Extract candidate questions from one PDF."""
     pages = _pdftotext_pages(path)
@@ -383,6 +561,8 @@ def import_paper(path: Path, course_id: str) -> tuple[list[ExamQuestion], dict]:
             noisy_pages += 1
 
     found, _unit = _parse_document(pages)
+    found, inline = split_inline_options(found)
+    found, splits = split_merged_questions(found)
 
     # A question with no words in it is a failed extraction, not a
     # question. Scanned papers that have been through bad OCR produce
@@ -392,7 +572,26 @@ def import_paper(path: Path, course_id: str) -> tuple[list[ExamQuestion], dict]:
     for item in found:
         if not looks_like_a_question(item["text"]):
             continue
+        if not looks_like_a_question_mark(item["text"]):
+            continue
         kept.append(item)
+
+    # A document where most of the "questions" are lecture-note headings is
+    # not a question paper - it is a slide deck. Skip the whole thing and
+    # say so, rather than importing headings as questions.
+    if found and len(kept) * 2 < len(found):
+        return [], {
+            "file": path.name,
+            "questions": 0,
+            "pages": total_pages,
+            "noisy_pages": noisy_pages,
+            "source_type": source_type,
+            "error": (
+                f"not a question paper - only {len(kept)} of {len(found)} "
+                f"extracted items read as questions; this looks like notes "
+                f"or slides"
+            ),
+        }
     found = kept
 
     # The page a question starts on, so the source pointer is exact.
@@ -439,6 +638,8 @@ def import_paper(path: Path, course_id: str) -> tuple[list[ExamQuestion], dict]:
         "pages": total_pages,
         "noisy_pages": noisy_pages,
         "source_type": source_type,
+        "splits": splits,
+        "inline": inline,
     }
     if total_pages == 0:
         # A scan with no text layer at all. Saying "0 questions" would be
@@ -510,6 +711,10 @@ def main() -> int:
             print(f"  {stats['file']}: {stats['error']}")
             continue
         note = ""
+        if stats.get("splits"):
+            note += f"  ({stats['splits']} question(s) split where the layout ran two together)"
+        if stats.get("inline"):
+            note += f"  ({stats['inline']} question(s) had their options printed inside the stem)"
         if stats["noisy_pages"]:
             note = (
                 f"  ({stats['noisy_pages']}/{stats['pages']} pages look "

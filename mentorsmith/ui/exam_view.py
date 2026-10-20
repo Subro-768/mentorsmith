@@ -49,6 +49,7 @@ from PyQt6.QtWidgets import (
 
 from ..core.exam import (
     OFFICIAL_SAMPLE,
+    answer_source_label,
     ORIGINAL_PRACTICE,
     PENDING_REVIEW,
     PREDICTED_PRACTICE,
@@ -403,10 +404,13 @@ class ExamPrepView(QWidget):
         self.unit_combo.blockSignals(True)
         self.unit_combo.clear()
         self.unit_combo.addItem("All units", None)
-        for unit in course.units if course else []:
-            topics = course.topics_in_unit(unit)
-            title = ", ".join(t.title for t in topics) if topics else f"Unit {unit}"
-            self.unit_combo.addItem(f"Unit {unit} — {title}", unit)
+        for unit, title, count in self.service.unit_breakdown(self.course_id):
+            self.unit_combo.addItem(f"Unit {unit} — {title} ({count})", unit)
+        stray = self.service.unassigned_count(self.course_id)
+        if stray:
+            # The cycle-test papers state no unit. They are grouped rather
+            # than scattered, so a student can find them.
+            self.unit_combo.addItem(f"No unit stated in the paper ({stray})", 0)
         self.unit_combo.blockSignals(False)
         self.refresh_questions()
         self._offer_resume()
@@ -491,15 +495,46 @@ class ExamPrepView(QWidget):
         self._question_ids = []
         for question in questions:
             item = QListWidgetItem(self._item_text(question))
-            item.setToolTip(question.source_reference)
+            item.setToolTip(self._item_tooltip(question))
             self.question_list.addItem(item)
             self._question_ids.append(question.id)
         if questions:
             self.question_list.setCurrentRow(0)
 
     def _item_text(self, question) -> str:
+        """The question, in sequence, showing where it came from.
+
+        The unit, the question number and the paper are all shown, because
+        a student revising from their own copy looks for exactly those
+        three things.
+        """
         mark = "✓" if question.verification_status == VERIFIED else "○"
-        return f"{mark} Q{question.source_question_number}  {question.question_text[:70]}"
+        unit = f"U{question.unit}" if question.unit else "—"
+        number = question.source_question_number or "?"
+        return (
+            f"{mark} {unit} · Q{number}  {question.question_text[:64]}"
+        )
+
+    def _item_tooltip(self, question) -> str:
+        """Where the question is from, and where it also fits."""
+        lines = [question.source_reference]
+        unit, evidence = self.service.cross_reference(self.course_id, question)
+        syllabus = self.service.syllabus(self.course_id)
+        if unit is not None and syllabus is not None:
+            current = syllabus.unit(unit)
+            if current:
+                lines.append(
+                    f"Also fits the current syllabus, Unit {unit}: "
+                    f"{current.title}"
+                )
+                if evidence:
+                    lines.append(f"  matched on: {', '.join(evidence[:5])}")
+        else:
+            lines.append(
+                "No confident match to the current syllabus - the question "
+                "keeps the unit its own paper stated."
+            )
+        return "\n".join(lines)
 
     def _on_question_selected(self, row: int) -> None:
         """Show a question in the right-hand pane, without starting a session."""
@@ -863,10 +898,21 @@ class ExamPrepView(QWidget):
                 f"<p>{_escape(result.explanation)}</p>"
             )
 
+        # Where the key came from. An answer written from the textbook is
+        # not an official key, and the learner should be able to see that
+        # rather than take it on trust.
+        source_note = ""
+        note = answer_source_label(result.question.answer_source)
+        if note:
+            source_note = (
+                f"<p style='color:{theme.MUTED};font-size:11px'>"
+                f"{_escape(note)}</p>"
+            )
+
         self.body.setHtml(
             f"<div style='font-family:system-ui,sans-serif;font-size:13px;"
             f"color:{theme.FOREGROUND};line-height:1.6'>"
-            f"{verdict}{pointer}{explanation}"
+            f"{verdict}{pointer}{explanation}{source_note}"
             f"<hr style='border-color:{theme.BORDER}'>"
             f"<p style='color:{theme.MUTED};font-size:11px'>"
             f"You chose: {_escape(result.chosen) or '(skipped)'}</p>"

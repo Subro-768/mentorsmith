@@ -41,10 +41,15 @@ from datetime import datetime, timezone
 
 from ..core.exam import (
     ExamQuestion,
+    Syllabus,
+    option_label,
     VERIFIED,
+    cross_reference_unit,
     load_courses,
     load_questions,
+    load_syllabus,
     normalise_text,
+    sequence_questions,
 )
 
 #: The label shown for an attempt that could not be graded.
@@ -235,6 +240,22 @@ class ExamPrepService:
                 return course
         return None
 
+    def syllabus(self, course_id: str) -> Syllabus | None:
+        """The syllabus outline used to sequence and cross-reference."""
+        return load_syllabus(course_id)
+
+    def unit_titles(self, course_id: str) -> dict[int, str]:
+        """The unit names the *papers* use, for the filter.
+
+        The papers are from the earlier regulation, so their unit names
+        are the ones that describe the questions. The 2026 syllabus is
+        carried alongside as a cross-reference.
+        """
+        syllabus = self.syllabus(course_id)
+        if syllabus is None:
+            return {}
+        return {u.unit: u.title for u in syllabus.previous_units}
+
     def questions(
         self,
         course_id: str,
@@ -246,12 +267,16 @@ class ExamPrepService:
         question_type: str | None = None,
         search: str = "",
     ) -> list[ExamQuestion]:
-        """The bank's questions, filtered.
+        """The bank's questions, in sequence, filtered.
+
+        The order is the unit, then the paper, then the question number -
+        the order a student revises in and the order they will be looking
+        for in their own copy of the paper.
 
         Every filter is one the brief asks for: topic, type, difficulty and
         verified/unverified status. An empty filter matches everything.
         """
-        found = load_questions(course_id)
+        found = sequence_questions(load_questions(course_id), self.syllabus(course_id))
         if unit is not None:
             found = [q for q in found if q.unit == unit]
         if topic_id:
@@ -270,6 +295,32 @@ class ExamPrepService:
                 or any(needle in option.lower() for option in q.options)
             ]
         return found
+
+    def cross_reference(self, course_id: str, question: ExamQuestion) -> tuple[int | None, list[str]]:
+        """The current syllabus unit a question also fits, if confidently."""
+        return cross_reference_unit(question, self.syllabus(course_id))
+
+    def unassigned_count(self, course_id: str) -> int:
+        """Questions whose paper states no unit.
+
+        The cycle-test papers do not label their sections, so their
+        questions cannot be filed under a unit. They are counted here so
+        the filter can offer them as a group rather than leaving a student
+        to wonder where they went.
+        """
+        return sum(1 for q in load_questions(course_id) if not q.unit)
+
+    def unit_breakdown(self, course_id: str) -> list[tuple[int, str, int]]:
+        """``(unit, title, count)`` for the filter, in unit order."""
+        titles = self.unit_titles(course_id)
+        counts: dict[int, int] = {}
+        for question in load_questions(course_id):
+            if question.unit:
+                counts[question.unit] = counts.get(question.unit, 0) + 1
+        return [
+            (unit, titles.get(unit, f"Unit {unit}"), counts.get(unit, 0))
+            for unit in sorted(set(list(titles) + list(counts)))
+        ]
 
     def counts(self, course_id: str) -> dict[str, int]:
         """How the bank breaks down, for the filters."""
@@ -404,7 +455,16 @@ class ExamPrepService:
             return None
         if question.question_type == "MCQ" and not question.answer_matches_an_option:
             return None
-        return normalise_text(chosen) == normalise_text(key)
+        if normalise_text(chosen) == normalise_text(key):
+            return True
+        # The key may be the option's *label* rather than its text, which is
+        # how a paper that prints its own key as "a" has to be read.
+        label = question.answer_label()
+        if label is not None:
+            for index, option in enumerate(question.options):
+                if normalise_text(option) == normalise_text(chosen):
+                    return option_label(index) == label
+        return False
 
     def _record(self, session: ExamSession, result: AttemptResult) -> None:
         """Write the attempt to the database."""

@@ -57,6 +57,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 
 # ── The four source types ──────────────────────────────────────────────
 #
@@ -138,6 +139,23 @@ DETERMINISTIC_TYPES: tuple[str, ...] = (
 
 class ExamDataError(RuntimeError):
     """The exam data is missing, malformed or internally inconsistent."""
+
+
+#: What each answer source means, in the words shown to the learner.
+#:
+#: The distinction matters: an answer written by an assistant from the C
+#: language definition is *not* an official answer key, and a student
+#: revising against it deserves to know that.
+ANSWER_SOURCE_LABELS: dict[str, str] = {
+    "book": "Answered from the supplied C textbook - not an official key.",
+    "assistant": "Answered from the C language definition - not an official key.",
+    "official": "Taken from an official answer key.",
+}
+
+
+def answer_source_label(source: str) -> str:
+    """The note to show under an answer, or "" when it needs no note."""
+    return ANSWER_SOURCE_LABELS.get(source, "")
 
 
 def _now() -> str:
@@ -379,6 +397,9 @@ class ExamQuestion:
     options: list[str] = field(default_factory=list)
     #: The correct option's text, for a multiple-choice question.
     answer: str = ""
+    #: Where the answer came from, so it is never presented as an official
+    #: key when it is not one. Empty means no answer yet.
+    answer_source: str = ""
     #: A worked explanation, shown after an answer.
     explanation: str = ""
     #: A marking rubric for free-text answers.
@@ -425,6 +446,7 @@ class ExamQuestion:
             "unit": self.unit,
             "options": list(self.options),
             "answer": self.answer,
+            "answer_source": self.answer_source,
             "explanation": self.explanation,
             "rubric": list(self.rubric),
             "marks": self.marks,
@@ -462,6 +484,7 @@ class ExamQuestion:
             unit=int(data.get("unit", 0) or 0),
             options=[str(o) for o in data.get("options", [])],
             answer=str(data.get("answer", "")),
+            answer_source=str(data.get("answer_source", "")),
             explanation=str(data.get("explanation", "")),
             rubric=[str(r) for r in data.get("rubric", [])],
             marks=data.get("marks"),
@@ -526,16 +549,36 @@ class ExamQuestion:
 
     @property
     def answer_matches_an_option(self) -> bool:
-        """Whether the answer is one of the options as extracted.
+        """Whether the answer picks out one of the options as extracted.
+
+        The answer may be the option's *text* or its *label* - "a". A
+        paper that prints its own key as a bare letter cannot be matched by
+        text, and the label is what the paper means.
 
         False means the extraction of the options is suspect: a student
         could not pick it, so the question cannot be graded automatically.
         """
         if not self.answer.strip():
             return False
-        return normalise_text(self.answer) in {
-            normalise_text(option) for option in self.options
-        }
+        wanted = normalise_text(self.answer)
+        for index, option in enumerate(self.options):
+            if normalise_text(option) == wanted:
+                return True
+            if normalise_text(option_label(index)) == wanted:
+                return True
+        return False
+
+    def answer_label(self) -> str | None:
+        """The option label the answer selects, if it selects one."""
+        if not self.answer.strip():
+            return None
+        wanted = normalise_text(self.answer)
+        for index, option in enumerate(self.options):
+            if normalise_text(option) == wanted:
+                return option_label(index)
+            if normalise_text(option_label(index)) == wanted:
+                return option_label(index)
+        return None
 
     @property
     def gradable(self) -> bool:
@@ -648,6 +691,7 @@ class ExamQuestion:
 # ── Loading and saving ─────────────────────────────────────────────────
 
 CATALOGUE_PATH = Path(__file__).resolve().parent.parent / "data" / "exam" / "courses.json"
+SYLLABUS_PATH = Path(__file__).resolve().parent.parent / "data" / "exam" / "syllabus.json"
 
 
 def exam_data_dir() -> Path:
@@ -676,6 +720,277 @@ def load_courses(path: Path | None = None) -> list[Course]:
     for course in courses:
         course.validate()
     return courses
+
+
+# ── Syllabus ───────────────────────────────────────────────────────────
+
+
+@dataclass
+class SyllabusUnit:
+    """One unit of a syllabus, with the keywords used to place questions."""
+
+    unit: int
+    title: str
+    sessions: int = 0
+    official_content: str = ""
+    keywords: list[str] = field(default_factory=list)
+    #: True when the title is a descriptive label rather than the
+    #: official one - which is the case for every unit here, because the
+    #: official syllabus names them only "Unit 1" to "Unit 5".
+    title_is_derived: bool = False
+
+    def to_dict(self) -> dict:
+        return {
+            "unit": self.unit,
+            "title": self.title,
+            "sessions": self.sessions,
+            "official_content": self.official_content,
+            "title_is_derived": self.title_is_derived,
+        }
+
+
+@dataclass
+class Syllabus:
+    """A course's syllabus outline.
+
+    Two frames, because the course changed regulation between the papers
+    and the syllabus: ``units`` is the current (2026) syllabus, and
+    ``previous_units`` are the unit names the papers themselves use. The
+    bank is sequenced by the paper's own unit, because that is what
+    describes the question; the current unit is a cross-reference.
+    """
+
+    course_id: str
+    source: str = ""
+    units: list[SyllabusUnit] = field(default_factory=list)
+    previous_units: list[SyllabusUnit] = field(default_factory=list)
+
+    def unit(self, number: int) -> SyllabusUnit | None:
+        for unit in self.units:
+            if unit.unit == number:
+                return unit
+        return None
+
+    def previous_unit(self, number: int) -> SyllabusUnit | None:
+        """The unit as the papers name it."""
+        for unit in self.previous_units:
+            if unit.unit == number:
+                return unit
+        return None
+
+    @property
+    def unit_numbers(self) -> list[int]:
+        return sorted(u.unit for u in self.units)
+
+
+def load_syllabus(course_id: str, path: Path | None = None) -> Syllabus | None:
+    """Load a syllabus outline, if there is one for this course."""
+    source = Path(path) if path else SYLLABUS_PATH
+    if not source.exists():
+        return None
+    try:
+        raw = json.loads(source.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ExamDataError(f"Syllabus is not valid JSON: {exc}") from None
+    if raw.get("course_id") != course_id:
+        return None
+    return Syllabus(
+        course_id=raw.get("course_id", course_id),
+        source=raw.get("source", ""),
+        previous_units=[
+            SyllabusUnit(
+                unit=int(u.get("unit", 0)),
+                title=str(u.get("title", "")),
+                official_content=str(u.get("source", "")),
+            )
+            for u in raw.get("previous_units", [])
+        ],
+        units=[
+            SyllabusUnit(
+                unit=int(u.get("unit", 0)),
+                title=str(u.get("title", "")),
+                sessions=int(u.get("sessions", 0)),
+                official_content=str(u.get("official_content", "")),
+                keywords=[str(k).lower() for k in u.get("keywords", [])],
+                title_is_derived=bool(u.get("title_is_derived", False)),
+            )
+            for u in raw.get("units", [])
+        ],
+    )
+
+
+def assign_syllabus_unit(
+    question: "ExamQuestion",
+    syllabus: Syllabus | None,
+) -> tuple[int | None, list[str]]:
+    """Place a question in a syllabus unit, with the evidence.
+
+    Returns ``(unit, matched keywords)``. The unit is ``None`` when the
+    question matched nothing, or when it matched two units equally well -
+    a question that could belong to either is not placed in either, because
+    a wrong placement is worse than an honest gap.
+
+    This is a *matching aid*, not a claim about the question. The unit the
+    paper itself stated is never overwritten; it stays on the question as
+    the provenance.
+    """
+    if syllabus is None or not syllabus.units:
+        return None, []
+    # The options carry as much topic signal as the question does: an
+    # option reading "int age;" says "types" even when the question is
+    # "Which of the following is not valid?".
+    text = " ".join(
+        [question.question_text.lower()]
+        + [option.lower() for option in question.options]
+    )
+    if not question.question_text.strip():
+        return None, []
+
+    # A keyword that only one unit can produce is a strong signal; one that
+    # appears in several units is a weak one. "malloc" places a question in
+    # Unit 5; "array" barely places it anywhere, because arrays are in
+    # three of the five units.
+    weight = _keyword_weights(syllabus)
+
+    scores: dict[int, float] = {}
+    hits: dict[int, list[str]] = {}
+    for unit in syllabus.units:
+        found = [k for k in unit.keywords if k and _mentions(text, k)]
+        if found:
+            hits[unit.unit] = found
+            scores[unit.unit] = sum(weight.get(k, 1.0) for k in found)
+
+    if not scores:
+        return None, []
+
+    ranked = sorted(scores.items(), key=lambda item: -item[1])
+    best_unit, best_score = ranked[0]
+    runner_up = ranked[1][1] if len(ranked) > 1 else 0.0
+
+    if best_score <= 0:
+        return None, []
+    if len(ranked) > 1 and best_score - runner_up < 0.5:
+        # Two units fit about equally well. Say so rather than picking one:
+        # a wrong placement is worse than an honest gap.
+        return None, sorted(
+            f"unit {unit}: {', '.join(hits[unit][:3])}" for unit, _ in ranked[:2]
+        )
+    return best_unit, sorted(hits[best_unit])
+
+
+def _mentions(text: str, keyword: str) -> bool:
+    """Whether a concept is mentioned, on a word boundary.
+
+    A word boundary plus a couple of extra letters, so "array" matches
+    "arrays" but "int" does not match "print".
+    """
+    pattern = re.compile(rf"\b{re.escape(keyword)}\w{{0,2}}\b")
+    return bool(pattern.search(text))
+
+
+def _keyword_weights(syllabus: Syllabus) -> dict[str, float]:
+    """How distinctive each keyword is, across the syllabus's units.
+
+    A keyword unique to one unit is worth 1.0; one shared by every unit is
+    worth 0.25. This is what stops a common word from dragging every
+    question into the same unit.
+    """
+    counts: dict[str, int] = {}
+    for unit in syllabus.units:
+        for keyword in set(unit.keywords):
+            counts[keyword] = counts.get(keyword, 0) + 1
+    total = max(1, len(syllabus.units))
+    return {
+        keyword: max(0.25, 1.0 - (count - 1) / total)
+        for keyword, count in counts.items()
+    }
+
+
+def sequence_questions(
+    questions: list["ExamQuestion"],
+    syllabus: Syllabus | None = None,
+) -> list["ExamQuestion"]:
+    """Put the questions in a proper sequence.
+
+    The order a student revises in is the **unit**, and the unit is the one
+    the paper itself states. That is the authoritative attribution: the
+    question banks label their sections "Unit 1" to "Unit 5", and a student
+    checking an answer against their own copy will be looking for it in
+    that order.
+
+    Within a unit, the order is the paper's own - the source file, then the
+    question number - so the two question banks' Unit 1 sections read
+    together rather than as two separate runs of Unit 1.
+
+    Questions from papers that state no unit (the cycle-test papers) come
+    last, in the same paper order. They are not dropped and not scattered
+    into a unit they do not belong to.
+
+    The current (2026) syllabus unit, where it can be matched confidently,
+    is a **cross-reference**, not the ordering: the 2026 regulation
+    reorganises the course, so a paper's unit number does not map one to
+    one onto a 2026 unit, and pretending otherwise would put a question
+    somewhere it is not.
+    """
+    def key(question: "ExamQuestion") -> tuple:
+        return (
+            # The paper's own unit. Zero means the paper states none.
+            question.unit if question.unit else 999,
+            question.source_file.lower(),
+            _question_number_sort_key(question.source_question_number),
+            question.id,
+        )
+
+    return sorted(questions, key=key)
+
+
+def cross_reference_unit(
+    question: "ExamQuestion",
+    syllabus: Syllabus | None,
+) -> tuple[int | None, list[str]]:
+    """The current syllabus unit a question also fits, if confidently.
+
+    Only a *distinctive* keyword counts - one that appears in a single
+    unit's list. A question that matches only common words is left without
+    a cross-reference rather than given a shaky one.
+    """
+    if syllabus is None or not syllabus.units:
+        return None, []
+    text = " ".join(
+        [question.question_text.lower()]
+        + [option.lower() for option in question.options]
+    )
+    if not question.question_text.strip():
+        return None, []
+
+    best: tuple[float, int, list[str]] | None = None
+    for unit in syllabus.units:
+        found = [k for k in unit.keywords if k and _mentions(text, k)]
+        if not found:
+            continue
+        distinctive = [k for k in found if _is_distinctive(syllabus, k)]
+        if not distinctive:
+            continue
+        score = float(len(distinctive))
+        if best is None or score > best[0]:
+            best = (score, unit.unit, sorted(distinctive))
+
+    if best is None:
+        return None, []
+    return best[1], best[2]
+
+
+def _is_distinctive(syllabus: Syllabus, keyword: str) -> bool:
+    """Whether a keyword belongs to exactly one unit's list."""
+    return sum(1 for unit in syllabus.units if keyword in unit.keywords) == 1
+
+
+def _question_number_sort_key(number: str) -> tuple[int, str]:
+    """Sort "2" before "10", and keep non-numbers after the numbers."""
+    text = (number or "").strip()
+    if text.isdigit():
+        return (int(text), "")
+    return (10_000, text)
 
 
 def get_course(course_id: str, path: Path | None = None) -> Course | None:
@@ -728,6 +1043,11 @@ def save_questions(questions: list[ExamQuestion]) -> Path:
     except OSError:  # pragma: no cover - platform dependent
         pass
     return path
+
+
+def option_label(index: int) -> str:
+    """The label the app shows for the nth option: a, b, c ..."""
+    return chr(ord("a") + index)
 
 
 def normalise_text(text: str) -> str:

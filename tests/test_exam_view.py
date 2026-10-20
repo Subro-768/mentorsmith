@@ -59,11 +59,7 @@ def qapp():
 @pytest.fixture()
 def view(qapp, database, tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
-    import importlib
-
     import mentorsmith.core.exam as exam
-
-    importlib.reload(exam)
     exam.save_questions([
         _question(id="q1"),
         _question(id="q2", source_type=ORIGINAL_PRACTICE, answer=""),
@@ -194,11 +190,7 @@ class TestMistakes:
 class TestTheEmptyState:
     def test_no_course_means_no_invented_content(self, qapp, database, tmp_path, monkeypatch) -> None:
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
-        import importlib
-
         import mentorsmith.core.exam as exam
-
-        importlib.reload(exam)
         exam.save_questions([])
 
         from mentorsmith.ui.exam_view import ExamPrepView
@@ -215,11 +207,7 @@ class TestTheEmptyState:
         self, qapp, database, tmp_path, monkeypatch
     ) -> None:
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
-        import importlib
-
         import mentorsmith.core.exam as exam
-
-        importlib.reload(exam)
         exam.save_questions([])
 
         from mentorsmith.ui.exam_view import ExamPrepView

@@ -575,9 +575,17 @@ always be able to tell what a question is.
   questions cannot be marked. Such an attempt is recorded and reported as
   *ungraded*, never as a mistake, and a session where nothing could be
   graded reports no score rather than 0%.
-- **What was actually extracted:** 356 questions from the two clean-text
-  question banks and the CT papers; 132 duplicates skipped; 15 of the 27
+- **What was actually extracted:** 330 questions from the two clean-text
+  question banks and the CT papers; 122 duplicates skipped; 15 of the 27
   supplied PDFs have no text layer and need OCR.
+- **There is now an answer key.** The papers print none, so all 330
+  questions were answered from the C language definition and the supplied C
+  textbooks (Ray Dawson's *Programming in ANSI C* in the course material,
+  and Kernighan & Ritchie's *The C Programming Language* in `theory/`).
+  Every answer records its source, and the app labels it as **not an
+  official key**. 316 of the 330 can be marked automatically; the other 14
+  printed their key inline, so the option text was lost with it, and they
+  are reported as ungradable rather than guessed at.
 - **The human-check workflow exists.** `Check questions` in the Exam Prep
   screen walks the pending queue, shows the source page, and records the
   answer and who checked it. That is the only path to

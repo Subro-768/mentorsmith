@@ -208,11 +208,7 @@ class TestTheImporterEndToEnd:
 class TestTheReviewReportTool:
     def test_the_report_names_what_needs_a_human(self, tmp_path, monkeypatch) -> None:
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
-        import importlib
-
         import mentorsmith.core.exam as exam
-
-        importlib.reload(exam)
         exam.save_questions([
             exam.ExamQuestion(
                 id="a", course_id="c1", question_text="A question?",

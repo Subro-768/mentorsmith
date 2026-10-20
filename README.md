@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1362 automated tests. It has **not** been
+and its behaviour is covered by 1375 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1362 tests
+python3 -m pytest tests/ -q                       # 1375 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -340,6 +340,27 @@ A session survives the app closing: the questions you have answered and
 your place in the run are written as you go, and **Resume** offers it back.
 The clock keeps running while the app is shut — a timed run that quietly
 gained time by being closed would not be a timed run.
+
+### The answer key
+
+The papers do not print an answer key, so the app supplies one: **all 330
+questions are answered**, from the C language definition and the supplied C
+textbook — *Programming in ANSI C* (Ray Dawson) and *The C Programming
+Language* (Kernighan & Ritchie) in `theory/`.
+
+Every answer records **where it came from**, and the app says so under the
+answer: *"Answered from the supplied C textbook — not an official key."* An
+answer written from a book is not the same thing as the exam's own key, and
+a student revising against it deserves to know which they are looking at.
+
+316 of the 330 can be marked automatically. The other 14 printed their key
+inline ("Ans: c"), so the option text was lost with it; those are listed in
+the review report as ungradable rather than guessed at.
+
+```bash
+python3 tools/set_answers.py --report     # what is answered, what is not
+python3 tools/set_answers.py --show       # the questions, with their options
+```
 
 ### Grading, honestly
 
