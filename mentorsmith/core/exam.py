@@ -110,6 +110,12 @@ VERIFICATION_LABELS: dict[str, str] = {
 # ── Question types ─────────────────────────────────────────────────────
 
 MCQ = "MCQ"
+#: A snippet is given and the student must state what it prints.
+TRACE = "TRACE"
+#: A snippet with a deliberate fault; the student must find and fix it.
+DEBUG = "DEBUG"
+#: A program to be written to a specification.
+PROGRAM = "PROGRAM"
 SHORT_ANSWER = "SHORT_ANSWER"
 LONG_ANSWER = "LONG_ANSWER"
 NUMERICAL = "NUMERICAL"
@@ -120,6 +126,9 @@ TRUE_FALSE = "TRUE_FALSE"
 
 QUESTION_TYPES: tuple[str, ...] = (
     MCQ,
+    TRACE,
+    DEBUG,
+    PROGRAM,
     SHORT_ANSWER,
     LONG_ANSWER,
     NUMERICAL,
@@ -136,6 +145,13 @@ DETERMINISTIC_TYPES: tuple[str, ...] = (
     TRUE_FALSE,
 )
 
+#: The question kinds the app can grade by **compiling and running** the
+#: student's C. These are the ones the 2025 CT papers are made of, and they
+#: are the reason the app can mark a programming paper honestly: the paper
+#: itself specifies the test inputs, so the expected output is a fact rather
+#: than an opinion.
+CODE_TYPES: tuple[str, ...] = (TRACE, DEBUG, PROGRAM)
+
 
 class ExamDataError(RuntimeError):
     """The exam data is missing, malformed or internally inconsistent."""
@@ -150,6 +166,10 @@ ANSWER_SOURCE_LABELS: dict[str, str] = {
     "book": "Answered from the supplied C textbook - not an official key.",
     "assistant": "Answered from the C language definition - not an official key.",
     "official": "Taken from an official answer key.",
+    "original": (
+        "Reference solution written for this bank. The expected output was "
+        "produced by running it."
+    ),
 }
 
 
@@ -400,6 +420,27 @@ class ExamQuestion:
     #: Where the answer came from, so it is never presented as an official
     #: key when it is not one. Empty means no answer yet.
     answer_source: str = ""
+    # -- the code question kinds -------------------------------------
+    #: The snippet the question shows, for a tracing or debugging task.
+    code: str = ""
+    #: What the student is asked to do.
+    task: str = ""
+    #: A complete, correct C program for the task. Used to generate the
+    #: expected output, and shown after an attempt.
+    reference_solution: str = ""
+    #: ``[{"stdin": ..., "expected_stdout": ...}]``. The paper specifies
+    #: the test inputs, so the expected output is computed, never guessed.
+    test_cases: list[dict] = field(default_factory=list)
+    #: The paper's part this question belongs to: "A", "B" or "C".
+    part: str = ""
+    #: The paper's marking metadata, carried through so a practice paper
+    #: looks like the real thing.
+    bloom_level: str = ""
+    co: str = ""
+    po: str = ""
+    pi_code: str = ""
+    #: Rules the student must follow, e.g. "use only the pointer ptr".
+    constraints: list[str] = field(default_factory=list)
     #: A worked explanation, shown after an answer.
     explanation: str = ""
     #: A marking rubric for free-text answers.
@@ -447,6 +488,17 @@ class ExamQuestion:
             "options": list(self.options),
             "answer": self.answer,
             "answer_source": self.answer_source,
+            "code": self.code,
+            "task": self.task,
+            "reference_solution": self.reference_solution,
+            "test_cases": [dict(c) for c in self.test_cases],
+            "part": self.part,
+            "marks": self.marks,
+            "bloom_level": self.bloom_level,
+            "co": self.co,
+            "po": self.po,
+            "pi_code": self.pi_code,
+            "constraints": list(self.constraints),
             "explanation": self.explanation,
             "rubric": list(self.rubric),
             "marks": self.marks,
@@ -485,6 +537,16 @@ class ExamQuestion:
             options=[str(o) for o in data.get("options", [])],
             answer=str(data.get("answer", "")),
             answer_source=str(data.get("answer_source", "")),
+            code=str(data.get("code", "")),
+            task=str(data.get("task", "")),
+            reference_solution=str(data.get("reference_solution", "")),
+            test_cases=[dict(c) for c in data.get("test_cases", [])],
+            part=str(data.get("part", "")),
+            bloom_level=str(data.get("bloom_level", "")),
+            co=str(data.get("co", "")),
+            po=str(data.get("po", "")),
+            pi_code=str(data.get("pi_code", "")),
+            constraints=[str(c) for c in data.get("constraints", [])],
             explanation=str(data.get("explanation", "")),
             rubric=[str(r) for r in data.get("rubric", [])],
             marks=data.get("marks"),
@@ -1004,12 +1066,55 @@ def bank_path() -> Path:
     return exam_data_dir() / "questions.json"
 
 
-def load_questions(course_id: str | None = None) -> list[ExamQuestion]:
-    """Load the local question bank.
+BUNDLED_QUESTIONS_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "exam" / "questions.json"
+)
 
-    Returns an empty list when there is none, which is the normal case for
-    a fresh install: the learner imports their own papers.
+
+def load_bundled_questions(course_id: str | None = None) -> list[ExamQuestion]:
+    """The questions that ship with the app.
+
+    These are written for the project, in the format of the 2025 CT papers,
+    so they can be redistributed. The expected output of every code question
+    was produced by compiling and running its reference solution, so the key
+    is computed rather than typed.
     """
+    if not BUNDLED_QUESTIONS_PATH.exists():
+        return []
+    try:
+        raw = json.loads(BUNDLED_QUESTIONS_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ExamDataError(
+            f"The bundled question bank is not valid JSON: {exc}"
+        ) from None
+    questions = [ExamQuestion.from_dict(q) for q in raw.get("questions", [])]
+    if course_id is not None:
+        questions = [q for q in questions if q.course_id == course_id]
+    return questions
+
+
+def load_questions(
+    course_id: str | None = None,
+    *,
+    local_only: bool = False,
+) -> list[ExamQuestion]:
+    """Every question available: the bundled bank, then the local one.
+
+    The bundled questions come first because they are the curated ones. The
+    local bank holds what the learner imported from their own papers, and it
+    is empty on a fresh install.
+
+    ``local_only`` returns just the imported bank. It exists for the tests,
+    which need to see a bank they control rather than the curated one that
+    ships with the app.
+    """
+    local = _load_local_questions(course_id)
+    if local_only:
+        return local
+    return load_bundled_questions(course_id) + local
+
+
+def _load_local_questions(course_id: str | None = None) -> list[ExamQuestion]:
     path = bank_path()
     if not path.exists():
         return []
@@ -1074,7 +1179,7 @@ def merge_questions(new: list[ExamQuestion]) -> dict[str, int]:
     Returns a count of what happened: ``added``, ``already_present`` and
     ``duplicates``.
     """
-    existing = load_questions()
+    existing = load_questions(local_only=True)
     by_id = {q.id: q for q in existing}
     by_text = {normalise_text(q.question_text): q.id for q in existing}
 
@@ -1112,7 +1217,7 @@ def set_answer(question_id: str, answer: str) -> ExamQuestion | None:
     gradable: the student looks it up in their own copy of the paper and
     types it in.
     """
-    questions = load_questions()
+    questions = load_questions(local_only=True)
     for question in questions:
         if question.id == question_id:
             question.answer = answer.strip()
@@ -1138,7 +1243,7 @@ def mark_verified(
     when. The answer key can be set at the same time, because checking a
     question against the paper means reading its answer too.
     """
-    questions = load_questions()
+    questions = load_questions(local_only=True)
     for question in questions:
         if question.id != question_id:
             continue
@@ -1160,9 +1265,14 @@ def mark_verified(
 
 
 def pending_questions(course_id: str | None = None) -> list[ExamQuestion]:
-    """The questions still waiting for a human to check them."""
+    """The imported questions still waiting for a human to check them.
+
+    Only the **local** bank. The bundled questions are ours, already carry a
+    reference solution, and are not what the review workflow is for - that
+    workflow exists to check an extraction against the paper it came from.
+    """
     return [
-        q for q in load_questions(course_id)
+        q for q in load_questions(course_id, local_only=True)
         if q.verification_status == PENDING_REVIEW
     ]
 
@@ -1173,7 +1283,7 @@ def review_report() -> dict:
     The brief asks for exactly this: "a report/export of unverified,
     missing-source, duplicate or possibly incorrect questions".
     """
-    questions = load_questions()
+    questions = load_questions(local_only=True)
     pending = [q for q in questions if q.verification_status == PENDING_REVIEW]
     missing_source = [
         q for q in questions

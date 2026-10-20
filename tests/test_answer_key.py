@@ -118,19 +118,32 @@ def installed_key(monkeypatch):
 class TestTheShippedKey:
     """The key as it stands in the learner's own data directory."""
 
-    def test_every_question_has_an_answer(self, installed_key) -> None:
-        questions = installed_key
-        unanswered = [q.id for q in questions if not q.answer.strip()]
+    def test_every_imported_question_has_an_answer(self, installed_key) -> None:
+        """The imported bank is keyed; the bundled one is graded by running."""
+        from mentorsmith.core.exam import load_questions
+
+        imported = load_questions(local_only=True)
+        if not imported:
+            pytest.skip("no imported bank is installed")
+        unanswered = [q.id for q in imported if not q.answer.strip()]
         assert not unanswered, f"questions with no answer: {unanswered}"
 
     def test_every_answer_says_where_it_came_from(self, installed_key) -> None:
-        questions = installed_key
+        from mentorsmith.core.exam import load_questions
+
+        questions = load_questions(local_only=True)
+        if not questions:
+            pytest.skip("no imported bank is installed")
         missing = [q.id for q in questions if not q.answer_source]
         assert not missing, f"answers with no source: {missing[:5]}"
 
     def test_no_answer_claims_to_be_official(self, installed_key) -> None:
         """A key written from a book is not an official key."""
-        questions = installed_key
+        from mentorsmith.core.exam import load_questions
+
+        questions = load_questions(local_only=True)
+        if not questions:
+            pytest.skip("no imported bank is installed")
         claimed = [q.id for q in questions if q.answer_source == "official"]
         assert not claimed, (
             "an answer is marked as an official key without an official source"
@@ -142,7 +155,11 @@ class TestTheShippedKey:
         Those are reported rather than hidden, but the bank as a whole has to
         be usable - a key where almost nothing can be marked is not a key.
         """
-        questions = installed_key
+        from mentorsmith.core.exam import load_questions
+
+        questions = load_questions(local_only=True)
+        if not questions:
+            pytest.skip("no imported bank is installed")
         gradable = [q for q in questions if q.gradable]
         assert len(gradable) >= len(questions) * 0.9, (
             f"only {len(gradable)} of {len(questions)} questions are gradable"

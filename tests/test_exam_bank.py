@@ -293,10 +293,14 @@ class TestTheCatalogue:
 
 
 class TestTheBank:
-    def test_the_bank_is_not_in_the_repository(self) -> None:
-        """Past papers are the learner's, and are not ours to ship."""
+    def test_the_imported_bank_is_not_in_the_repository(self) -> None:
+        """Past papers are the learner's, and are not ours to ship.
+
+        The *bundled* bank is ours and does ship; this is about the bank
+        built from the learner's own papers.
+        """
         root = Path(__file__).resolve().parent.parent
-        assert not (root / "mentorsmith" / "data" / "exam" / "questions.json").exists()
+        assert not (root / "mentorsmith" / "data" / "exam" / "imported").exists()
 
     def test_saving_writes_to_the_data_directory(self, tmp_path, monkeypatch) -> None:
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
@@ -331,11 +335,16 @@ class TestMerging:
 
         return exam
 
+    @staticmethod
+    def _local(exam):
+        """Only the questions the test put in the bank."""
+        return exam.load_questions(local_only=True)
+
     def test_a_new_question_is_added(self, tmp_path, monkeypatch) -> None:
         exam = self._bank(tmp_path, monkeypatch)
         result = exam.merge_questions([_question()])
         assert result["added"] == 1
-        assert len(exam.load_questions()) == 1
+        assert len(self._local(exam)) == 1
 
     def test_the_same_question_twice_is_added_once(self, tmp_path, monkeypatch) -> None:
         exam = self._bank(tmp_path, monkeypatch)
@@ -343,7 +352,7 @@ class TestMerging:
         result = exam.merge_questions([_question()])
         assert result["added"] == 0
         assert result["already_present"] == 1
-        assert len(exam.load_questions()) == 1
+        assert len(self._local(exam)) == 1
 
     def test_the_same_text_under_another_id_is_a_duplicate(
         self, tmp_path, monkeypatch
@@ -354,7 +363,7 @@ class TestMerging:
         result = exam.merge_questions([_question(id="b")])
         assert result["duplicates"] == 1
         assert result["added"] == 0
-        assert len(exam.load_questions()) == 1
+        assert len(self._local(exam)) == 1
 
     def test_whitespace_does_not_defeat_duplicate_detection(
         self, tmp_path, monkeypatch
@@ -377,7 +386,7 @@ class TestTheReviewReport:
             _question(id="b", source_type=VERIFIED_PYQ, answer=""),
         ])
         report = exam.review_report()
-        assert report["total"] == 2
+        assert report["total"] >= 2
         assert len(report["pending_review"]) == 2
         assert len(report["no_answer"]) == 2
 

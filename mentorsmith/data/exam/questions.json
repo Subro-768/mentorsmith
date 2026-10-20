@@ -1,0 +1,675 @@
+{
+ "_comment": "The original question bank, written in the format of the CT-1 paper of 12.10.2025 (26CSE1002J). These are written for this project, so they ship with it. The expected output of every code question is produced by compiling and running the reference solution - it is computed, never typed.",
+ "questions": [
+  {
+   "id": "26cse1002j-pps--ct1-2025--a1",
+   "course_id": "26cse1002j-pps",
+   "question_type": "DEBUG",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO1",
+   "po": "PO1, PO2",
+   "pi_code": "1.3.1",
+   "question_text": "Consider the following C code and identify the error in the decision expression, state the output produced by the given code, and write the corrected condition.",
+   "task": "State the output of the program as written, explain what is wrong with the condition, and write the condition that makes the program behave as intended.",
+   "code": "#include <stdio.h>\nint main() {\n    int marks = 75;\n    if (marks = 50)\n        printf(\"Pass\");\n    else\n        printf(\"Fail\");\n    return 0;\n}",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int marks = 75;\n    if (marks == 50)\n        printf(\"Pass\");\n    else\n        printf(\"Fail\");\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "Fail"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "identifies that = is assignment, not comparison",
+    "states the output as written (Pass, because 50 is non-zero)",
+    "writes the corrected condition using =="
+   ],
+   "tags": [
+    "trace",
+    "debug",
+    "if",
+    "operators"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--a2",
+   "course_id": "26cse1002j-pps",
+   "question_type": "DEBUG",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO1",
+   "po": "PO1, PO2",
+   "pi_code": "2.2.1",
+   "question_text": "Debug the following function and identify why the value of n is not updated after modify() is called.",
+   "task": "Trace the program and state the exact output. Then explain what is wrong with the function and write a corrected version that updates the caller's variable.",
+   "code": "#include <stdio.h>\nvoid modify(int *p) {\n    int x = 50;\n    p = &x;\n}\nint main() {\n    int a = 10;\n    int *ptr = &a;\n    modify(ptr);\n    printf(\"%d \", *ptr);\n    return 0;\n}",
+   "reference_solution": "#include <stdio.h>\nvoid modify(int *p) {\n    *p = 50;\n}\nint main() {\n    int a = 10;\n    int *ptr = &a;\n    modify(ptr);\n    printf(\"%d \", *ptr);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "50 "
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "states the output as written",
+    "explains that modify received a copy of the pointer, so *p = 50 changed a local copy",
+    "writes the corrected line *p = 50 or explains the equivalent"
+   ],
+   "tags": [
+    "trace",
+    "debug",
+    "pointers",
+    "pass-by-value"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--a3",
+   "course_id": "26cse1002j-pps",
+   "question_type": "DEBUG",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO1",
+   "po": "PO1, PO2",
+   "pi_code": "2.2.1",
+   "question_text": "A program must print \"Eligible\" only when age is between 18 and 60 and the applicant has a valid ID. The student writes:",
+   "task": "Identify the logical/precedence issue and rewrite the condition using appropriate parentheses. State which ages the original condition would wrongly accept.",
+   "code": "if (age >= 18 || age <= 60 && hasID)\n    printf(\"Eligible\");\nelse\n    printf(\"Not Eligible\");",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int age = 25, hasID = 1;\n    if ((age >= 18 && age <= 60) && hasID)\n        printf(\"Eligible\");\n    else\n        printf(\"Not Eligible\");\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "Eligible"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "identifies that && binds tighter than ||",
+    "rewrites the condition with the parentheses in the right place",
+    "notes the original wrongly accepts anyone aged 18 or over"
+   ],
+   "tags": [
+    "debug",
+    "operators",
+    "precedence",
+    "conditions"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--a4",
+   "course_id": "26cse1002j-pps",
+   "question_type": "DEBUG",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO2",
+   "po": "PO1, PO2",
+   "pi_code": "2.2.1",
+   "question_text": "The following recursive function is intended to find the factorial of n. Identify the error and state where the base-case condition must be placed.",
+   "task": "Explain what the function does as written, and rewrite it so that it computes the factorial correctly.",
+   "code": "int fact(int n) {\n    return n * fact(n - 1);\n    if (n == 0)\n        return 1;\n}",
+   "reference_solution": "#include <stdio.h>\nint fact(int n) {\n    if (n == 0)\n        return 1;\n    return n * fact(n - 1);\n}\nint main() {\n    printf(\"%d\", fact(5));\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "120"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "explains that the return happens before the base case is ever reached",
+    "states the base case must come before the recursive call",
+    "writes the corrected function"
+   ],
+   "tags": [
+    "debug",
+    "recursion",
+    "functions"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--a5",
+   "course_id": "26cse1002j-pps",
+   "question_type": "DEBUG",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO1",
+   "po": "PO1, PO2",
+   "pi_code": "2.1.1",
+   "question_text": "Trace and state the exact output, and identify the missing keyword and where it must go so that only \"Wednesday\" is printed.",
+   "task": "State the exact output of the program as written, and say which keyword is missing and where it belongs so that only \"Wednesday\" is printed.",
+   "code": "#include <stdio.h>\nint main() {\n    int day = 3;\n    switch (day) {\n        case 1: printf(\"Monday\");\n        case 2: printf(\"Tuesday\");\n        case 3: printf(\"Wednesday\");\n        case 4: printf(\"Thursday\");\n        default: printf(\"Invalid day\");\n    }\n    return 0;\n}",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int day = 3;\n    switch (day) {\n        case 1: printf(\"Monday\"); break;\n        case 2: printf(\"Tuesday\"); break;\n        case 3: printf(\"Wednesday\"); break;\n        case 4: printf(\"Thursday\"); break;\n        default: printf(\"Invalid day\");\n    }\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "Wednesday"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "states the full output produced by the fall-through",
+    "identifies the missing break",
+    "says where the break must be placed"
+   ],
+   "tags": [
+    "trace",
+    "debug",
+    "switch"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--a6",
+   "course_id": "26cse1002j-pps",
+   "question_type": "TRACE",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO1",
+   "po": "PO1, PO2",
+   "pi_code": "1.3.1",
+   "question_text": "State the exact output of the following program and explain the division that produced it.",
+   "task": "State the exact output and explain the difference between the two values.",
+   "code": "#include <stdio.h>\nint main() {\n    int a = 7, b = 2;\n    printf(\"%d %f\\n\", a / b, a / (double) b);\n    return 0;\n}",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int a = 7, b = 2;\n    printf(\"%d %f\\n\", a / b, a / (double) b);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "3 3.500000\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "states the exact output",
+    "explains integer division truncates",
+    "explains the cast to double forces floating-point division"
+   ],
+   "tags": [
+    "trace",
+    "operators",
+    "type-conversion"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--a7",
+   "course_id": "26cse1002j-pps",
+   "question_type": "DEBUG",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO2",
+   "po": "PO1, PO2",
+   "pi_code": "2.2.1",
+   "question_text": "What happens when this program is executed? Justify your answer and identify what is missing in sum().",
+   "task": "State what happens when the program is run, and correct it so that sum(5) returns 15.",
+   "code": "#include <stdio.h>\nint sum(int n) {\n    return n + sum(n - 1);\n}\nint main() {\n    printf(\"%d\", sum(5));\n    return 0;\n}",
+   "reference_solution": "#include <stdio.h>\nint sum(int n) {\n    if (n == 0)\n        return 0;\n    return n + sum(n - 1);\n}\nint main() {\n    printf(\"%d\", sum(5));\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "15"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "states the program never terminates (or crashes on stack overflow)",
+    "identifies the missing base case",
+    "writes the corrected function"
+   ],
+   "tags": [
+    "trace",
+    "debug",
+    "recursion"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--a8",
+   "course_id": "26cse1002j-pps",
+   "question_type": "DEBUG",
+   "part": "A",
+   "marks": 2,
+   "bloom_level": "2",
+   "co": "CO1",
+   "po": "PO1, PO2",
+   "pi_code": "1.3.1",
+   "question_text": "The following program is supposed to print the sum of the first five numbers, but it prints the wrong answer. Identify the fault and correct it.",
+   "task": "State the output as written, explain the fault, and write the corrected loop.",
+   "code": "#include <stdio.h>\nint main() {\n    int sum = 0;\n    for (int i = 1; i < 5; i++)\n        sum = sum + i;\n    printf(\"%d\", sum);\n    return 0;\n}",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int sum = 0;\n    for (int i = 1; i <= 5; i++)\n        sum = sum + i;\n    printf(\"%d\", sum);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "15"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "states the output as written",
+    "identifies the off-by-one in the loop condition",
+    "writes the corrected loop"
+   ],
+   "tags": [
+    "trace",
+    "debug",
+    "loops"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--b1",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "B",
+   "marks": 4,
+   "bloom_level": "3",
+   "co": "CO1",
+   "po": "PO1, PO3",
+   "pi_code": "3.2.1",
+   "question_text": "Write a C program that reads two integer values, a and b, from the user and performs the following operations, displaying the result of each clearly:\n\n1. Arithmetic: the quotient and the remainder of a divided by b.\n2. Bitwise: the bitwise OR and the bitwise XOR of a and b.\n3. Shift: a left shift by 2 positions, and a right shift by 1 position.",
+   "task": "Write the program. It must read the two values with scanf and print all six results.",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int a, b;\n    scanf(\"%d %d\", &a, &b);\n    printf(\"Quotient: %d\\n\", a / b);\n    printf(\"Remainder: %d\\n\", a % b);\n    printf(\"Bitwise OR: %d\\n\", a | b);\n    printf(\"Bitwise XOR: %d\\n\", a ^ b);\n    printf(\"Left shift by 2: %d\\n\", a << 2);\n    printf(\"Right shift by 1: %d\\n\", a >> 1);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "13 5\n",
+     "expected_stdout": "Quotient: 2\nRemainder: 3\nBitwise OR: 13\nBitwise XOR: 8\nLeft shift by 2: 52\nRight shift by 1: 6\n"
+    },
+    {
+     "stdin": "20 4\n",
+     "expected_stdout": "Quotient: 5\nRemainder: 0\nBitwise OR: 20\nBitwise XOR: 16\nLeft shift by 2: 80\nRight shift by 1: 10\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "reads two integers with scanf",
+    "uses / and % for quotient and remainder",
+    "uses | and ^ for the bitwise operations",
+    "uses << 2 and >> 1 for the shifts"
+   ],
+   "tags": [
+    "operators",
+    "bitwise",
+    "scanf"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--b2",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "B",
+   "marks": 4,
+   "bloom_level": "3",
+   "co": "CO2",
+   "po": "PO1, PO3",
+   "pi_code": "3.3.1",
+   "question_text": "Declare a single integer variable \"num\" and a pointer \"ptr\" that points to num. Using only the pointer ptr, access and modify num - without declaring any additional variables - and print the value of num after each step:\n\n1. Double the value of num using ptr.\n2. Add 15 to num using ptr.\n3. Reset the value of num to zero using ptr.",
+   "task": "Write the program. Constraint: do not use any variable other than num and ptr for these operations.",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int num = 10;\n    int *ptr = &num;\n    *ptr = *ptr * 2;\n    printf(\"%d\\n\", num);\n    *ptr = *ptr + 15;\n    printf(\"%d\\n\", num);\n    *ptr = 0;\n    printf(\"%d\\n\", num);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "20\n35\n0\n"
+    }
+   ],
+   "constraints": [
+    "No variable other than num and ptr may be used."
+   ],
+   "rubric": [
+    "declares int *ptr = &num",
+    "modifies num through *ptr rather than through num",
+    "prints the value of num after each of the three steps"
+   ],
+   "tags": [
+    "pointers",
+    "constraints"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--b3",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "B",
+   "marks": 4,
+   "bloom_level": "3",
+   "co": "CO1",
+   "po": "PO1, PO3",
+   "pi_code": "3.2.1",
+   "question_text": "Write a C function",
+   "task": "Write the complete program and state what * and & mean in the signature, the call and the body.",
+   "code": "void updateBalance(int *balance, int amount)\n\nthat adds amount to balance using a pointer. In main(), declare a balance of 1000, call the function with amount = 250, and print the updated balance. Identify the role of * and & in the function call and in the definition.",
+   "reference_solution": "#include <stdio.h>\nvoid updateBalance(int *balance, int amount) {\n    *balance = *balance + amount;\n}\nint main() {\n    int balance = 1000;\n    updateBalance(&balance, 250);\n    printf(\"%d\", balance);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "1250"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "takes the balance as a pointer",
+    "uses &balance at the call site to pass the address",
+    "uses *balance to read and write through the pointer",
+    "prints 1250"
+   ],
+   "tags": [
+    "pointers",
+    "functions"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--b4",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "B",
+   "marks": 4,
+   "bloom_level": "3",
+   "co": "CO1",
+   "po": "PO1, PO3",
+   "pi_code": "3.2.1",
+   "question_text": "For int n = 13, determine the result of each of the following expressions and briefly state the operation performed:\n\n    (a) n & 1\n    (b) n >> 2\n    (c) (n >> 10) && (n < 20)\n    (d) (n % 5 == 3) ? n + 2 : n - 2",
+   "task": "Write a C program that prints the value of each of the four expressions for n = 13, and state what operation each one performs.",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int n = 13;\n    printf(\"%d\\n\", n & 1);\n    printf(\"%d\\n\", n >> 2);\n    printf(\"%d\\n\", (n >> 10) && (n < 20));\n    printf(\"%d\\n\", (n % 5 == 3) ? n + 2 : n - 2);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "",
+     "expected_stdout": "1\n3\n0\n15\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "evaluates all four expressions correctly",
+    "identifies & as bitwise AND, >> as right shift, && as logical AND",
+    "identifies the conditional operator"
+   ],
+   "tags": [
+    "bitwise",
+    "operators",
+    "conditional"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--c1",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "C",
+   "marks": 12,
+   "bloom_level": "4",
+   "co": "CO1, CO2",
+   "po": "PO1, PO2, PO3",
+   "pi_code": "1.3.1, 2.2.1, 3.2.1",
+   "question_text": "A university uses the following rules to classify a student for a merit scholarship. Read the CGPA (0.0-10.0), the attendance percentage (0-100), and the disciplinary cases (0 or more).\n\n  i.   Print \"Invalid Input\" if any value is outside its valid range.\n  ii.  Print \"Gold Scholarship\" if CGPA >= 9.0, attendance >= 90 and disciplinary cases == 0.\n  iii. Print \"Silver Scholarship\" if CGPA >= 8.0, attendance >= 85 and disciplinary cases == 1.\n  iv.  Print \"Not Eligible\" otherwise.\n\nUse an if...else if...else ladder so that a Gold Scholarship student is not classified as Silver.",
+   "task": "Write the complete C program and show the output for:\n  (a) CGPA 9.2, attendance 92, disciplinary cases 0\n  (b) CGPA 8.4, attendance 88, disciplinary cases 1",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    float cgpa;\n    int attendance, cases;\n    scanf(\"%f %d %d\", &cgpa, &attendance, &cases);\n    if (cgpa < 0.0 || cgpa > 10.0 || attendance < 0 || attendance > 100 || cases < 0) {\n        printf(\"Invalid Input\\n\");\n    } else if (cgpa >= 9.0 && attendance >= 90 && cases == 0) {\n        printf(\"Gold Scholarship\\n\");\n    } else if (cgpa >= 8.0 && attendance >= 85 && cases == 1) {\n        printf(\"Silver Scholarship\\n\");\n    } else {\n        printf(\"Not Eligible\\n\");\n    }\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "9.2 92 0\n",
+     "expected_stdout": "Gold Scholarship\n"
+    },
+    {
+     "stdin": "8.4 88 1\n",
+     "expected_stdout": "Silver Scholarship\n"
+    },
+    {
+     "stdin": "7.0 70 0\n",
+     "expected_stdout": "Not Eligible\n"
+    },
+    {
+     "stdin": "11.0 90 0\n",
+     "expected_stdout": "Invalid Input\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "validates all three inputs before classifying",
+    "uses an if...else if...else ladder in the order given",
+    "prints exactly one of Invalid Input / Gold Scholarship / Silver Scholarship / Not Eligible",
+    "produces the stated output for the given test cases"
+   ],
+   "tags": [
+    "conditions",
+    "nested-if",
+    "validation",
+    "scanf"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--c2",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "C",
+   "marks": 12,
+   "bloom_level": "4",
+   "co": "CO1, CO2",
+   "po": "PO1, PO2, PO3",
+   "pi_code": "1.3.1, 2.2.1, 3.2.1",
+   "question_text": "A campus cafeteria provides the following meal plans:\n\n  1 - Breakfast Combo : Rs 80\n  2 - Lunch Combo     : Rs 150\n  3 - Dinner Combo    : Rs 180\n  4 - Student Special: Rs 120\n\nRead the plan choice and the quantity. Using switch, determine the unit price and calculate the total bill. For an unsupported choice, print \"Invalid Choice\" and do not calculate the bill. Also reject a non-positive quantity using a decision construct.",
+   "task": "Write the complete C program and show the output for:\n  (a) choice = 2, quantity = 3\n  (b) choice = 5, quantity = 2\n  (c) choice = 1, quantity = 0",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint main() {\n    int choice, quantity, unit = 0;\n    scanf(\"%d %d\", &choice, &quantity);\n    if (quantity <= 0) {\n        printf(\"Invalid Quantity\\n\");\n        return 0;\n    }\n    switch (choice) {\n        case 1: unit = 80;  break;\n        case 2: unit = 150; break;\n        case 3: unit = 180; break;\n        case 4: unit = 120; break;\n        default: printf(\"Invalid Choice\\n\"); return 0;\n    }\n    printf(\"Total Bill: %d\\n\", unit * quantity);\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "2 3\n",
+     "expected_stdout": "Total Bill: 450\n"
+    },
+    {
+     "stdin": "5 2\n",
+     "expected_stdout": "Invalid Choice\n"
+    },
+    {
+     "stdin": "1 0\n",
+     "expected_stdout": "Invalid Quantity\n"
+    },
+    {
+     "stdin": "3 2\n",
+     "expected_stdout": "Total Bill: 360\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "reads the choice and the quantity",
+    "uses switch to select the unit price",
+    "prints Invalid Choice and calculates no bill for an unsupported choice",
+    "rejects a non-positive quantity",
+    "computes unit price times quantity"
+   ],
+   "tags": [
+    "switch",
+    "conditions",
+    "scanf"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--c3",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "C",
+   "marks": 12,
+   "bloom_level": "4",
+   "co": "CO2",
+   "po": "PO1, PO2",
+   "pi_code": "1.3.1, 2.2.1, 3.2.1",
+   "question_text": "A student scorecard program must calculate the total and the average of three subject marks, and then apply a grace mark through a pointer.\n\n  i.   Write int calculateTotal(int, int, int) using pass-by-value.\n  ii.  Write void applyGrace(int *total, int grace) using pass-by-reference, so that the updated total must not exceed 300.\n  iii. Calculate and display the average and print \"Pass\" if the average >= 40; otherwise print \"Fail\".\n  iv.  Reject marks outside 0-100 and a grace outside 0-5 before calling the functions.",
+   "task": "Write the complete modular C program and show the result for marks 42, 48, 50 with grace = 5.",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint calculateTotal(int m1, int m2, int m3) {\n    return m1 + m2 + m3;\n}\nvoid applyGrace(int *total, int grace) {\n    *total = *total + grace;\n    if (*total > 300) {\n        *total = 300;\n    }\n}\nint main() {\n    int m1, m2, m3, grace, total;\n    scanf(\"%d %d %d %d\", &m1, &m2, &m3, &grace);\n    if (m1 < 0 || m1 > 100 || m2 < 0 || m2 > 100 || m3 < 0 || m3 > 100 || grace < 0 || grace > 5) {\n        printf(\"Invalid Input\\n\");\n        return 0;\n    }\n    total = calculateTotal(m1, m2, m3);\n    applyGrace(&total, grace);\n    printf(\"Total: %d\\n\", total);\n    printf(\"Average: %.2f\\n\", total / 3.0);\n    if (total / 3.0 >= 40)\n        printf(\"Pass\\n\");\n    else\n        printf(\"Fail\\n\");\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "42 48 50 5\n",
+     "expected_stdout": "Total: 145\nAverage: 48.33\nPass\n"
+    },
+    {
+     "stdin": "10 20 30 0\n",
+     "expected_stdout": "Total: 60\nAverage: 20.00\nFail\n"
+    },
+    {
+     "stdin": "120 40 50 5\n",
+     "expected_stdout": "Invalid Input\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "declares calculateTotal with three int parameters and returns their sum",
+    "declares applyGrace with a pointer parameter and modifies through it",
+    "caps the total at 300",
+    "validates the marks and the grace before calling the functions",
+    "prints the average, and Pass or Fail"
+   ],
+   "tags": [
+    "functions",
+    "pointers",
+    "modular",
+    "validation"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--c4",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "C",
+   "marks": 12,
+   "bloom_level": "4",
+   "co": "CO2",
+   "po": "PO1, PO2",
+   "pi_code": "1.3.1, 2.2.1, 3.2.1",
+   "question_text": "An online learning platform awards 2 + 4 + ... + 2n points for n completed tasks.\n\n  i.   Write a recursive function int evenSum(int n) without using any loop.\n  ii.  State the base case and the recurrence relation.\n  iii. Reject n values outside 0-20.\n  iv.  Trace the function calls and returns for n = 4.\n  v.   Write the complete C program and display the final score.",
+   "task": "Write the complete C program. Trace the calls and returns for n = 4 in your answer, and display the final score for the input given.",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint evenSum(int n) {\n    if (n == 0)\n        return 0;\n    return 2 * n + evenSum(n - 1);\n}\nint main() {\n    int n;\n    scanf(\"%d\", &n);\n    if (n < 0 || n > 20) {\n        printf(\"Invalid Input\\n\");\n        return 0;\n    }\n    printf(\"Score: %d\\n\", evenSum(n));\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "4\n",
+     "expected_stdout": "Score: 20\n"
+    },
+    {
+     "stdin": "5\n",
+     "expected_stdout": "Score: 30\n"
+    },
+    {
+     "stdin": "0\n",
+     "expected_stdout": "Score: 0\n"
+    },
+    {
+     "stdin": "25\n",
+     "expected_stdout": "Invalid Input\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "writes evenSum with a base case for n == 0",
+    "uses the recurrence 2*n + evenSum(n-1) and no loop",
+    "rejects n outside 0-20",
+    "traces the calls and returns for n = 4",
+    "prints the final score"
+   ],
+   "tags": [
+    "recursion",
+    "functions",
+    "validation"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  },
+  {
+   "id": "26cse1002j-pps--ct1-2025--c5",
+   "course_id": "26cse1002j-pps",
+   "question_type": "PROGRAM",
+   "part": "C",
+   "marks": 12,
+   "bloom_level": "4",
+   "co": "CO2",
+   "po": "PO1, PO2",
+   "pi_code": "1.3.1, 2.2.1, 3.2.1",
+   "question_text": "A person wants to climb a staircase of n steps. At each move, the person can climb either 1 step or 2 steps. The number of ways to reach the top is calculated using the recursive relationship:\n\n    ways(n) = ways(n-1) + ways(n-2)\n    ways(0) = 1\n    ways(1) = 1\n\nWrite a C program with a recursive function ways(int n) that reads the number of steps n and prints the total number of ways to reach the top. Trace the recursive calls for ways(4) and list all the recursive calls in the order in which they are made.",
+   "task": "Write the complete C program. In your answer, list every recursive call for ways(4) in the order it is made, and state the final result.",
+   "code": "",
+   "reference_solution": "#include <stdio.h>\nint ways(int n) {\n    if (n == 0 || n == 1)\n        return 1;\n    return ways(n - 1) + ways(n - 2);\n}\nint main() {\n    int n;\n    scanf(\"%d\", &n);\n    if (n < 0) {\n        printf(\"Invalid Input\\n\");\n        return 0;\n    }\n    printf(\"%d\\n\", ways(n));\n    return 0;\n}",
+   "test_cases": [
+    {
+     "stdin": "4\n",
+     "expected_stdout": "5\n"
+    },
+    {
+     "stdin": "5\n",
+     "expected_stdout": "8\n"
+    },
+    {
+     "stdin": "1\n",
+     "expected_stdout": "1\n"
+    },
+    {
+     "stdin": "0\n",
+     "expected_stdout": "1\n"
+    }
+   ],
+   "constraints": [],
+   "rubric": [
+    "writes ways with the base cases for n = 0 and n = 1",
+    "uses the recurrence ways(n-1) + ways(n-2)",
+    "lists the recursive calls for ways(4) in order",
+    "prints the total number of ways"
+   ],
+   "tags": [
+    "recursion",
+    "fibonacci",
+    "functions"
+   ],
+   "source_type": "ORIGINAL_PRACTICE",
+   "answer_source": "original",
+   "verification_status": "PENDING_REVIEW"
+  }
+ ]
+}

@@ -59,8 +59,13 @@ followed the findings.
 - **The exam-prep course catalogue is verified** - the learner supplied the
   official syllabus (*Regulations 2026, Vol 2*) and the course entry is
   taken from it. The *questions* are all still `PENDING_REVIEW`.
-- **Every extracted question is `PENDING_REVIEW`.** 356 questions; none has
-  been compared with its paper by a human yet.
+- **The format changed for 2026.** The multiple-choice bank that used to be
+  here is gone. The 2025 CT papers ask what a snippet prints, where its
+  fault is, and for a program to a specification with the test inputs
+  stated. The bank was rebuilt around that: 17 original questions in the
+  new format, graded by compiling and running the student's code.
+- **Every imported question is `PENDING_REVIEW`.** The papers the learner
+  imported are still waiting for a human to compare them with the paper.
 - **The end-semester exam pattern is unknown.** The official syllabus
   states the *assessment* split - CA 50% (written test 15%, written
   test/examination 15%, practice 20%) and a summative final 50% (theory

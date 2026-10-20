@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import html as html_module
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QThread, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -60,6 +60,7 @@ from ..core.exam import (
 )
 from ..services.exam_prep import ExamPrepService, ExamSession
 from . import theme
+from .code_editor import CodeEditor
 
 
 def _escape(text: str) -> str:
@@ -129,6 +130,32 @@ class MockDialog(QDialog):
             self.minutes_spin.value(),
             self.source_combo.currentData(),
         )
+
+
+class CodeCheckWorker(QThread):
+    """Compiles and runs a code answer off the GUI thread.
+
+    A compile takes a second or two; doing it on the GUI thread would
+    freeze the window on every check, which is the one thing an exam tool
+    must not do.
+    """
+
+    checked = pyqtSignal(object)
+    failed = pyqtSignal(str)
+
+    def __init__(self, question, source: str, adapter) -> None:
+        super().__init__()
+        self.question = question
+        self.source = source
+        self.adapter = adapter
+
+    def run(self) -> None:  # noqa: D102 - QThread API
+        try:
+            from ..services.code_grader import grade
+
+            self.checked.emit(grade(self.question, self.source, self.adapter))
+        except Exception as exc:  # pragma: no cover - defensive
+            self.failed.emit(str(exc))
 
 
 class ExamPrepView(QWidget):
@@ -362,6 +389,42 @@ class ExamPrepView(QWidget):
         self.clock = QTimer(self)
         self.clock.setInterval(1000)
         self.clock.timeout.connect(self._on_tick)
+
+        # ── The code panel ─────────────────────────────────────────────
+        # A tracing question is answered by typing what the program
+        # prints; a debugging or programming question by writing the code.
+        self.code_panel = QWidget()
+        code_layout = QVBoxLayout(self.code_panel)
+        code_layout.setContentsMargins(0, 0, 0, 0)
+        code_layout.setSpacing(6)
+
+        self.code_editor = CodeEditor()
+        self.code_editor.setMinimumHeight(180)
+        code_layout.addWidget(self.code_editor)
+
+        self.output_edit = QLineEdit()
+        self.output_edit.setPlaceholderText(
+            "Type the exact output the program prints"
+        )
+        code_layout.addWidget(self.output_edit)
+
+        code_buttons = QHBoxLayout()
+        self.check_button = QPushButton("Compile and check")
+        self.check_button.setObjectName("primary")
+        self.check_button.setFixedHeight(34)
+        self.check_button.clicked.connect(self._on_check_code)
+        code_buttons.addWidget(self.check_button)
+
+        self.show_solution_button = QPushButton("Show the reference solution")
+        self.show_solution_button.setObjectName("subtle")
+        self.show_solution_button.setFixedHeight(34)
+        self.show_solution_button.clicked.connect(self._on_show_solution)
+        code_buttons.addWidget(self.show_solution_button)
+        code_buttons.addStretch(1)
+        code_layout.addLayout(code_buttons)
+
+        self.code_panel.setVisible(False)
+        right_layout.addWidget(self.code_panel)
 
         splitter.addWidget(right)
         splitter.setStretchFactor(0, 2)
@@ -836,6 +899,179 @@ class ExamPrepView(QWidget):
         self._review_index += 1
         self._show_next_for_review()
 
+    # ------------------------------------------------------------------
+    # Code questions
+    # ------------------------------------------------------------------
+    def _is_code_question(self, question) -> bool:
+        from ..core.exam import CODE_TYPES
+
+        return question is not None and question.question_type in CODE_TYPES
+
+    def _show_code_question(self, question) -> None:
+        """Show a tracing, debugging or programming question."""
+        from ..core.exam import CODE_TYPES
+
+        self.code_panel.setVisible(True)
+        self.choice_box.setVisible(False)
+        self.submit_button.setVisible(False)
+
+        kind = {
+            "TRACE": "Trace",
+            "DEBUG": "Debug",
+            "PROGRAM": "Write the program",
+        }.get(question.question_type, "Question")
+
+        header = (
+            f"<p style='color:{theme.ACCENT};font-weight:700;font-size:11px'>"
+            f"PART {question.part} &nbsp;·&nbsp; {question.marks or 0} MARKS"
+            f" &nbsp;·&nbsp; {kind.upper()}</p>"
+            f"<p style='font-size:13px'>{_escape(question.task)}</p>"
+        )
+        if question.constraints:
+            header += (
+                f"<p style='color:{theme.WARNING};font-size:12px'>"
+                f"Constraints: {_escape('; '.join(question.constraints))}</p>"
+            )
+        if question.code:
+            header += (
+                f"<pre style='background:{theme.SURFACE_ALT};padding:10px;"
+                f"border-radius:6px;overflow-x:auto'>{_escape(question.code)}</pre>"
+            )
+        self.body.setHtml(header)
+
+        if question.question_type == "TRACE":
+            # The answer is the output, not a program.
+            self.code_editor.setVisible(False)
+            self.output_edit.setVisible(True)
+            self.output_edit.clear()
+            self.check_button.setText("Check the output")
+        else:
+            self.code_editor.setVisible(True)
+            self.output_edit.setVisible(False)
+            self.code_editor.setPlainText(
+                question.code if question.question_type == "DEBUG" else ""
+            )
+            self.check_button.setText("Compile and check")
+        self.show_solution_button.setVisible(True)
+
+    def _on_check_code(self) -> None:
+        """Compile and run the answer, and compare it with the expected."""
+        question = self.session.current if self.session else None
+        if question is None:
+            return
+
+        from ..core.exam import CODE_TYPES
+        from ..services.code_grader import grade_text
+
+        if question.question_type == "TRACE":
+            result = grade_text(question, self.output_edit.text())
+            self._render_code_result(question, result)
+            return
+
+        source = self.code_editor.toPlainText()
+        self.check_button.setEnabled(False)
+        self.check_button.setText("Compiling…")
+        worker = CodeCheckWorker(question, source, self._c_adapter())
+        worker.checked.connect(
+            lambda result: self._render_code_result(question, result)
+        )
+        worker.failed.connect(self._on_code_error)
+        worker.finished.connect(self._re_enable_check)
+        self._worker = worker
+        worker.start()
+
+    def _c_adapter(self):
+        """A C adapter that compiles and runs the student's answer."""
+        from ..execution.c import CAdapter
+
+        if getattr(self, "_adapter", None) is None:
+            self._adapter = CAdapter(self._work_dir(), sandbox=False)
+        return self._adapter
+
+    def _work_dir(self):
+        import tempfile
+        from pathlib import Path
+
+        path = Path(tempfile.gettempdir()) / "mentorsmith-exam-work"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def _re_enable_check(self) -> None:
+        self.check_button.setEnabled(True)
+        if self.session and self.session.current:
+            kind = self.session.current.question_type
+            self.check_button.setText(
+                "Check the output" if kind == "TRACE" else "Compile and check"
+            )
+
+    def _on_code_error(self, message: str) -> None:
+        self.body.setHtml(
+            f"<p style='color:{theme.ERROR}'>The check failed: "
+            f"{_escape(message)}</p>"
+        )
+
+    def _render_code_result(self, question, result) -> None:
+        """Show what happened, and what the expected output was."""
+        if not result.compiled:
+            self.body.setHtml(
+                f"<p style='color:{theme.ERROR};font-weight:700'>"
+                f"It did not compile.</p>"
+                f"<pre style='background:{theme.SURFACE_ALT};padding:10px;"
+                f"border-radius:6px'>{_escape(result.build_error)}</pre>"
+            )
+            return
+
+        rows = []
+        for case in result.cases:
+            colour = theme.SUCCESS if case.passed else theme.ERROR
+            mark = "✓" if case.passed else "✗"
+            rows.append(
+                f"<p style='color:{colour};font-weight:700'>{mark} "
+                f"{_escape(case.note or 'matched')}</p>"
+                f"<pre style='background:{theme.SURFACE_ALT};padding:8px;"
+                f"border-radius:6px'>expected: "
+                f"{_escape(case.expected or '(none)')}\n"
+                f"yours   : {_escape(case.actual or '(none)')}</pre>"
+            )
+
+        headline = (
+            f"<p style='color:{theme.SUCCESS};font-weight:700'>"
+            f"Correct - {result.passed_count} of {result.total} test "
+            f"case(s) matched.</p>"
+            if result.passed
+            else
+            f"<p style='color:{theme.WARNING};font-weight:700'>"
+            f"Not yet - {result.passed_count} of {result.total} test "
+            f"case(s) matched.</p>"
+        )
+        note = (
+            "<p style='color:{theme.MUTED};font-size:11px'>The expected "
+            "output was produced by compiling and running the reference "
+            "solution, so it is a fact rather than an opinion.</p>"
+        )
+        rubric = ""
+        if question.rubric:
+            rubric = (
+                "<p><b>What the examiner looks for:</b></p><ul>"
+                + "".join(f"<li>{_escape(r)}</li>" for r in question.rubric)
+                + "</ul>"
+            )
+        self.body.setHtml(headline + "".join(rows) + note + rubric)
+
+    def _on_show_solution(self) -> None:
+        question = self.session.current if self.session else None
+        if question is None or not question.reference_solution:
+            return
+        self.code_editor.setPlainText(question.reference_solution)
+        self.code_editor.setVisible(True)
+        self.output_edit.setVisible(False)
+        self.body.setHtml(
+            f"<p style='color:{theme.WARNING};font-weight:700'>"
+            f"Reference solution - study it, then write your own.</p>"
+            f"<pre style='background:{theme.SURFACE_ALT};padding:10px;"
+            f"border-radius:6px'>{_escape(question.reference_solution)}</pre>"
+        )
+
     def _show_current(self) -> None:
         if self.session is None:
             return
@@ -850,6 +1086,12 @@ class ExamPrepView(QWidget):
         )
         self.submit_button.setText("Submit answer")
         self.next_button.setEnabled(False)
+        if self._is_code_question(question):
+            self._show_code_question(question)
+            return
+        self.code_panel.setVisible(False)
+        self.submit_button.setVisible(True)
+        self.choice_box.setVisible(True)
         self._render_question(question, show_options=True)
 
     def _on_submit(self) -> None:
@@ -987,3 +1229,6 @@ class ExamPrepView(QWidget):
         self.submit_button.setEnabled(False)
         self.next_button.setEnabled(False)
         self._clear_choices()
+        self.code_panel.setVisible(False)
+        self.submit_button.setVisible(True)
+        self.choice_box.setVisible(True)

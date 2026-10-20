@@ -78,8 +78,12 @@ class TestTheMock:
         assert all(q.source_type == VERIFIED_PYQ for q in mock.questions)
 
     def test_the_count_is_capped_by_what_exists(self, service) -> None:
+        from mentorsmith.core.exam import load_questions
+
+        available = len(load_questions(COURSE))
         mock = service.start_mock(COURSE, count=500)
-        assert len(mock.questions) == 10
+        assert len(mock.questions) == available
+        assert available >= 10
 
     def test_the_clock_counts_down(self, service) -> None:
         mock = service.start_mock(COURSE, count=2, minutes=1)
@@ -97,9 +101,9 @@ class TestTheMock:
         assert service.seconds_left(mock) == 0
 
     def test_a_mock_with_no_questions_is_refused(self, service, bank) -> None:
-        bank.save_questions([])
+        """A course with nothing in it cannot make a mock."""
         with pytest.raises(ValueError):
-            service.start_mock(COURSE, count=5)
+            service.start_mock("a-course-with-no-questions", count=5)
 
 
 class TestSessionRecovery:

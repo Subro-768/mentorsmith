@@ -266,6 +266,7 @@ class ExamPrepService:
         verification_status: str | None = None,
         question_type: str | None = None,
         search: str = "",
+        local_only: bool = False,
     ) -> list[ExamQuestion]:
         """The bank's questions, in sequence, filtered.
 
@@ -276,7 +277,10 @@ class ExamPrepService:
         Every filter is one the brief asks for: topic, type, difficulty and
         verified/unverified status. An empty filter matches everything.
         """
-        found = sequence_questions(load_questions(course_id), self.syllabus(course_id))
+        found = sequence_questions(
+            load_questions(course_id, local_only=local_only),
+            self.syllabus(course_id),
+        )
         if unit is not None:
             found = [q for q in found if q.unit == unit]
         if topic_id:

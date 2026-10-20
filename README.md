@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1375 automated tests. It has **not** been
+and its behaviour is covered by 1400 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1375 tests
+python3 -m pytest tests/ -q                       # 1400 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -345,21 +345,46 @@ your place in the run are written as you go, and **Resume** offers it back.
 The clock keeps running while the app is shut — a timed run that quietly
 gained time by being closed would not be a timed run.
 
+### The new format: code, not multiple choice
+
+The 2025 CT papers are a different animal from the old question banks.
+Their Part A asks *what does this snippet print* and *where is the fault*;
+Part B asks for a short program; Part C asks for a modular program with
+the test inputs stated in the question and a trace to show. Marks are
+2 / 4 / 12, and every question carries its Bloom level, course outcome and
+programme outcome.
+
+That is a better fit for an app that compiles code, because **the paper
+itself states the test inputs**. The expected output is then a fact: the
+reference solution is compiled and run, and the student's program is judged
+against what actually came out. Nothing is graded against a stored opinion.
+
+The bundled bank is written in that format — **17 original questions**
+(8 in Part A, 4 in Part B, 5 in Part C) with 32 test cases, all written for
+this project so they ship with it.
+
+- **Trace** — type what the program prints; it is compared with the
+  computed output.
+- **Debug** — the snippet has a deliberate fault; you fix it and the fixed
+  program is run.
+- **Program** — you write it to the specification, and it is run against the
+  paper's own inputs.
+
+The examiner's rubric — "identify the error and state the corrected
+condition", "trace the calls and returns" — is shown too, and is labelled as
+the part a person marks.
+
 ### The answer key
 
-The papers do not print an answer key, so the app supplies one: **all 330
-questions are answered**, from the C language definition and the supplied C
-textbook — *Programming in ANSI C* (Ray Dawson) and *The C Programming
-Language* (Kernighan & Ritchie) in `theory/`.
+The old multiple-choice bank has been removed: the format changed for this
+year, and the new papers are code, not options. What replaces it is a bank
+written in the new format, where the answer is a **program** and the
+expected output is computed by running it.
 
-Every answer records **where it came from**, and the app says so under the
-answer: *"Answered from the supplied C textbook — not an official key."* An
-answer written from a book is not the same thing as the exam's own key, and
-a student revising against it deserves to know which they are looking at.
-
-316 of the 330 can be marked automatically. The other 14 printed their key
-inline ("Ans: c"), so the option text was lost with it; those are listed in
-the review report as ungradable rather than guessed at.
+Every question records **where it came from**. An imported paper's key is
+labelled *"Answered from the supplied C textbook — not an official key"*; a
+bundled question is labelled *"Reference solution written for this bank.
+The expected output was produced by running it."*
 
 ```bash
 python3 tools/set_answers.py --report     # what is answered, what is not

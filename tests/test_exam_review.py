@@ -150,7 +150,7 @@ class TestTheServiceRefusesToMarkAnUngradableQuestion:
         db.connect()
         service = ExamPrepService(db)
         session = service.start_session(
-            service.questions("26cse1002j-pps"), "26cse1002j-pps"
+            service.questions("26cse1002j-pps", local_only=True), "26cse1002j-pps"
         )
         result = service.submit(session, "int age;")
         assert result.correct is None
@@ -167,7 +167,8 @@ class TestTheServiceRefusesToMarkAnUngradableQuestion:
         db.connect()
         service = ExamPrepService(db)
         session = service.start_session(
-            service.questions("26cse1002j-pps"), "26cse1002j-pps"
+            service.questions("26cse1002j-pps", local_only=True),
+            "26cse1002j-pps",
         )
         result = service.submit(session, "int age;")
         assert result.correct is True
@@ -245,7 +246,9 @@ class TestTheScreen:
     def test_an_empty_queue_says_so(self, view) -> None:
         import mentorsmith.core.exam as exam
 
-        for question in exam.load_questions():
+        # The review queue covers the imported bank only, so clearing it is
+        # enough to empty the queue.
+        for question in exam.load_questions(local_only=True):
             mark_verified(question.id, answer=question.options[0])
         view.start_review()
         assert "Nothing waiting" in view.session_label.text()

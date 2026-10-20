@@ -575,17 +575,25 @@ always be able to tell what a question is.
   questions cannot be marked. Such an attempt is recorded and reported as
   *ungraded*, never as a mistake, and a session where nothing could be
   graded reports no score rather than 0%.
-- **What was actually extracted:** 330 questions from the two clean-text
-  question banks and the CT papers; 122 duplicates skipped; 15 of the 27
-  supplied PDFs have no text layer and need OCR.
-- **There is now an answer key.** The papers print none, so all 330
-  questions were answered from the C language definition and the supplied C
-  textbooks (Ray Dawson's *Programming in ANSI C* in the course material,
-  and Kernighan & Ritchie's *The C Programming Language* in `theory/`).
-  Every answer records its source, and the app labels it as **not an
-  official key**. 316 of the 330 can be marked automatically; the other 14
-  printed their key inline, so the option text was lost with it, and they
-  are reported as ungradable rather than guessed at.
+- **The 2025 papers** (CT-1, 12.10.2025, 26CSE1002J, 100 minutes, 40
+  marks, sets A and C1) are the model for the new bank. They were supplied
+  as photographs, and the questions were read from them directly.
+- **The question format changed for 2026 and the bank was rebuilt around
+  it.** The old multiple-choice bank is gone. The 2025 CT papers ask what a
+  snippet prints, where its fault is, and for a program to a specification
+  with the test inputs stated - 2, 4 and 12 marks, with the Bloom level and
+  the CO/PO carried on every question.
+- **The new bank is 17 original questions with 32 test cases**, written for
+  this project so it can ship with it. Every one has a reference solution,
+  and the expected output is **produced by compiling and running that
+  solution** - computed, never typed. A test re-runs every reference
+  solution and fails if the stored expectation no longer matches.
+- **Grading is by execution.** `services/code_grader.py` compiles the
+  student's C and runs it against the paper's own inputs, then compares the
+  output. A tracing question is answered by typing the output, which is
+  compared with the computed one. The rubric half of each question - "state
+  the corrected condition", "trace the calls" - is shown and labelled as
+  the part a person marks.
 - **The human-check workflow exists.** `Check questions` in the Exam Prep
   screen walks the pending queue, shows the source page, and records the
   answer and who checked it. That is the only path to

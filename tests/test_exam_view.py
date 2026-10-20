@@ -88,7 +88,10 @@ class TestTheLabels:
         assert "not yet verified" not in view.course_combo.currentText()
 
     def test_the_questions_are_listed(self, view) -> None:
-        assert view.question_list.count() == 2
+        # The bundled bank ships with the app, so the count includes it.
+        from mentorsmith.core.exam import load_questions
+
+        assert view.question_list.count() == len(load_questions("26cse1002j-pps"))
 
     def test_an_unverified_question_does_not_look_verified(self, view) -> None:
         body = view.body.toPlainText()
@@ -103,7 +106,6 @@ class TestTheLabels:
     def test_the_summary_says_how_many_await_review(self, view) -> None:
         summary = view.bank_summary.text()
         assert "awaiting a human check" in summary
-        assert "2" in summary
 
 
 class TestASession:
@@ -156,13 +158,18 @@ class TestASession:
         """Both questions lose their key, so nothing in the session grades."""
         import mentorsmith.core.exam as exam
 
-        questions = exam.load_questions("26cse1002j-pps")
+        # Only the learner's own questions, so the bundled bank - which is
+        # graded by running code, not by a key - does not join the session.
+        questions = exam.load_questions("26cse1002j-pps", local_only=True)
         for question in questions:
             question.answer = ""
         exam.save_questions(questions)
         view.refresh_questions()
 
-        view.start_practice()
+        view.session = view.service.start_session(
+            questions, "26cse1002j-pps", "test"
+        )
+        view._show_current()
         view.choice_buttons[0].setChecked(True)
         view._on_submit()
         view._on_next()
@@ -175,7 +182,13 @@ class TestASession:
 
 class TestMistakes:
     def test_mistakes_need_a_graded_wrong_answer(self, view) -> None:
-        view.start_practice()
+        import mentorsmith.core.exam as exam
+
+        questions = exam.load_questions("26cse1002j-pps", local_only=True)
+        view.session = view.service.start_session(
+            questions, "26cse1002j-pps", "test"
+        )
+        view._show_current()
         view.choice_buttons[1].setChecked(True)   # wrong, and it has a key
         view._on_submit()
         view._on_next()
@@ -197,9 +210,15 @@ class TestTheEmptyState:
 
         widget = ExamPrepView(database)
         try:
-            # The catalogue still has a course, but the bank is empty.
-            assert widget.question_list.count() == 0
-            assert "0 of 0" in widget.bank_summary.text()
+            # The catalogue still has a course. The bundled bank ships with
+            # the app, so the list is not empty; what matters is that the
+            # learner's own bank contributed nothing.
+            from mentorsmith.core.exam import load_questions
+
+            assert len(load_questions(local_only=True)) == 0
+            assert widget.question_list.count() == len(
+                load_questions("26cse1002j-pps")
+            )
         finally:
             widget.deleteLater()
 
