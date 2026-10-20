@@ -576,6 +576,11 @@ always be able to tell what a question is.
   answer and who checked it. That is the only path to
   `verification_status=VERIFIED`, and therefore the only path to the
   "Verified past question" label.
+- **The timed mock uses the learner's own format.** No end-semester
+  pattern is asserted, because none of the supplied material states one.
+  The catalogue carries the Cycle Test header only.
+- **Sessions survive a restart** (`exam_sessions`), and the clock keeps
+  running while the app is closed.
 - **A key that is not among the extracted options is flagged, not
   rejected.** It usually means the options were garbled by the
   extraction. Such a question is saved as checked but cannot be graded

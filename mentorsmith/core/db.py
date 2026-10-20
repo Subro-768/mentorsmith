@@ -210,6 +210,29 @@ MIGRATIONS: dict[int, list[str]] = {
             ON exercise_attempts (language, lesson_id)
         """,
     ],
+    6: [
+        # --- Exam sessions -----------------------------------------------
+        # A session has to survive the app closing. Without this, closing
+        # the app mid-mock loses the questions already answered, which is
+        # the one thing a timed practice run cannot afford to lose.
+        """
+        CREATE TABLE IF NOT EXISTS exam_sessions (
+            id            TEXT PRIMARY KEY,
+            course_id     TEXT NOT NULL,
+            title         TEXT NOT NULL DEFAULT '',
+            question_ids  TEXT NOT NULL DEFAULT '',
+            position      INTEGER NOT NULL DEFAULT 0,
+            time_limit    INTEGER NOT NULL DEFAULT 0,
+            started_at    TEXT NOT NULL,
+            finished_at   TEXT NOT NULL DEFAULT '',
+            updated_at    TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_exam_sessions_course
+            ON exam_sessions (course_id, finished_at)
+        """,
+    ],
     5: [
         # --- Exam preparation attempts -----------------------------------
         # A student's answer to a question from their own papers. Kept

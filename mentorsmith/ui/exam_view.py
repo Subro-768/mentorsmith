@@ -24,9 +24,12 @@ from __future__ import annotations
 
 import html as html_module
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -37,6 +40,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QRadioButton,
     QScrollArea,
+    QSpinBox,
     QSplitter,
     QTextBrowser,
     QVBoxLayout,
@@ -65,6 +69,65 @@ def _matches_an_option(answer: str, options: list[str]) -> bool:
     """Whether an answer is one of the options, ignoring case and spacing."""
     wanted = " ".join(answer.lower().split())
     return any(" ".join(option.lower().split()) == wanted for option in options)
+
+
+class MockDialog(QDialog):
+    """Asks for the shape of a practice mock.
+
+    The format is the learner's own, and the dialog says so. The exam's
+    real pattern is not offered, because the only pattern the catalogue
+    carries is the Cycle Test header - and a CT is not the end-semester
+    paper. Inventing an end-semester format on no evidence would be the
+    exact thing this module exists to prevent.
+    """
+
+    def __init__(self, available: int, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Practice mock")
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+
+        note = QLabel(
+            "A practice format you set, not the exam's official pattern. "
+            "The papers you imported do not state an end-semester format, "
+            "so this one is yours to choose."
+        )
+        note.setWordWrap(True)
+        note.setObjectName("muted")
+        layout.addWidget(note)
+
+        form = QFormLayout()
+        self.count_spin = QSpinBox()
+        self.count_spin.setRange(1, max(1, available))
+        self.count_spin.setValue(min(10, max(1, available)))
+        form.addRow("Questions", self.count_spin)
+
+        self.minutes_spin = QSpinBox()
+        self.minutes_spin.setRange(0, 240)
+        self.minutes_spin.setValue(30)
+        self.minutes_spin.setSpecialValueText("no time limit")
+        form.addRow("Minutes", self.minutes_spin)
+        layout.addLayout(form)
+
+        self.source_combo = QComboBox()
+        self.source_combo.addItem("Everything in the bank", None)
+        self.source_combo.addItem("Past questions only", VERIFIED_PYQ)
+        self.source_combo.addItem("Official samples only", OFFICIAL_SAMPLE)
+        layout.addWidget(self.source_combo)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def settings(self) -> tuple[int, int, str | None]:
+        return (
+            self.count_spin.value(),
+            self.minutes_spin.value(),
+            self.source_combo.currentData(),
+        )
 
 
 class ExamPrepView(QWidget):
@@ -176,6 +239,15 @@ class ExamPrepView(QWidget):
         self.mistakes_button.clicked.connect(self.start_mistakes)
         buttons.addWidget(self.mistakes_button)
 
+        self.mock_button = QPushButton("Timed mock")
+        self.mock_button.setObjectName("subtle")
+        self.mock_button.setFixedHeight(34)
+        self.mock_button.setToolTip(
+            "A timed practice run in a format you choose."
+        )
+        self.mock_button.clicked.connect(self.start_mock)
+        buttons.addWidget(self.mock_button)
+
         self.review_button = QPushButton("Check questions")
         self.review_button.setObjectName("subtle")
         self.review_button.setFixedHeight(34)
@@ -206,6 +278,13 @@ class ExamPrepView(QWidget):
         self.next_button.setFixedHeight(34)
         self.next_button.clicked.connect(self._on_next)
         self.session_bar.addWidget(self.next_button)
+
+        self.resume_button = QPushButton("Resume")
+        self.resume_button.setObjectName("subtle")
+        self.resume_button.setFixedHeight(34)
+        self.resume_button.setVisible(False)
+        self.resume_button.clicked.connect(self.resume_session)
+        self.session_bar.addWidget(self.resume_button)
         right_layout.addLayout(self.session_bar)
 
         self.body = QTextBrowser()
@@ -268,6 +347,12 @@ class ExamPrepView(QWidget):
         self.review_panel.setVisible(False)
         right_layout.addWidget(self.review_panel)
 
+        # The clock. Ticks once a second, and ends the session when the
+        # time runs out.
+        self.clock = QTimer(self)
+        self.clock.setInterval(1000)
+        self.clock.timeout.connect(self._on_tick)
+
         splitter.addWidget(right)
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
@@ -314,6 +399,7 @@ class ExamPrepView(QWidget):
             self.unit_combo.addItem(f"Unit {unit} — {title}", unit)
         self.unit_combo.blockSignals(False)
         self.refresh_questions()
+        self._offer_resume()
 
     def _show_empty(self) -> None:
         """An empty state, not a fabricated course."""
@@ -453,6 +539,74 @@ class ExamPrepView(QWidget):
     # ------------------------------------------------------------------
     # Sessions
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # The timed mock
+    # ------------------------------------------------------------------
+    def start_mock(self) -> None:
+        """Ask for the format, then run it."""
+        available = len(self.service.questions(self.course_id))
+        if not available:
+            QMessageBox.information(
+                self, "Nothing to mock",
+                "There are no questions in this course yet.",
+            )
+            return
+        dialog = MockDialog(available, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        count, minutes, source = dialog.settings()
+        try:
+            self.session = self.service.start_mock(
+                self.course_id, count=count, minutes=minutes, source_type=source
+            )
+        except ValueError as exc:
+            QMessageBox.warning(self, "Cannot start", str(exc))
+            return
+        self._leave_review_mode()
+        self.service.save_session(self.session)
+        self.clock.start()
+        self._show_current()
+
+    def resume_session(self) -> None:
+        """Pick up an unfinished session."""
+        session = self.service.open_session(self.course_id)
+        if session is None:
+            self.resume_button.setVisible(False)
+            return
+        self.session = session
+        self._leave_review_mode()
+        if session.timed:
+            self.clock.start()
+        self._show_current()
+
+    def _offer_resume(self) -> None:
+        """Show the resume button when there is something to resume."""
+        session = self.service.open_session(self.course_id)
+        if session is None:
+            self.resume_button.setVisible(False)
+            return
+        self.resume_button.setVisible(True)
+        self.resume_button.setToolTip(
+            f'Continue "{session.title}" — question '
+            f"{session.index + 1} of {len(session.questions)}"
+        )
+
+    def _on_tick(self) -> None:
+        """Once a second: update the clock, and end the session on time."""
+        if self.session is None or not self.session.timed:
+            self.clock.stop()
+            return
+        left = self.service.seconds_left(self.session)
+        minutes, seconds = divmod(left, 60)
+        self.session_label.setText(
+            f"{self.session.title} — question {self.session.index + 1} of "
+            f"{len(self.session.questions)}  ·  {minutes:02d}:{seconds:02d} left"
+        )
+        if left <= 0:
+            self.clock.stop()
+            self.service.close_session(self.session)
+            self._show_results()
+
     def _leave_review_mode(self) -> None:
         """Put the practice controls back and hide the review ones."""
         self.review_panel.setVisible(False)

@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1334 automated tests. It has **not** been
+and its behaviour is covered by 1354 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1334 tests
+python3 -m pytest tests/ -q                       # 1354 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -308,6 +308,19 @@ If the answer you read is not among the options the importer extracted,
 the app says so — that usually means the *options* were read wrongly, and
 the question cannot be graded automatically until they are put right. It is
 still saved as checked, because you were the one reading the paper.
+
+### A timed mock, in a format you choose
+
+**Timed mock** asks you how many questions and how many minutes. That
+format is *yours*, and the dialog says so — the papers you imported do
+not state an end-semester format, so the app does not invent one. The only
+pattern the catalogue carries is the Cycle Test header (25 marks, 50
+minutes, Part A 10 × 1), and that is a CT, not the end-semester paper.
+
+A session survives the app closing: the questions you have answered and
+your place in the run are written as you go, and **Resume** offers it back.
+The clock keeps running while the app is shut — a timed run that quietly
+gained time by being closed would not be a timed run.
 
 ### Grading, honestly
 

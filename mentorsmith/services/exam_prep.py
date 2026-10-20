@@ -34,6 +34,7 @@ mistakes", and that has to mean the ones they actually got wrong.
 
 from __future__ import annotations
 
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -52,6 +53,14 @@ UNGRADED = "ungraded"
 
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _parse(timestamp: str) -> datetime:
+    """Read a timestamp back, assuming UTC when it carries no zone."""
+    parsed = datetime.fromisoformat(timestamp)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
 
 
 @dataclass
@@ -178,6 +187,14 @@ class ExamSession:
     index: int = 0
     results: list[AttemptResult] = field(default_factory=list)
     started_at: str = field(default_factory=_now)
+    #: Seconds allowed for the whole session. Zero means untimed.
+    time_limit: int = 0
+    #: When the session was created, as a timestamp, for recovery.
+    deadline: float = 0.0
+
+    @property
+    def timed(self) -> bool:
+        return self.time_limit > 0
 
     @property
     def current(self) -> ExamQuestion | None:
@@ -284,16 +301,60 @@ class ExamPrepService:
         questions: list[ExamQuestion],
         course_id: str,
         title: str = "",
+        *,
+        time_limit: int = 0,
     ) -> ExamSession:
         """Begin a session over the given questions."""
         if not questions:
             raise ValueError("Cannot start a session with no questions.")
-        return ExamSession(
+        session = ExamSession(
             id=uuid.uuid4().hex[:12],
             course_id=course_id,
             title=title or f"{len(questions)} question(s)",
             questions=list(questions),
+            time_limit=max(0, int(time_limit)),
         )
+        if session.timed:
+            session.deadline = time.monotonic() + session.time_limit
+        return session
+
+    def start_mock(
+        self,
+        course_id: str,
+        *,
+        count: int = 10,
+        minutes: int = 0,
+        source_type: str | None = None,
+    ) -> ExamSession:
+        """A timed mock in a format the *learner* chose.
+
+        The format is the learner's, and the screen says so. The exam's
+        own pattern is only used when a paper states it, and the only
+        pattern the catalogue carries is the Cycle Test header - 25 marks,
+        50 minutes, Part A 10 x 1 - which is a CT, not the end-semester
+        paper. Asserting an end-semester format on no evidence would be
+        the kind of invented fact this whole module exists to avoid.
+        """
+        questions = self.questions(course_id, source_type=source_type)
+        if not questions:
+            raise ValueError("There are no questions to build a mock from.")
+        # Deterministic selection, so a resumed session is the same mock.
+        chosen = questions[: max(1, min(int(count), len(questions)))]
+        label = f"Practice mock — {len(chosen)} question(s)"
+        if minutes:
+            label += f" in {minutes} minute(s)"
+        return self.start_session(
+            chosen, course_id, label, time_limit=int(minutes) * 60,
+        )
+
+    def seconds_left(self, session: ExamSession) -> int:
+        """Seconds remaining, or 0 for an untimed session."""
+        if not session.timed:
+            return 0
+        return max(0, int(session.deadline - time.monotonic()))
+
+    def expired(self, session: ExamSession) -> bool:
+        return session.timed and self.seconds_left(session) <= 0
 
     def submit(
         self,
@@ -327,6 +388,8 @@ class ExamPrepService:
         session.index += 1
 
         self._record(session, result)
+        # Saved on every answer, so a crash or a close loses nothing.
+        self.save_session(session)
         return result
 
     def _grade(self, question: ExamQuestion, chosen: str) -> bool | None:
@@ -370,6 +433,69 @@ class ExamPrepService:
         except Exception:  # pragma: no cover - a storage failure must not
             # lose the student's work in the session itself.
             pass
+
+    # ------------------------------------------------------------------
+    # Session recovery
+    # ------------------------------------------------------------------
+    def save_session(self, session: ExamSession, *, finished: bool = False) -> None:
+        """Write the session so it survives the app closing."""
+        self.database.connect().execute(
+            """
+            INSERT INTO exam_sessions
+                (id, course_id, title, question_ids, position, time_limit,
+                 started_at, finished_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                position = excluded.position,
+                finished_at = excluded.finished_at,
+                updated_at = excluded.updated_at
+            """,
+            (
+                session.id,
+                session.course_id,
+                session.title,
+                ",".join(q.id for q in session.questions),
+                session.index,
+                session.time_limit,
+                session.started_at,
+                _now() if finished else "",
+                _now(),
+            ),
+        )
+        self.database.connect().commit()
+
+    def open_session(self, course_id: str) -> ExamSession | None:
+        """The unfinished session for a course, if there is one."""
+        row = self.database.connect().execute(
+            "SELECT * FROM exam_sessions WHERE course_id = ? AND finished_at = '' "
+            "ORDER BY updated_at DESC LIMIT 1",
+            (course_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        ids = [i for i in str(row["question_ids"]).split(",") if i]
+        by_id = {q.id: q for q in load_questions(course_id)}
+        questions = [by_id[i] for i in ids if i in by_id]
+        if not questions:
+            return None
+        session = ExamSession(
+            id=row["id"],
+            course_id=row["course_id"],
+            title=row["title"],
+            questions=questions,
+            index=int(row["position"]),
+            time_limit=int(row["time_limit"]),
+            started_at=row["started_at"],
+        )
+        if session.timed:
+            # The clock keeps running while the app is closed. That is the
+            # honest reading of a mock: the time was spent either way.
+            elapsed = (datetime.now(timezone.utc) - _parse(row["started_at"])).total_seconds()
+            session.deadline = time.monotonic() + max(0, session.time_limit - elapsed)
+        return session
+
+    def close_session(self, session: ExamSession) -> None:
+        self.save_session(session, finished=True)
 
     # ------------------------------------------------------------------
     # Results
