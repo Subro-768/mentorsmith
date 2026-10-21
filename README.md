@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1426 automated tests. It has **not** been
+and its behaviour is covered by 1448 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1426 tests
+python3 -m pytest tests/ -q                       # 1448 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -403,6 +403,23 @@ questions you actually got wrong.
 The full audit behind this — what was inspected, what works, what is
 unverified, and the security and copyright findings — is in
 [docs/audit-srm-exam-prep.md](docs/audit-srm-exam-prep.md).
+
+## Your licence
+
+The app is **free for your first 30 days**, and paid after that. There is
+no account and nothing to sign up for: a licence is a key you paste into
+**Settings → Your licence**.
+
+The key is signed with an RSA-2048 private key that is **not in this
+repository and not on the machine the app runs on** — the app holds only
+the public half, so it can check a licence and cannot write one. Checking
+is done offline, so a licence works with no network.
+
+The gate itself is **off by default** and there is a switch for it in
+Settings. That is deliberate: the free stretch is yours to have, and a
+paywall that appears without warning is how an app earns a bad name.
+When it is on and the free stretch has run out, the paid features stop and
+the app says exactly why — and your progress is never touched.
 
 ## Focus mode
 

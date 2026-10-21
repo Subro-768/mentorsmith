@@ -305,6 +305,48 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(appearance_box)
 
+        # ── Licence ─────────────────────────────────────────────────────
+        licence_box = QGroupBox("Your licence")
+        licence_layout = QVBoxLayout(licence_box)
+        licence_layout.setContentsMargins(12, 16, 12, 12)
+        licence_layout.setSpacing(8)
+
+        self.licence_status = QLabel()
+        self.licence_status.setWordWrap(True)
+        self.licence_status.setObjectName("muted")
+        licence_layout.addWidget(self.licence_status)
+
+        self.licence_edit = QLineEdit()
+        self.licence_edit.setPlaceholderText("Paste your licence key here")
+        self.licence_edit.setFixedHeight(34)
+        licence_layout.addWidget(self.licence_edit)
+
+        licence_buttons = QHBoxLayout()
+        self.licence_activate = QPushButton("Activate")
+        self.licence_activate.setObjectName("primary")
+        self.licence_activate.setFixedHeight(34)
+        self.licence_activate.clicked.connect(self._on_activate_licence)
+        licence_buttons.addWidget(self.licence_activate)
+
+        self.licence_clear = QPushButton("Remove")
+        self.licence_clear.setObjectName("subtle")
+        self.licence_clear.setFixedHeight(34)
+        self.licence_clear.clicked.connect(self._on_clear_licence)
+        licence_buttons.addWidget(self.licence_clear)
+        licence_buttons.addStretch(1)
+        licence_layout.addLayout(licence_buttons)
+
+        self.gate_check = QCheckBox(
+            "Require a licence to use the paid features"
+        )
+        self.gate_check.setToolTip(
+            "Off by default. When it is on and the free stretch has run "
+            "out, the paid features stop working until a licence is entered."
+        )
+        licence_layout.addWidget(self.gate_check)
+
+        layout.addWidget(licence_box)
+
         # ── Test output ────────────────────────────────────────────────
         self.test_output = QPlainTextEdit()
         self.test_output.setReadOnly(True)
@@ -363,6 +405,11 @@ class SettingsDialog(QDialog):
         idx = self.theme_combo.findData(saved_theme)
         if idx >= 0:
             self.theme_combo.setCurrentIndex(idx)
+        self.licence_edit.setText(self.settings.get("licence_key", ""))
+        self.gate_check.setChecked(
+            bool(self.settings.get("licence_gate_enabled", False))
+        )
+        self._refresh_licence_status()
         self._refresh_key_status()
         self._refresh_sandbox_detail()
 
@@ -603,6 +650,44 @@ class SettingsDialog(QDialog):
         finally:
             self.test_button.setEnabled(True)
 
+    def _refresh_licence_status(self) -> None:
+        """Say where the learner stands: free, licensed, or over."""
+        from ..core.entitlement import entitlement
+
+        state = entitlement(self.settings)
+        text = state.reason
+        if state.licence is not None and state.licence.name:
+            text = f"Licensed to {state.licence.name}."
+            if state.licence.expires:
+                text += f"  Valid until {state.licence.expires}."
+        self.licence_status.setText(text)
+
+    def _on_activate_licence(self) -> None:
+        """Check a licence key and keep it if it is good."""
+        from ..core.entitlement import EntitlementError, activate_licence
+
+        key = self.licence_edit.text().strip()
+        try:
+            activate_licence(self.settings, key)
+        except EntitlementError as exc:
+            QMessageBox.warning(self, "That licence was not accepted", str(exc))
+            return
+        save_settings(self.settings)
+        self._refresh_licence_status()
+        QMessageBox.information(
+            self, "Licence accepted",
+            "Thank you. Everything is unlocked.",
+        )
+
+    def _on_clear_licence(self) -> None:
+        """Forget the licence."""
+        from ..core.entitlement import clear_licence
+
+        clear_licence(self.settings)
+        self.licence_edit.clear()
+        save_settings(self.settings)
+        self._refresh_licence_status()
+
     def _on_save(self) -> None:
         self.settings["provider_base_url"] = self.base_url_edit.text().strip()
         self.settings["provider_model"] = self.model_edit.text().strip()
@@ -613,6 +698,7 @@ class SettingsDialog(QDialog):
         if typed != load_api_key():
             save_api_key(typed)
         self.settings["sandbox_enabled"] = self.sandbox_check.isChecked()
+        self.settings["licence_gate_enabled"] = self.gate_check.isChecked()
         # Persist selected theme
         selected_theme = self.theme_combo.currentData()
         if selected_theme:

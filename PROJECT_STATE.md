@@ -559,6 +559,21 @@ should not be re-proposed.
   that put numbers on "easy on the eyes" so it cannot drift back.
 - **Focus mode** stops the things that pull you away, on both platforms.
 
+## The licence and the free stretch
+
+- **Free for 30 days**, then paid. The entitlement layer
+  (`mentorsmith/core/entitlement.py`) decides what the app may do; the
+  gate that enforces it is **off by default** and there is a switch for it
+  in Settings.
+- **A licence is a signed key.** RSA-2048, PKCS#1 v1.5 over SHA-256. The
+  app holds only the **public** key (`mentorsmith/data/licence_public_key.json`)
+  so it can check a licence and cannot write one. The private key lives in
+  `~/.local/share/mentorsmith/licence-signing/`, off the repository, and is
+  only needed by `tools/make_licence_key.py`.
+- **Checked offline.** No account, no server, no network needed.
+- **Nothing is ever lost.** The gate is about features, never about the
+  learner's work.
+
 ## Exam preparation (SRM KTR)
 
 Built to a handoff brief. The design is driven by one rule: a student must
