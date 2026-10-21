@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1400 automated tests. It has **not** been
+and its behaviour is covered by 1426 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1400 tests
+python3 -m pytest tests/ -q                       # 1426 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -403,6 +403,29 @@ questions you actually got wrong.
 The full audit behind this — what was inspected, what works, what is
 unverified, and the security and copyright findings — is in
 [docs/audit-srm-exam-prep.md](docs/audit-srm-exam-prep.md).
+
+## Focus mode
+
+A page that takes over the screen for a set length of time, so the other
+windows are not what you are looking at.
+
+- **The guard** — the window goes full screen and stays on top, with the
+  time remaining in the middle. This is the part that works on every
+  display server, and it is the part that actually stops the pull.
+- **The screen lock and suspend are inhibited** while the session runs, via
+  `systemd-inhibit`.
+- **The applications you tick are closed** when the session starts.
+- **It says what it could not do.** On Wayland the compositor will not let
+  one application see or close another's windows, so the app says exactly
+  that instead of pretending. On X11 the real window list is used, with
+  titles.
+- **It cannot trap you.** The End button is always on screen, Escape ends
+  the session, and the timer ending ends it by itself.
+
+On Android the same idea is **Do Not Disturb**, which is the platform's real
+answer: the app asks for notification access (a permission only the user
+can grant) and silences notifications from every other app. No Android app
+may close another app, and the app says so rather than implying it can.
 
 ## Requirements
 

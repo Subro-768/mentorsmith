@@ -91,6 +91,17 @@ import androidx.compose.ui.platform.LocalContext
 '''
 
 
+#: Which desktop theme feeds which Android colour scheme.
+#:
+#: The Android app follows the system's light/dark setting, so it needs a
+#: genuinely dark palette for its dark scheme and a genuinely light one for
+#: its light scheme. The desktop's *default* is now the soft "paper" theme,
+#: so that is what the light scheme carries - the two apps then look the
+#: same in the light, which is how most people will run them.
+DARK_THEME = "dark_orange"
+LIGHT_THEME = theme.DEFAULT_THEME
+
+
 def _argb(hex_colour: str) -> str:
     """'#e8650a' -> '0xFFE8650A' (Compose wants an opaque ARGB literal)."""
     value = hex_colour.lstrip("#")
@@ -141,7 +152,12 @@ def _semantics() -> str:
         "object MentorColors {",
     ]
     for token, prop in SEMANTIC.items():
-        lines.append(f"    val {prop} = Color({_argb(theme._PALETTES['dark_orange'][token])})")
+        # The flat semantic set comes from the dark palette. The Android
+        # screens use it for foreground colours only - muted text, a warning,
+        # a success tick - and those mid-tones read on both schemes. The
+        # background tints in the same set would not, which is why the
+        # schemes carry their own.
+        lines.append(f"    val {prop} = Color({_argb(theme._PALETTES[DARK_THEME][token])})")
     lines.append("}")
     return "\n".join(lines) + "\n"
 
@@ -179,9 +195,16 @@ fun MentorSmithTheme(
 '''
 
 
+#: Which desktop theme feeds which Android colour scheme.
+#:
+#: The Android app follows the system's light/dark setting, so it needs a
+#: genuinely dark palette for its dark scheme and a genuinely light one for
+#: its light scheme. The desktop's *default* is now the soft "paper" theme,
+#: so that is what the light scheme carries - the two apps then look the
+#: same in the light, which is how most people will run them.
 def render() -> str:
-    dark = theme._PALETTES["dark_orange"]
-    light = theme._PALETTES["light"]
+    dark = theme._PALETTES[DARK_THEME]
+    light = theme._PALETTES[LIGHT_THEME]
     return (
         HEADER
         + _scheme("DarkColors", dark)

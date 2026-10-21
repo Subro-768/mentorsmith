@@ -123,15 +123,21 @@ class TestColoursComeFromTheDesktop:
         assert "onSurfaceVariant = Color(0xFF7A7069)" in _scheme_body("DarkColors")
 
     def test_light_primary_matches_the_light_theme(self) -> None:
-        assert theme._PALETTES["light"]["ACCENT"].lstrip("#").upper() == "C44F00"
-        assert "primary = Color(0xFFC44F00)" in _scheme_body("LightColors")
+        """The Android light scheme follows the desktop's default theme."""
+        expected = theme._PALETTES[theme.DEFAULT_THEME]["ACCENT"]
+        assert f"primary = Color(0xFF{expected.lstrip('#').upper()})" in _scheme_body(
+            "LightColors"
+        )
 
     def test_light_background_matches(self) -> None:
-        assert "background = Color(0xFFFFFFFF)" in _scheme_body("LightColors")
+        expected = theme._PALETTES[theme.DEFAULT_THEME]["BASE"]
+        assert f"background = Color(0xFF{expected.lstrip('#').upper()})" in _scheme_body(
+            "LightColors"
+        )
 
     @pytest.mark.parametrize(
         "palette_name, scheme",
-        [("dark_orange", "DarkColors"), ("light", "LightColors")],
+        [("dark_orange", "DarkColors"), (theme.DEFAULT_THEME, "LightColors")],
     )
     def test_every_colour_in_the_scheme_exists_in_the_palette(self, palette_name, scheme) -> None:
         palette = {

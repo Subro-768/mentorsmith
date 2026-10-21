@@ -23,16 +23,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import app.mentorsmith.android.focus.FocusMode
 import app.mentorsmith.android.domain.Concept
 import app.mentorsmith.android.domain.normalise
 import app.mentorsmith.android.domain.Exercise
@@ -560,6 +564,109 @@ fun TutorScreen(viewModel: MentorViewModel) {
     }
 }
 
+/**
+ * The focus card.
+ *
+ * Android's answer to "stop all distracting apps" is **Do Not Disturb**:
+ * it silences notifications from every other app, which removes the reason
+ * to pick the phone up. No Android app may close another app, and this
+ * screen says so rather than implying that it can.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FocusCard(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    var minutes by remember { mutableStateOf(45) }
+    var running by remember { mutableStateOf(false) }
+    var secondsLeft by remember { mutableStateOf(0) }
+    var previousFilter by remember { mutableStateOf(-1) }
+    var hasAccess by remember { mutableStateOf(FocusMode.hasPolicyAccess(context)) }
+
+    LaunchedEffect(running) {
+        if (!running) return@LaunchedEffect
+        while (secondsLeft > 0) {
+            delay(1000)
+            secondsLeft -= 1
+        }
+        FocusMode.restoreFilter(context, previousFilter)
+        running = false
+    }
+
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Focus", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Turns on Do Not Disturb, so notifications from every other " +
+                    "app stop arriving. Android does not let an app close " +
+                    "another app, so this quiets the phone rather than " +
+                    "killing what is on it.",
+                color = MentorColors.muted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+
+            if (running) {
+                val left = secondsLeft / 60
+                val seconds = secondsLeft % 60
+                Text(
+                    "%02d:%02d left".format(left, seconds),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                OutlinedButton(
+                    onClick = {
+                        FocusMode.restoreFilter(context, previousFilter)
+                        running = false
+                    },
+                ) { Text("End the session") }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(25, 45, 60).forEach { option ->
+                        if (option == minutes) {
+                            Button(onClick = { minutes = option }) { Text("$option") }
+                        } else {
+                            OutlinedButton(onClick = { minutes = option }) {
+                                Text("$option")
+                            }
+                        }
+                    }
+                }
+                Text(
+                    "minutes",
+                    color = MentorColors.muted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+
+                if (!hasAccess) {
+                    Text(
+                        "MentorSmith needs notification access to turn Do Not " +
+                            "Disturb on. Android grants that to you, in the " +
+                            "system settings - it cannot be taken by an app.",
+                        color = MentorColors.warning,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Button(
+                        onClick = {
+                            context.startActivity(FocusMode.policyAccessIntent())
+                        },
+                    ) { Text("Open notification access") }
+                    TextButton(
+                        onClick = { hasAccess = FocusMode.hasPolicyAccess(context) },
+                    ) { Text("I have granted it - check again") }
+                } else {
+                    Button(
+                        onClick = {
+                            previousFilter = FocusMode.currentFilter(context)
+                            if (FocusMode.setDoNotDisturb(context)) {
+                                secondsLeft = minutes * 60
+                                running = true
+                            }
+                        },
+                    ) { Text("Start a $minutes minute session") }
+                }
+            }
+        }
+    }
+}
+
 /** Settings: sync endpoint, offline explanation, what is stored. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -572,6 +679,8 @@ fun SettingsScreen(viewModel: MentorViewModel) {
             Modifier.padding(padding).padding(16.dp).fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            FocusCard()
+
             Text("Sync (optional)", style = MaterialTheme.typography.titleMedium)
             Text(
                 "Leave this blank to stay offline. Progress is always saved on this " +

@@ -540,6 +540,25 @@ a mocked `urlopen`; the live path against an actual vendor is unverified.
 5. Then Phase 5 (`aihandoff_5.md`): git integration, project workspaces, AI code
    review, test generation, security audit and portfolio docs.
 
+## Product decisions
+
+Settled with the learner on 2026-10-22. They are decisions, not ideas, and
+should not be re-proposed.
+
+- **The college has good WiFi.** So: no offline-first work, no WhatsApp or
+  Telegram bot, and no "works with no internet" as a selling point. The app
+  can lean on the network.
+- **English only.** No local-language explanation. The audience reads
+  English; a translation layer would be a distraction, not a feature.
+- **Monetise everything.** The app is free for a first stretch - long
+  enough for a learner to get hooked - and paid after that. The
+  entitlement layer is what makes that possible; see below.
+- **The interface should be light.** The dark themes looked striking and
+  were tiring over a long session, and a learner spends hours in this
+  window. The default is now the soft "paper" theme, and there are tests
+  that put numbers on "easy on the eyes" so it cannot drift back.
+- **Focus mode** stops the things that pull you away, on both platforms.
+
 ## Exam preparation (SRM KTR)
 
 Built to a handoff brief. The design is driven by one rule: a student must

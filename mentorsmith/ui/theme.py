@@ -1,9 +1,10 @@
 """Multi-theme engine — built from scratch.
 
 Three themes available:
-  - dark_orange : Deep black/charcoal base with rich amber-orange accent (default).
-  - dark_purple : Original deep navy + violet/purple accent (legacy).
+  - paper       : Warm off-white, low contrast, muted terracotta (default).
   - light       : Clean white base with warm orange accent.
+  - dark_orange : Deep black/charcoal base with rich amber-orange accent.
+  - dark_purple : Original deep navy + violet/purple accent (legacy).
 
 Usage:
     from mentorsmith.ui import theme
@@ -21,6 +22,12 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Theme definitions — all palette tokens per theme
 # ---------------------------------------------------------------------------
+
+#: The theme the app starts in.
+#:
+#: Paper, not the dark one. The dark themes looked striking but were tiring
+#: over a long study session, and a learner spends hours in here.
+DEFAULT_THEME = "paper"
 
 _PALETTES: dict[str, dict[str, str]] = {
 
@@ -80,6 +87,66 @@ _PALETTES: dict[str, dict[str, str]] = {
         "SYNTAX_PREPROCESSOR": "#e3a041",   # #include etc → amber
         "SYNTAX_FUNCTION":     "#f4934a",   # function calls → orange
         "SYNTAX_OPERATOR":     "#ff6e30",   # operators → bright orange
+    },
+
+    # ── Paper (soft light — the default) ────────────────────────────────
+    #
+    # Built for long study sessions, not for looking impressive. The rules:
+    #
+    # * The page is warm off-white, never pure white. Pure white on a bright
+    #   screen is the main reason a light theme tires the eyes.
+    # * Text is a soft near-black rather than #000. Full contrast against the
+    #   background is what makes a page feel heavy.
+    # * Borders are barely there. Structure comes from spacing, not from
+    #   lines drawn around everything.
+    # * The accent is a muted terracotta, not a saturated orange. A colour
+    #   that shouts is a colour you stop noticing after an hour.
+    "paper": {
+        "BASE":          "#f4f1ec",    # warm off-white page
+        "SURFACE":       "#faf8f5",    # cards, just above the page
+        "SURFACE_ALT":   "#f0ece5",    # inputs, code blocks
+        "SURFACE_HOV":   "#eae5dc",    # hover
+        "BORDER":        "#e2dcd2",    # barely-there divider
+        "BORDER_SUB":    "#ece7de",
+
+        "FOREGROUND":    "#3b3730",    # soft near-black
+        "MUTED":         "#7d766b",    # secondary text
+        "PLACEHOLDER":   "#aaa398",
+
+        # Accent — muted terracotta
+        "ACCENT":        "#b4703a",
+        "ACCENT_LIGHT":  "#c98a56",
+        "ACCENT_ALT":    "#95582b",
+        "ACCENT_TEXT":   "#ffffff",
+
+        "NAV_ACTIVE_BG":     "#efe4d6",
+        "NAV_ACTIVE_BG_HOV": "#e7d8c4",
+        "LIST_SEL_BG":       "#efe4d6",
+
+        "BTN_DISABLED_BG": "#ebe6dd",
+        "BTN_DISABLED_FG": "#ada69b",
+        "PRIMARY_HOVER_FG": "#ffffff",
+
+        "CYAN":          "#4d8b98",
+        "CYAN_LIGHT":    "#71aab5",
+
+        "SUCCESS":       "#5f8b5c",
+        "SUCCESS_BG":    "#e7efe5",
+        "WARNING":       "#a3803d",
+        "WARNING_BG":    "#f5eede",
+        "ERROR":         "#b4605a",
+        "ERROR_BG":      "#f6e8e5",
+        "INFO":          "#5c7fa5",
+        "INFO_BG":       "#e7edf3",
+
+        "SYNTAX_KEYWORD":      "#a3564f",
+        "SYNTAX_TYPE":         "#4a6f96",
+        "SYNTAX_STRING":       "#6b7d52",
+        "SYNTAX_NUMBER":       "#9a6a2e",
+        "SYNTAX_COMMENT":      "#a8a196",
+        "SYNTAX_PREPROCESSOR": "#9a6a2e",
+        "SYNTAX_FUNCTION":     "#7b6191",
+        "SYNTAX_OPERATOR":     "#a3564f",
     },
 
     # ── Dark Purple (legacy, original theme) ────────────────────────────
@@ -183,7 +250,7 @@ _PALETTES: dict[str, dict[str, str]] = {
 # ---------------------------------------------------------------------------
 # Active theme tokens (module-level, for backwards-compat with all views)
 # ---------------------------------------------------------------------------
-_ACTIVE_THEME = "dark_orange"
+_ACTIVE_THEME = DEFAULT_THEME
 _p = _PALETTES[_ACTIVE_THEME]
 
 # Expose all tokens as module globals so existing code like `theme.ACCENT` works
@@ -823,23 +890,25 @@ QFrame#lesson_card_active {{
 
 #: Available theme names and their display labels
 THEMES: dict[str, str] = {
+    "paper":       "📄  Paper (soft light)",
+    "light":       "☀️  Light",
     "dark_orange": "🔥 Dark Orange",
     "dark_purple": "💜 Dark Purple",
-    "light":       "☀️  Light",
 }
 
 
-def get_stylesheet(theme_name: str = "dark_orange") -> str:
+
+def get_stylesheet(theme_name: str = DEFAULT_THEME) -> str:
     """Return the full QSS stylesheet for the given theme name."""
-    palette = _PALETTES.get(theme_name, _PALETTES["dark_orange"])
+    palette = _PALETTES.get(theme_name, _PALETTES[DEFAULT_THEME])
     return _build_stylesheet(palette)
 
 
-def apply_theme(window: Any, theme_name: str = "dark_orange") -> None:
+def apply_theme(window: Any, theme_name: str = DEFAULT_THEME) -> None:
     """Apply a theme to the main window and update all module-level token globals."""
     global _ACTIVE_THEME
     _ACTIVE_THEME = theme_name
-    palette = _PALETTES.get(theme_name, _PALETTES["dark_orange"])
+    palette = _PALETTES.get(theme_name, _PALETTES[DEFAULT_THEME])
     _expose(palette)
     # Rebuild stylesheet with current palette and apply
     window.setStyleSheet(get_stylesheet(theme_name))
@@ -851,4 +920,4 @@ def active_theme() -> str:
 
 
 # The default stylesheet exposed for backwards compatibility
-STYLESHEET = get_stylesheet("dark_orange")
+STYLESHEET = get_stylesheet(DEFAULT_THEME)

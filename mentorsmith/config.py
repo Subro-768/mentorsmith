@@ -190,8 +190,10 @@ def default_settings() -> dict:
         # The user can turn it off, and their choice is remembered: the
         # default only applies to a setting that has never been set.
         "sandbox_enabled": sandbox_available(),
-        # Appearance — "dark_orange" | "dark_purple" | "light"
-        "theme": "dark_orange",
+        # Appearance — "paper" | "light" | "dark_orange" | "dark_purple".
+        # Paper is soft warm light: a learner spends hours in this window,
+        # and the dark themes were tiring over a long session.
+        "theme": "paper",
     }
 
 

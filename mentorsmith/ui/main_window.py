@@ -34,6 +34,7 @@ from . import theme
 from .analytics_view import AnalyticsView
 from .dashboard import DashboardView, InsightsPanel, ProgressView
 from .exam_view import ExamPrepView
+from .focus_view import FocusView
 from .developer_view import DeveloperView
 from .lesson_view import LessonView
 from .practice_view import PracticeView
@@ -54,6 +55,7 @@ PAGE_ANALYTICS  = 7
 PAGE_THEORY     = 8
 PAGE_PLAYGROUND = 9
 PAGE_EXAM      = 10
+PAGE_FOCUS     = 11
 
 _NAV_ITEMS = [
     (PAGE_ANALYTICS,  "📊", "Analytics"),
@@ -66,6 +68,7 @@ _NAV_ITEMS = [
     (PAGE_PROJECTS,   "🏗", "Projects"),
     (PAGE_PROGRESS,   "📋", "History"),
     (PAGE_EXAM,      "🎓", "Exam Prep"),
+    (PAGE_FOCUS,     "🎯", "Focus"),
     (PAGE_DEVELOPER,  "🛠", "Developer"),
 ]
 
@@ -214,8 +217,8 @@ class MainWindow(QMainWindow):
         self._apply_track("cpp")
         self._build_toolchain()
         self._build_ui()
-        # Apply saved theme (default: dark_orange)
-        saved_theme = self.settings.get("theme", "dark_orange")
+        # Apply the saved theme, falling back to the default one.
+        saved_theme = self.settings.get("theme") or theme.DEFAULT_THEME
         theme.apply_theme(self, saved_theme)
         self._wire()
         self.refresh_all()
@@ -393,6 +396,7 @@ class MainWindow(QMainWindow):
         self.practice_view  = PracticeView(self.database, self.bank, self.toolchain)
         self.lesson_view    = LessonView(toolchain=self.toolchain)
         self.exam_view      = ExamPrepView(self.database)
+        self.focus_view     = FocusView()
         self.insights       = InsightsPanel()
         self.projects_view  = ProjectsView(self.database, self.model)
         self.progress_view  = ProgressView()
@@ -412,6 +416,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.theory_view)     # 8
         self.stack.addWidget(self.playground_view) # 9
         self.stack.addWidget(self.exam_view)        # 10
+        self.stack.addWidget(self.focus_view)       # 11
 
         content_layout.addWidget(self.stack, 1)
         root_layout.addWidget(content_area, 1)
