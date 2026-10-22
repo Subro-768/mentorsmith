@@ -555,8 +555,14 @@ should not be re-proposed.
   entitlement layer is what makes that possible; see below.
 - **The interface should be light.** The dark themes looked striking and
   were tiring over a long session, and a learner spends hours in this
-  window. The default is now the soft "paper" theme, and there are tests
-  that put numbers on "easy on the eyes" so it cannot drift back.
+  window. There are now two themes built for long sessions - **paper**
+  (soft warm light, the default) and **night** (a soft dark, at about 11:1
+  contrast rather than the old 17:1). The old near-black dark theme is
+  still there but is no longer the dark option people are pointed at. There
+  are tests that put numbers on "easy on the eyes" so it cannot drift back:
+  text that is not pure black or pure white, contrast under 13:1 so nothing
+  glares, secondary text that still clears AA, faint borders, and an accent
+  you can find that does not shout.
 - **Focus mode** stops the things that pull you away, on both platforms.
 
 ## The licence and the free stretch

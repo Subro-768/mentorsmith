@@ -16,7 +16,7 @@ what you clicked, and adapts what it gives you next.
 ## Status
 
 This is a working application, not a product. It launches, runs real compilers,
-and its behaviour is covered by 1448 automated tests. It has **not** been
+and its behaviour is covered by 1467 automated tests. It has **not** been
 through a security review, run at scale, or tested on anything but one Fedora
 workstation and one 16 GB laptop. There is no release build, no packaging and
 no store listing.
@@ -79,7 +79,7 @@ python3 main.py              # launch
 Then, to see the parts that are hard to describe:
 
 ```bash
-python3 -m pytest tests/ -q                       # 1448 tests
+python3 -m pytest tests/ -q                       # 1467 tests
 python3 tools/security_audit.py                   # real containment evidence
 python3 tools/export_curriculum.py --check        # Android assets current?
 python3 tools/export_theme.py --check             # Android colours current?
@@ -420,6 +420,27 @@ Settings. That is deliberate: the free stretch is yours to have, and a
 paywall that appears without warning is how an app earns a bad name.
 When it is on and the free stretch has run out, the paid features stop and
 the app says exactly why — and your progress is never touched.
+
+## Themes
+
+Five, and the choice is in **Settings → Appearance**:
+
+| | |
+|---|---|
+| **Paper** | The default. Warm off-white page, soft near-black text, quiet borders, muted terracotta accent. |
+| **Night** | A soft dark. A warm charcoal page rather than black, text at around 11:1 contrast rather than the 17:1 that makes a dark theme tiring, a calm amber accent. |
+| Light | A crisper white, for a bright room. |
+| Dark Orange | The original near-black theme. Striking, and tiring over a long session. |
+| Dark Purple | The original navy theme. |
+
+Paper and Night are the two built for long study sessions, and the tests
+put numbers on what "easy on the eyes" means so they cannot drift back:
+text that is not pure black or pure white, contrast under 13:1 so nothing
+glares, secondary text that still clears AA, borders that are faint, and an
+accent you can find but that does not shout.
+
+The Android app follows the system setting and carries the same two
+palettes, so the phone and the desktop look the same in either.
 
 ## Focus mode
 

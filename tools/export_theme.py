@@ -98,7 +98,7 @@ import androidx.compose.ui.platform.LocalContext
 #: its light scheme. The desktop's *default* is now the soft "paper" theme,
 #: so that is what the light scheme carries - the two apps then look the
 #: same in the light, which is how most people will run them.
-DARK_THEME = "dark_orange"
+DARK_THEME = "night"
 LIGHT_THEME = theme.DEFAULT_THEME
 
 

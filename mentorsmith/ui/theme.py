@@ -95,58 +95,113 @@ _PALETTES: dict[str, dict[str, str]] = {
     #
     # * The page is warm off-white, never pure white. Pure white on a bright
     #   screen is the main reason a light theme tires the eyes.
-    # * Text is a soft near-black rather than #000. Full contrast against the
-    #   background is what makes a page feel heavy.
+    # * The text is a soft near-black rather than #000. Full contrast against
+    #   the background is what makes a page feel heavy.
     # * Borders are barely there. Structure comes from spacing, not from
     #   lines drawn around everything.
     # * The accent is a muted terracotta, not a saturated orange. A colour
     #   that shouts is a colour you stop noticing after an hour.
     "paper": {
-        "BASE":          "#f4f1ec",    # warm off-white page
-        "SURFACE":       "#faf8f5",    # cards, just above the page
-        "SURFACE_ALT":   "#f0ece5",    # inputs, code blocks
-        "SURFACE_HOV":   "#eae5dc",    # hover
-        "BORDER":        "#e2dcd2",    # barely-there divider
-        "BORDER_SUB":    "#ece7de",
+        "BASE":          "#efebe4",    # warm off-white page
+        "SURFACE":       "#faf8f4",    # cards, just above the page
+        "SURFACE_ALT":   "#e9e5dd",    # inputs, code blocks
+        "SURFACE_HOV":   "#e2ddd4",    # hover
+        "BORDER":        "#dbd4c7",    # barely-there divider
+        "BORDER_SUB":    "#e8e3da",
 
-        "FOREGROUND":    "#3b3730",    # soft near-black
-        "MUTED":         "#7d766b",    # secondary text
-        "PLACEHOLDER":   "#aaa398",
+        "FOREGROUND":    "#38342d",    # soft near-black
+        "MUTED":         "#6b655b",    # secondary text
+        "PLACEHOLDER":   "#a7a196",
 
         # Accent — muted terracotta
-        "ACCENT":        "#b4703a",
-        "ACCENT_LIGHT":  "#c98a56",
-        "ACCENT_ALT":    "#95582b",
+        "ACCENT":        "#a05620",
+        "ACCENT_LIGHT":  "#c4804a",
+        "ACCENT_ALT":    "#8a4a1b",
         "ACCENT_TEXT":   "#ffffff",
 
-        "NAV_ACTIVE_BG":     "#efe4d6",
-        "NAV_ACTIVE_BG_HOV": "#e7d8c4",
-        "LIST_SEL_BG":       "#efe4d6",
+        "NAV_ACTIVE_BG":     "#e7dccd",
+        "NAV_ACTIVE_BG_HOV": "#dfd1bc",
+        "LIST_SEL_BG":       "#e7dccd",
 
-        "BTN_DISABLED_BG": "#ebe6dd",
-        "BTN_DISABLED_FG": "#ada69b",
+        "BTN_DISABLED_BG": "#e6e1d7",
+        "BTN_DISABLED_FG": "#a9a297",
         "PRIMARY_HOVER_FG": "#ffffff",
 
-        "CYAN":          "#4d8b98",
-        "CYAN_LIGHT":    "#71aab5",
+        "CYAN":          "#467f8c",
+        "CYAN_LIGHT":    "#6aa0ab",
 
-        "SUCCESS":       "#5f8b5c",
-        "SUCCESS_BG":    "#e7efe5",
-        "WARNING":       "#a3803d",
-        "WARNING_BG":    "#f5eede",
-        "ERROR":         "#b4605a",
-        "ERROR_BG":      "#f6e8e5",
-        "INFO":          "#5c7fa5",
-        "INFO_BG":       "#e7edf3",
+        "SUCCESS":       "#56814f",
+        "SUCCESS_BG":    "#e4ede1",
+        "WARNING":       "#99762f",
+        "WARNING_BG":    "#f3ebd9",
+        "ERROR":         "#ac5a53",
+        "ERROR_BG":      "#f5e6e3",
+        "INFO":          "#55789e",
+        "INFO_BG":       "#e5eaf0",
 
-        "SYNTAX_KEYWORD":      "#a3564f",
-        "SYNTAX_TYPE":         "#4a6f96",
-        "SYNTAX_STRING":       "#6b7d52",
-        "SYNTAX_NUMBER":       "#9a6a2e",
-        "SYNTAX_COMMENT":      "#a8a196",
-        "SYNTAX_PREPROCESSOR": "#9a6a2e",
-        "SYNTAX_FUNCTION":     "#7b6191",
-        "SYNTAX_OPERATOR":     "#a3564f",
+        "SYNTAX_KEYWORD":      "#9c4f48",
+        "SYNTAX_TYPE":         "#42648a",
+        "SYNTAX_STRING":       "#5f7049",
+        "SYNTAX_NUMBER":       "#8c5f27",
+        "SYNTAX_COMMENT":      "#a29b90",
+        "SYNTAX_PREPROCESSOR": "#8c5f27",
+        "SYNTAX_FUNCTION":     "#725885",
+        "SYNTAX_OPERATOR":     "#9c4f48",
+    },
+
+    # ── Night (soft dark) ───────────────────────────────────────────────
+    #
+    # A dark theme that is not the near-black one. The old dark palette
+    # was #0a0a0b with #f0ece4 text - a contrast of nearly 17 to 1, which
+    # is what makes a dark theme tiring. This one sits around 11 to 1,
+    # the text is a warm grey rather than white, the borders are quieter,
+    # and the accent is an amber that glows without glaring.
+    "night": {
+        "BASE":          "#1a1917",    # warm charcoal, not black
+        "SURFACE":       "#232220",    # cards, just above the page
+        "SURFACE_ALT":   "#1e1d1b",    # inputs, code blocks
+        "SURFACE_HOV":   "#2a2825",    # hover
+        "BORDER":        "#302e2a",    # quiet divider
+        "BORDER_SUB":    "#292722",
+
+        "FOREGROUND":    "#d9d3c8",    # warm grey, not white
+        "MUTED":         "#968f84",    # secondary text
+        "PLACEHOLDER":   "#6b655c",
+
+        # Accent — a soft amber
+        "ACCENT":        "#c2803f",
+        "ACCENT_LIGHT":  "#d29a5c",
+        "ACCENT_ALT":    "#a3672c",
+        "ACCENT_TEXT":   "#201a12",
+
+        "NAV_ACTIVE_BG":     "#33291c",
+        "NAV_ACTIVE_BG_HOV": "#3e3121",
+        "LIST_SEL_BG":       "#33291c",
+
+        "BTN_DISABLED_BG": "#33312d",
+        "BTN_DISABLED_FG": "#6e6960",
+        "PRIMARY_HOVER_FG": "#201a12",
+
+        "CYAN":          "#6fa8b4",
+        "CYAN_LIGHT":    "#96c4cd",
+
+        "SUCCESS":       "#7fb073",
+        "SUCCESS_BG":    "#24301f",
+        "WARNING":       "#d2a854",
+        "WARNING_BG":    "#33291a",
+        "ERROR":         "#dc7c73",
+        "ERROR_BG":      "#33201e",
+        "INFO":          "#7ba2ce",
+        "INFO_BG":       "#1e2836",
+
+        "SYNTAX_KEYWORD":      "#d98a80",
+        "SYNTAX_TYPE":         "#8fb4d8",
+        "SYNTAX_STRING":       "#a8bd8a",
+        "SYNTAX_NUMBER":       "#d8a668",
+        "SYNTAX_COMMENT":      "#6f6a61",
+        "SYNTAX_PREPROCESSOR": "#d8a668",
+        "SYNTAX_FUNCTION":     "#c2a3d8",
+        "SYNTAX_OPERATOR":     "#d98a80",
     },
 
     # ── Dark Purple (legacy, original theme) ────────────────────────────
@@ -891,6 +946,7 @@ QFrame#lesson_card_active {{
 #: Available theme names and their display labels
 THEMES: dict[str, str] = {
     "paper":       "📄  Paper (soft light)",
+    "night":       "🌙  Night (soft dark)",
     "light":       "☀️  Light",
     "dark_orange": "🔥 Dark Orange",
     "dark_purple": "💜 Dark Purple",

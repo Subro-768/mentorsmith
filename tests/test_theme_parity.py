@@ -24,6 +24,9 @@ from mentorsmith.ui import theme
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
+from export_theme import DARK_THEME, LIGHT_THEME  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+
 THEME_KT = (
     ROOT / "android" / "app" / "src" / "main" / "java" / "app" / "mentorsmith"
     / "android" / "ui" / "theme" / "Theme.kt"
@@ -105,22 +108,25 @@ class TestColoursComeFromTheDesktop:
             )
 
     def test_dark_primary_is_the_desktop_accent(self) -> None:
-        assert theme._PALETTES["dark_orange"]["ACCENT"].lstrip("#").upper() == "E8650A"
-        assert "primary = Color(0xFFE8650A)" in _scheme_body("DarkColors")
+        expected = theme._PALETTES[DARK_THEME]["ACCENT"].lstrip("#").upper()
+        assert f"primary = Color(0xFF{expected})" in _scheme_body("DarkColors")
 
     def test_dark_background_is_the_desktop_base(self) -> None:
-        assert "background = Color(0xFF0A0A0B)" in _scheme_body("DarkColors")
+        expected = theme._PALETTES[DARK_THEME]["BASE"].lstrip("#").upper()
+        assert f"background = Color(0xFF{expected})" in _scheme_body("DarkColors")
 
     def test_dark_surface_is_the_desktop_surface(self) -> None:
-        assert "surface = Color(0xFF141414)" in _scheme_body("DarkColors")
+        expected = theme._PALETTES[DARK_THEME]["SURFACE"].lstrip("#").upper()
+        assert f"surface = Color(0xFF{expected})" in _scheme_body("DarkColors")
 
     def test_dark_foreground_is_the_warm_desktop_white(self) -> None:
-        """#f0ece4, not a neutral #ffffff - the desktop is deliberately warm."""
-        assert "onBackground = Color(0xFFF0ECE4)" in _scheme_body("DarkColors")
+        """A warm grey, not a neutral white - the desktop is deliberately warm."""
+        expected = theme._PALETTES[DARK_THEME]["FOREGROUND"].lstrip("#").upper()
+        assert f"onBackground = Color(0xFF{expected})" in _scheme_body("DarkColors")
 
     def test_muted_matches(self) -> None:
-        assert theme._PALETTES["dark_orange"]["MUTED"].upper() == "#7A7069"
-        assert "onSurfaceVariant = Color(0xFF7A7069)" in _scheme_body("DarkColors")
+        expected = theme._PALETTES[DARK_THEME]["MUTED"].lstrip("#").upper()
+        assert f"onSurfaceVariant = Color(0xFF{expected})" in _scheme_body("DarkColors")
 
     def test_light_primary_matches_the_light_theme(self) -> None:
         """The Android light scheme follows the desktop's default theme."""
@@ -137,7 +143,7 @@ class TestColoursComeFromTheDesktop:
 
     @pytest.mark.parametrize(
         "palette_name, scheme",
-        [("dark_orange", "DarkColors"), (theme.DEFAULT_THEME, "LightColors")],
+        [(DARK_THEME, "DarkColors"), (LIGHT_THEME, "LightColors")],
     )
     def test_every_colour_in_the_scheme_exists_in_the_palette(self, palette_name, scheme) -> None:
         palette = {
@@ -178,7 +184,7 @@ class TestSemanticColours:
         ],
     )
     def test_each_maps_to_the_desktop_token(self, prop, token) -> None:
-        expected = "0xFF" + theme._PALETTES["dark_orange"][token].lstrip("#").upper()
+        expected = "0xFF" + theme._PALETTES[DARK_THEME][token].lstrip("#").upper()
         assert f"val {prop} = Color({expected})" in _kt_text(), (
             f"MentorColors.{prop} should be the desktop {token} ({expected})"
         )
@@ -233,9 +239,9 @@ class TestSemanticColours:
             for argb in COLOR_RE.findall(scheme_text)
         }
         exported = {
-            theme._PALETTES["dark_orange"][token].lstrip("#").upper()
+            theme._PALETTES[DARK_THEME][token].lstrip("#").upper()
             for token in export_theme.SEMANTIC
-            if token in theme._PALETTES["dark_orange"]
+            if token in theme._PALETTES[DARK_THEME]
         }
 
         #: Qt-stylesheet states with no Material counterpart. Navigation and
@@ -251,7 +257,7 @@ class TestSemanticColours:
         }
 
         unreachable = []
-        for token, value in theme._PALETTES["dark_orange"].items():
+        for token, value in theme._PALETTES[DARK_THEME].items():
             if token in QT_ONLY:
                 continue
             rgb = value.lstrip("#").upper()

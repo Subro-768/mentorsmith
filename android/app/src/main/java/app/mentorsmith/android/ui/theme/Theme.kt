@@ -24,45 +24,45 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFE8650A),
-    onPrimary = Color(0xFFFFF5EB),
-    primaryContainer = Color(0xFF212121),
-    onPrimaryContainer = Color(0xFFFFF5EB),
-    secondary = Color(0xFFF0A500),
-    onSecondary = Color(0xFF0A0A0B),
-    background = Color(0xFF0A0A0B),
-    onBackground = Color(0xFFF0ECE4),
-    surface = Color(0xFF141414),
-    onSurface = Color(0xFFF0ECE4),
-    surfaceVariant = Color(0xFF1A1A1A),
-    onSurfaceVariant = Color(0xFF7A7069),
-    outline = Color(0xFF2E2E2E),
-    outlineVariant = Color(0xFF1E1E1E),
-    error = Color(0xFFF85149),
-    onError = Color(0xFFFFF5EB),
-    errorContainer = Color(0xFF2D1016),
-    onErrorContainer = Color(0xFFF85149),
+    primary = Color(0xFFC2803F),
+    onPrimary = Color(0xFF201A12),
+    primaryContainer = Color(0xFF2A2825),
+    onPrimaryContainer = Color(0xFF201A12),
+    secondary = Color(0xFF6FA8B4),
+    onSecondary = Color(0xFF1A1917),
+    background = Color(0xFF1A1917),
+    onBackground = Color(0xFFD9D3C8),
+    surface = Color(0xFF232220),
+    onSurface = Color(0xFFD9D3C8),
+    surfaceVariant = Color(0xFF1E1D1B),
+    onSurfaceVariant = Color(0xFF968F84),
+    outline = Color(0xFF302E2A),
+    outlineVariant = Color(0xFF292722),
+    error = Color(0xFFDC7C73),
+    onError = Color(0xFF201A12),
+    errorContainer = Color(0xFF33201E),
+    onErrorContainer = Color(0xFFDC7C73),
 )
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFFB4703A),
+    primary = Color(0xFFA05620),
     onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFEAE5DC),
+    primaryContainer = Color(0xFFE2DDD4),
     onPrimaryContainer = Color(0xFFFFFFFF),
-    secondary = Color(0xFF4D8B98),
-    onSecondary = Color(0xFFF4F1EC),
-    background = Color(0xFFF4F1EC),
-    onBackground = Color(0xFF3B3730),
-    surface = Color(0xFFFAF8F5),
-    onSurface = Color(0xFF3B3730),
-    surfaceVariant = Color(0xFFF0ECE5),
-    onSurfaceVariant = Color(0xFF7D766B),
-    outline = Color(0xFFE2DCD2),
-    outlineVariant = Color(0xFFECE7DE),
-    error = Color(0xFFB4605A),
+    secondary = Color(0xFF467F8C),
+    onSecondary = Color(0xFFEFEBE4),
+    background = Color(0xFFEFEBE4),
+    onBackground = Color(0xFF38342D),
+    surface = Color(0xFFFAF8F4),
+    onSurface = Color(0xFF38342D),
+    surfaceVariant = Color(0xFFE9E5DD),
+    onSurfaceVariant = Color(0xFF6B655B),
+    outline = Color(0xFFDBD4C7),
+    outlineVariant = Color(0xFFE8E3DA),
+    error = Color(0xFFAC5A53),
     onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFF6E8E5),
-    onErrorContainer = Color(0xFFB4605A),
+    errorContainer = Color(0xFFF5E6E3),
+    onErrorContainer = Color(0xFFAC5A53),
 )
 
 /**
@@ -77,26 +77,26 @@ private val LightColors = lightColorScheme(
  * `MaterialTheme.colorScheme`.
  */
 object MentorColors {
-    val accent = Color(0xFFE8650A)
-    val success = Color(0xFF3FB950)
-    val warning = Color(0xFFD29922)
-    val error = Color(0xFFF85149)
-    val info = Color(0xFF388BFD)
-    val muted = Color(0xFF7A7069)
-    val placeholder = Color(0xFF4A4540)
-    val border = Color(0xFF2E2E2E)
-    val borderSub = Color(0xFF1E1E1E)
-    val surfaceAlt = Color(0xFF1A1A1A)
-    val surfaceHover = Color(0xFF212121)
-    val highlight = Color(0xFFF0A500)
-    val highlightLight = Color(0xFFFFC840)
-    val accentLight = Color(0xFFF4934A)
-    val accentDeep = Color(0xFFC24D08)
-    val successBg = Color(0xFF0F2A1A)
-    val warningBg = Color(0xFF271F00)
-    val errorBg = Color(0xFF2D1016)
-    val infoBg = Color(0xFF051D4D)
-    val onAccentPressed = Color(0xFF1A0800)
+    val accent = Color(0xFFC2803F)
+    val success = Color(0xFF7FB073)
+    val warning = Color(0xFFD2A854)
+    val error = Color(0xFFDC7C73)
+    val info = Color(0xFF7BA2CE)
+    val muted = Color(0xFF968F84)
+    val placeholder = Color(0xFF6B655C)
+    val border = Color(0xFF302E2A)
+    val borderSub = Color(0xFF292722)
+    val surfaceAlt = Color(0xFF1E1D1B)
+    val surfaceHover = Color(0xFF2A2825)
+    val highlight = Color(0xFF6FA8B4)
+    val highlightLight = Color(0xFF96C4CD)
+    val accentLight = Color(0xFFD29A5C)
+    val accentDeep = Color(0xFFA3672C)
+    val successBg = Color(0xFF24301F)
+    val warningBg = Color(0xFF33291A)
+    val errorBg = Color(0xFF33201E)
+    val infoBg = Color(0xFF1E2836)
+    val onAccentPressed = Color(0xFF201A12)
 }
 
 /**
